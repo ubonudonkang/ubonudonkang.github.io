@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Accounting Management System · Ubon Udonkang</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%230A0A0A'/><text x='16' y='22' text-anchor='middle' font-family='monospace' font-size='12' font-weight='700' fill='white'>UU</text></svg>"/>
+</head>
+<body>
+<header class="topbar"><a class="topbar__logo" href="index.html">Ubon Udonkang</a><div class="topbar__right"><span data-clock>00:00:00 WAT</span></div></header>
+
+<main class="page-in">
+<div class="col">
+
+  <section class="proj-hero">
+    <a href="projects.html" style="font-family:var(--fm);font-size:.65rem;color:var(--dim);display:inline-flex;align-items:center;gap:5px;margin-bottom:16px;">← Back to Work</a>
+    <span class="lbl">Client: Classified · Government · 2022</span>
+    <div class="proj-hero__vis dk-g2" style="margin-top:18px;">
+      <div>
+        <div class="proj-hero__co">CLIENT: CLASSIFIED</div>
+        <div class="proj-hero__title">Accounting Management System (AMS)</div>
+        <div class="proj-hero__metric">6 Modules</div>
+      </div>
+    </div>
+    <div class="proj-meta-row rv">
+      <div class="proj-meta-item"><div class="proj-meta-lbl">Role</div><div class="proj-meta-val">Sole Business Analyst</div></div>
+      <div class="proj-meta-item"><div class="proj-meta-lbl">Client</div><div class="proj-meta-val">Classified (Government Agency)</div></div>
+      <div class="proj-meta-item"><div class="proj-meta-lbl">Domain</div><div class="proj-meta-val">Government / Public Finance</div></div>
+      <div class="proj-meta-item"><div class="proj-meta-lbl">Tracking</div><div class="proj-meta-val">Jira (DTPAMS)</div></div>
+    </div>
+  </section>
+
+  <div class="proj-content rv">
+
+    <div class="proj-sec">
+      <h3>Overview</h3>
+      <p>A government agency engaged me as the sole Business Analyst on a full implementation of their Accounting Management System (AMS). The system was designed to digitise the agency's end-to-end financial operations; covering voucher workflow automation, General Ledger management, budget tracking, payroll processing, fixed asset management, and GIFMIS payment integration. The project was tracked in Jira under the DTPAMS project code.</p>
+    </div>
+
+    <div class="proj-sec">
+      <h3>Challenge</h3>
+      <p>The agency's accounting operations were entirely manual; vouchers were raised on paper, approvals happened through physical sign-offs, and GL entries were made by hand. Reconciliation with GIFMIS was a weekly manual exercise prone to errors and delays. There was no digital audit trail, which created both compliance risk and operational inefficiency.</p>
+      <p>As the sole BA, I was responsible for requirements across six interconnected modules; each with its own stakeholders, process complexity, and regulatory constraints. Aligning the Finance department, Audit team, IT department, and agency leadership on a single integrated system required significant stakeholder management work before a single requirement could be written.</p>
+    </div>
+
+    <div class="proj-sec">
+      <h3>My Approach</h3>
+      <p>I structured the engagement around six modules: Voucher Management, Chart of Accounts and GL, Budget Management, Payroll and Disbursements, Fixed Asset Management, and GIFMIS Integration. For each module, I ran dedicated stakeholder workshops, documented the as-is process in BPMN, identified automation opportunities, and authored the to-be functional specifications.</p>
+      <ul>
+        <li>Facilitated requirements workshops across Finance, Audit, IT, and agency leadership</li>
+        <li>Produced 15 BPMN process diagrams covering 6 AMS modules</li>
+        <li>Documented the complete 12-stage voucher lifecycle (submission through reconciliation)</li>
+        <li>Authored epics and user stories in Jira (DTPAMS project) covering GL posting, voucher workflow, budget allocation, and payroll</li>
+        <li>Designed GIFMIS API integration specifications; including payment submission, status polling, and reconciliation flows</li>
+        <li>Produced GL posting rules covering double-entry validation, period close controls, and exception handling</li>
+        <li>Defined user roles, approval hierarchies, and multi-factor authentication requirements across 8 user roles</li>
+      </ul>
+    </div>
+
+    <div class="proj-impact-box">
+      <div class="proj-impact-box__label">Outcome</div>
+      <div class="proj-impact-box__text">Complete digital audit trail for all financial transactions · GIFMIS-compliant payment processing · 12-stage voucher lifecycle automated · Jira backlog fully groomed and signed off</div>
+    </div>
+
+    <div class="proj-sec">
+      <h3>The 12-Stage Voucher Lifecycle</h3>
+      <p>One of the key deliverables was documenting and designing the end-to-end voucher lifecycle for the government agency:</p>
+      <ul>
+        <li>Request Submission (Employee, 15 min)</li>
+        <li>Department Head Review (1–3 days)</li>
+        <li>Voucher Auto-generation (System, 5 min)</li>
+        <li>Finance Officer Filling (30 min–2 days)</li>
+        <li>Finance Manager Approval with MFA</li>
+        <li>GIFMIS API Submission (System, 5 min)</li>
+        <li>Payment Processing (GIFMIS, 24–48 hrs)</li>
+        <li>GL Auto-posting (double-entry, 5 min)</li>
+        <li>Voucher Archival as PDF</li>
+        <li>Daily GIFMIS Reconciliation</li>
+        <li>Financial Report Generation</li>
+        <li>Audit Query via API</li>
+      </ul>
+    </div>
+
+    <div class="proj-sec">
+      <h3>Key Deliverables</h3>
+      <ul>
+        <li>15 BPMN process flow diagrams (6 modules, as-is and to-be)</li>
+        <li>Jira backlog: epics, user stories, acceptance criteria, and test cases (DTPAMS)</li>
+        <li>GL posting rule specifications with double-entry validation logic</li>
+        <li>GIFMIS API integration specification</li>
+        <li>User role and approval hierarchy matrix</li>
+        <li>MVP prioritisation matrix across all modules</li>
+      </ul>
+    </div>
+
+    <div class="proj-sec rv">
+      <h3>Project Artifacts</h3>
+      <p>Key documentation produced for this engagement. All materials are confidential and provided for portfolio review only.</p>
+      <div class="artifact-list">
+
+        <div class="artifact-row" data-pdf="docs/ams/data-dictionary.pdf" data-title="Data Dictionary">
+          <div class="artifact-left">
+            <div class="artifact-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <div>
+              <div class="artifact-name">Data Dictionary</div>
+              <div class="artifact-meta">System schema · User management &amp; security tables</div>
+            </div>
+          </div>
+          <button class="artifact-btn">View</button>
+        </div>
+
+        <div class="artifact-row" data-pdf="docs/ams/process-flows.pdf" data-title="BPMN Process Flows">
+          <div class="artifact-left">
+            <div class="artifact-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <div>
+              <div class="artifact-name">BPMN Process Flows</div>
+              <div class="artifact-meta">15 diagrams · 6 modules · As-is &amp; to-be</div>
+            </div>
+          </div>
+          <button class="artifact-btn">View</button>
+        </div>
+
+        <div class="artifact-row" data-pdf="docs/ams/gifmis-integration-spec.pdf" data-title="GIFMIS Integration Specification">
+          <div class="artifact-left">
+            <div class="artifact-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <div>
+              <div class="artifact-name">GIFMIS Integration Specification</div>
+              <div class="artifact-meta">API spec · Payment submission &amp; reconciliation flows</div>
+            </div>
+          </div>
+          <button class="artifact-btn">View</button>
+        </div>
+
+        <div class="artifact-row" data-pdf="docs/ams/user-role-matrix.pdf" data-title="User Role & Approval Matrix">
+          <div class="artifact-left">
+            <div class="artifact-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <div>
+              <div class="artifact-name">User Role &amp; Approval Matrix</div>
+              <div class="artifact-meta">8 roles · Approval hierarchies &amp; permissions</div>
+            </div>
+          </div>
+          <button class="artifact-btn">View</button>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="proj-sec">
+      <h3>Tools &amp; Stack</h3>
+      <div class="proj-tools">
+        <span class="proj-tool">Jira</span><span class="proj-tool">Eraser.io</span><span class="proj-tool">Claude</span>
+        <span class="proj-tool">Confluence</span><span class="proj-tool">User Stories</span><span class="proj-tool">Process Mapping</span>
+        <span class="proj-tool">Gemini</span>
+      </div>
+    </div>
+
+    <div class="proj-nav">
+      <a href="project-rights-issue.html" class="proj-nav-link"><div class="proj-nav-link__dir">← Previous</div><div class="proj-nav-link__title">₦365B Rights Issue Digitisation</div></a>
+      <a href="project-rpa-treasury.html" class="proj-nav-link proj-nav-link--next"><div class="proj-nav-link__dir">Next →</div><div class="proj-nav-link__title">RPA for Treasury Digitalization</div></a>
+    </div>
+  </div>
+
+  <footer class="foot rv"><span class="foot__copy">&copy; 2026 Ubon Udonkang</span><div class="foot__links"><a href="projects.html" class="foot__link">All Work</a><a href="contact.html" class="foot__link">Hire Me</a></div></footer>
+</div>
+</main>
+
+<!-- PDF Viewer Modal -->
+<div class="pdf-modal" id="pdfModal" oncontextmenu="return false">
+  <div class="pdf-modal__bar">
+    <div class="pdf-modal__bar-left">
+      <div class="pdf-modal__title" id="pdfModalTitle">Document</div>
+      <div class="pdf-modal__badge">View only · Portfolio reference</div>
+    </div>
+    <button class="pdf-modal__close" id="pdfClose" aria-label="Close viewer">✕</button>
+  </div>
+  <div class="pdf-modal__body">
+    <div class="pdf-modal__guard"></div>
+    <iframe class="pdf-modal__frame" id="pdfFrame" src="" title="Document viewer"></iframe>
+  </div>
+</div>
+
+<nav class="dock"><a href="index.html" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg><span class="dock-tip">Home</span></a><a href="about.html" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg><span class="dock-tip">About</span></a><a href="projects.html" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg><span class="dock-tip">Work</span></a><a href="resources.html" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="dock-tip">Resources</span></a><a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M7 10v8M7 7v.01M11 18v-5a2 2 0 0 1 4 0v5M11 13h4"/></svg><span class="dock-tip">LinkedIn</span></a><a href="contact.html" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><span class="dock-tip">Contact</span></a></nav>
+<div class="toast" id="toast"></div><script src="js/main.js"></script>
+</body>
+</html>
