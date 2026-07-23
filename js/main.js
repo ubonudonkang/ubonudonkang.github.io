@@ -183,12 +183,29 @@ document.querySelectorAll('[data-to]').forEach(el => cntObs.observe(el));
 /* ── CONTACT FORM ───────────────────────────────────────────── */
 const form = document.getElementById('contact-form');
 if (form) {
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     const btn = form.querySelector('[type="submit"]');
     const orig = btn.textContent;
-    btn.textContent = 'Message sent ✓';
+    btn.textContent = 'Sending…';
     btn.disabled = true;
-    setTimeout(() => { btn.textContent = orig; btn.disabled = false; form.reset(); }, 3500);
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { Accept: 'application/json' }
+      });
+      if (res.ok) {
+        btn.textContent = 'Message sent ✓';
+        form.reset();
+        setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 4000);
+      } else {
+        throw new Error();
+      }
+    } catch {
+      btn.textContent = orig;
+      btn.disabled = false;
+      toast('Something went wrong — email me directly.');
+    }
   });
 }
