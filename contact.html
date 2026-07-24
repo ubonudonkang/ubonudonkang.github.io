@@ -50,19 +50,52 @@
 
   <section class="sec">
     <div class="sec__hd"><span class="sec__title">Send a Message</span></div>
+
+    <div data-fs-success style="display:none;padding:28px;background:var(--off);border:1px solid var(--rule);border-radius:10px;text-align:center;">
+      <p style="font-family:var(--fh);font-weight:700;font-size:1rem;color:var(--ink);margin-bottom:6px;">Message sent ✓</p>
+      <p style="font-size:.82rem;color:var(--muted);">I'll get back to you within 24 hours.</p>
+    </div>
+
+    <div data-fs-error style="display:none;padding:12px 16px;background:#fff5f5;border:1px solid #fecaca;border-radius:6px;font-family:var(--fm);font-size:.75rem;color:#dc2626;margin-bottom:16px;"></div>
+
     <form id="contact-form" class="rv" action="https://formspree.io/f/xdaqwayj" method="POST">
       <div class="form-row2 fgrp">
-        <div><label class="flbl" for="fn">First name</label><input class="finput" id="fn" name="first_name" type="text" placeholder="Ada" required/></div>
-        <div><label class="flbl" for="ln">Last name</label><input class="finput" id="ln" name="last_name" type="text" placeholder="Okafor" required/></div>
+        <div>
+          <label class="flbl" for="fn">First name</label>
+          <input class="finput" id="fn" name="first_name" type="text" placeholder="Ada" required data-fs-field/>
+        </div>
+        <div>
+          <label class="flbl" for="ln">Last name</label>
+          <input class="finput" id="ln" name="last_name" type="text" placeholder="Okafor" required data-fs-field/>
+        </div>
       </div>
-      <div class="fgrp"><label class="flbl" for="em">Email</label><input class="finput" id="em" name="email" type="email" placeholder="ada@company.com" required/></div>
-      <div class="fgrp"><label class="flbl" for="co">Company</label><input class="finput" id="co" name="company" type="text" placeholder="Fintech Ltd"/></div>
+      <div class="fgrp">
+        <label class="flbl" for="em">Email</label>
+        <input class="finput" id="em" name="email" type="email" placeholder="ada@company.com" required data-fs-field/>
+        <span data-fs-error="email" style="font-family:var(--fm);font-size:.68rem;color:#dc2626;margin-top:4px;display:block;"></span>
+      </div>
+      <div class="fgrp">
+        <label class="flbl" for="co">Company</label>
+        <input class="finput" id="co" name="company" type="text" placeholder="Fintech Ltd" data-fs-field/>
+      </div>
       <div class="fgrp">
         <label class="flbl" for="ty">Engagement type</label>
-        <select class="finput" id="ty" name="type"><option value="" disabled selected>Select</option><option value="contract">Contract</option><option value="freelance">Freelance / Project</option><option value="fulltime">Full-Time Role</option><option value="consulting">Advisory / Consulting</option><option value="resource">Resource Enquiry</option><option value="other">Other</option></select>
+        <select class="finput" id="ty" name="type" data-fs-field>
+          <option value="" disabled selected>Select</option>
+          <option value="contract">Contract</option>
+          <option value="freelance">Freelance / Project</option>
+          <option value="fulltime">Full-Time Role</option>
+          <option value="consulting">Advisory / Consulting</option>
+          <option value="resource">Resource Enquiry</option>
+          <option value="other">Other</option>
+        </select>
       </div>
-      <div class="fgrp"><label class="flbl" for="msg">Message</label><textarea class="finput" id="msg" name="message" placeholder="Tell me about the project, problem, or role..." required></textarea></div>
-      <button type="submit" class="btn btn-dark" style="width:100%;justify-content:center;padding:13px 0;">Send Message →</button>
+      <div class="fgrp">
+        <label class="flbl" for="msg">Message</label>
+        <textarea class="finput" id="msg" name="message" placeholder="Tell me about the project, problem, or role..." required data-fs-field></textarea>
+        <span data-fs-error="message" style="font-family:var(--fm);font-size:.68rem;color:#dc2626;margin-top:4px;display:block;"></span>
+      </div>
+      <button type="submit" class="btn btn-dark" style="width:100%;justify-content:center;padding:13px 0;" data-fs-submit-btn>Send Message →</button>
       <p style="font-size:.65rem;color:var(--dim);font-family:var(--fm);text-align:center;margin-top:10px;">Your message goes directly to my inbox.</p>
     </form>
   </section>
@@ -87,5 +120,10 @@
 <nav class="dock"><a href="index.html" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg><span class="dock-tip">Home</span></a><a href="about.html" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg><span class="dock-tip">About</span></a><a href="projects.html" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg><span class="dock-tip">Work</span></a><a href="resources.html" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="dock-tip">Resources</span></a><a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M7 10v8M7 7v.01M11 18v-5a2 2 0 0 1 4 0v5M11 13h4"/></svg><span class="dock-tip">LinkedIn</span></a><a href="contact.html" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><span class="dock-tip">Contact</span></a></nav>
 <div class="toast" id="toast"></div>
 <script src="js/main.js"></script>
+<script>
+  window.formspree = window.formspree || function () { (formspree.q = formspree.q || []).push(arguments); };
+  formspree('initForm', { formElement: '#contact-form', formId: 'xdaqwayj' });
+</script>
+<script src="https://unpkg.com/@formspree/ajax@1" defer></script>
 </body>
 </html>
