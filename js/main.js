@@ -91,12 +91,10 @@ document.querySelectorAll('[data-copy]').forEach(el => {
   });
 
   /* active state */
-  const page = location.pathname.split('/').pop() || 'index.html';
+  const path = location.pathname;
   items.forEach(item => {
     const href = item.getAttribute('href') || '';
-    if (href === page || (page === '' && href === 'index.html')) {
-      item.classList.add('is-active');
-    }
+    if (href === path) item.classList.add('is-active');
   });
 })();
 
