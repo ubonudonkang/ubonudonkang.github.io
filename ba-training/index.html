@@ -197,12 +197,45 @@
   .join{background:var(--ink); color:#FFFFFF; border-radius:16px; padding:44px 40px;}
   .join .eyebrow{color:var(--sticky);}
   .join .section-lede{color:#C9D6CD; margin-bottom:0;}
-  .form-frame{background:#FFFFFF; color:var(--ink); border-radius:10px; overflow:hidden; margin-top:28px;}
-  .form-frame iframe{display:block; width:100%; height:1500px; border:0;}
-  .form-placeholder{padding:48px 24px; text-align:center;}
-  .form-placeholder p{margin:0 0 6px;}
-  .form-placeholder code{font-family:var(--mono); font-size:13px; background:var(--wall); padding:2px 6px; border-radius:4px;}
-  .fallback{display:inline-block; margin-top:16px; color:#C9D6CD; font-size:15px;}
+  #waitlist-form{margin-top:30px;}
+  #waitlist-form fieldset{border:0; border-top:1px solid rgba(255,255,255,0.18); margin:0 0 6px; padding:24px 0 8px;}
+  #waitlist-form fieldset:first-of-type{border-top:0; padding-top:0;}
+  #waitlist-form legend{font-family:var(--mono); font-size:12.5px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--sticky); padding:0 0 14px;}
+  .f-grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:18px 22px;}
+  .f-field{display:block; margin-bottom:18px;}
+  .f-grid .f-field{margin-bottom:0;}
+  .f-label{display:block; font-size:15.5px; font-weight:700; margin-bottom:7px;}
+  .f-label em{color:var(--sticky); font-style:normal;}
+  .f-label small{font-weight:400; color:#B4C4B9; font-size:14px;}
+  .f-hint{display:block; font-size:14px; color:#B4C4B9; margin-top:6px;}
+  .f-other{margin-top:10px;}
+  .f-other[hidden]{display:none;}
+  .f-note{font-size:15px; color:#C9D6CD; margin:0 0 16px;}
+  #waitlist-form input[type=text], #waitlist-form input[type=email], #waitlist-form input[type=tel], #waitlist-form select, #waitlist-form textarea{
+    width:100%; font-family:var(--body); font-size:16px; color:var(--ink); background:#FFFFFF;
+    border:2px solid transparent; border-radius:8px; padding:11px 12px;
+  }
+  #waitlist-form select{appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%2313262B' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:38px;}
+  #waitlist-form textarea{resize:vertical;}
+  #waitlist-form input:focus, #waitlist-form select:focus, #waitlist-form textarea:focus{outline:none; border-color:var(--sticky);}
+  #waitlist-form .invalid{border-color:#F0A08C;}
+  .f-checks{display:flex; flex-wrap:wrap; gap:10px;}
+  .f-check{display:flex; align-items:flex-start; gap:9px; background:rgba(255,255,255,0.08); border:2px solid rgba(255,255,255,0.16); border-radius:8px; padding:10px 14px; font-size:15px; cursor:pointer;}
+  .f-check:hover{border-color:rgba(255,255,255,0.4);}
+  .f-check input{accent-color:var(--sticky); width:17px; height:17px; margin:1px 0 0; flex-shrink:0;}
+  .f-check.checked{border-color:var(--sticky); background:rgba(247,213,72,0.14);}
+  .f-check.maxed{opacity:0.45;}
+  .f-consent{margin-top:18px; align-items:flex-start;}
+  .f-consent em{color:var(--sticky); font-style:normal;}
+  .f-hp{position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;}
+  .f-submit{display:flex; flex-wrap:wrap; align-items:center; gap:18px; margin-top:26px;}
+  .f-submit .btn{border:2px solid var(--sticky);}
+  .f-submit .btn[disabled]{opacity:0.6; cursor:progress;}
+  .f-status{margin:0; font-size:15px; color:#F0A08C;}
+  .f-status.ok{color:var(--sage);}
+  .f-done{margin-top:30px; background:rgba(255,255,255,0.1); border:2px solid var(--sticky); border-radius:12px; padding:30px 28px;}
+  .f-done h3{font-size:26px; margin-bottom:8px; color:var(--sticky);}
+  .f-done p{margin:0; color:#C9D6CD;}
 
   /* ---------- Footer ---------- */
   .foot{padding:36px 0 48px; font-size:14.5px; color:var(--ink-soft);}
@@ -241,6 +274,9 @@
     .bio{grid-template-columns:1fr; padding:24px; gap:18px;}
     .monogram{width:72px; height:72px; font-size:26px;}
     .join{padding:30px 18px; border-radius:12px;}
+    .f-grid{grid-template-columns:1fr; gap:18px;}
+    .f-grid .f-field{margin-bottom:0;}
+    .f-check{width:100%;}
     .top .hide-sm{display:none;}
     .story dd{font-size:19px;}
   }
@@ -389,7 +425,7 @@
       <dl class="runs">
         <div class="run reveal">
           <dt>Live sessions</dt>
-          <dd>Two a week: a 2-hour weekday evening class and a 2-hour Saturday workshop. Every session is recorded.</dd>
+          <dd>Two a week: a 2-hour weekday evening class and a 3-hour Saturday workshop. Every session is recorded.</dd>
         </div>
         <div class="run reveal">
           <dt>Assignments</dt>
@@ -397,7 +433,7 @@
         </div>
         <div class="run reveal">
           <dt>Peer pods</dt>
-          <dd>Small review groups inside a cohort of 10 to 20, so you learn from how others approach the same problem.</dd>
+          <dd>Small review groups inside a cohort of 15 to 25, so you learn from how others approach the same problem.</dd>
         </div>
         <div class="run reveal">
           <dt>Format</dt>
@@ -514,13 +550,172 @@
         <p class="eyebrow">Join the waitlist</p>
         <h2>Get first access to the pilot cohort.</h2>
         <p class="section-lede">It takes about 3 minutes. Your answers on format and budget shape how the program runs.</p>
-        <div class="form-frame" id="form-frame">
-          <div class="form-placeholder">
-            <p><strong>The form will appear here.</strong></p>
-            <p>Paste your Google Form link into <code>FORM_URL</code> near the bottom of this file.</p>
+        <form id="waitlist-form" novalidate>
+
+          <fieldset>
+            <legend>About you</legend>
+            <div class="f-grid">
+              <label class="f-field"><span class="f-label">Full name <em>*</em></span>
+                <input type="text" name="name" autocomplete="name" required>
+              </label>
+              <label class="f-field"><span class="f-label">Email address <em>*</em></span>
+                <input type="email" name="email" autocomplete="email" required>
+              </label>
+              <label class="f-field"><span class="f-label">WhatsApp number <small>Optional</small></span>
+                <input type="tel" name="whatsapp" autocomplete="tel" placeholder="+234...">
+                <span class="f-hint">Include your country code if outside Nigeria, e.g. +234...</span>
+              </label>
+              <label class="f-field"><span class="f-label">City and country <em>*</em></span>
+                <input type="text" name="location" required>
+              </label>
+              <label class="f-field"><span class="f-label">Which best describes your current background? <em>*</em></span>
+                <select name="background" data-other="background_other" required>
+                  <option value="">Choose one</option>
+                  <option>Student or recent graduate</option>
+                  <option>Academic or market research</option>
+                  <option>Banking, finance, or insurance</option>
+                  <option>Operations, admin, or customer service</option>
+                  <option>Tech, but not in a BA role</option>
+                  <option>Working BA looking to level up</option>
+                  <option>Other</option>
+                </select>
+                <input type="text" class="f-other" id="background_other" name="background_other" placeholder="Tell us your background" hidden>
+              </label>
+              <label class="f-field"><span class="f-label">Years of work experience <em>*</em></span>
+                <select name="experience" required>
+                  <option value="">Choose one</option>
+                  <option>0 to 1</option>
+                  <option>2 to 4</option>
+                  <option>5 to 9</option>
+                  <option>10+</option>
+                </select>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Your goals</legend>
+            <label class="f-field"><span class="f-label">Where are you in your move into business analysis? <em>*</em></span>
+              <select name="stage" required>
+                <option value="">Choose one</option>
+                <option>Just exploring whether BA is right for me</option>
+                <option>Decided on BA, need structured training</option>
+                <option>Already doing some BA-type work informally</option>
+                <option>Currently a BA, want to get stronger</option>
+              </select>
+            </label>
+            <div class="f-field">
+              <span class="f-label">What do you most want from this program? <em>*</em> <small>Pick up to 3</small></span>
+              <div class="f-checks" data-max="3">
+                <label class="f-check"><input type="checkbox" name="wants" value="Practical, job-ready skills"><span>Practical, job-ready skills</span></label>
+                <label class="f-check"><input type="checkbox" name="wants" value="A portfolio project to show employers"><span>A portfolio project to show employers</span></label>
+                <label class="f-check"><input type="checkbox" name="wants" value="Certification prep (ECBA / CCBA)"><span>Certification prep (ECBA / CCBA)</span></label>
+                <label class="f-check"><input type="checkbox" name="wants" value="CV, LinkedIn, and interview prep"><span>CV, LinkedIn, and interview prep</span></label>
+                <label class="f-check"><input type="checkbox" name="wants" value="Mentorship from a practising BA"><span>Mentorship from a practising BA</span></label>
+                <label class="f-check"><input type="checkbox" name="wants" value="Networking and job leads"><span>Networking and job leads</span></label>
+                <label class="f-check"><input type="checkbox" name="wants" value="Other" data-other="wants_other"><span>Other</span></label>
+              </div>
+              <input type="text" class="f-other" id="wants_other" name="wants_other" placeholder="Tell us what else you want" hidden>
+            </div>
+            <label class="f-field"><span class="f-label">What is holding you back from landing a BA role right now?</span>
+              <textarea name="blocker" rows="3"></textarea>
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Format and budget</legend>
+            <label class="f-field"><span class="f-label">Which format would suit you best? <em>*</em></span>
+              <select name="format" required>
+                <option value="">Choose one</option>
+                <option>Live online cohort</option>
+                <option>Self-paced with recordings and templates</option>
+                <option>Mix of live sessions and self-paced</option>
+              </select>
+            </label>
+            <div class="f-field">
+              <span class="f-label">When can you attend live sessions? <em>*</em></span>
+              <div class="f-checks">
+                <label class="f-check"><input type="checkbox" name="availability" value="Weekday evenings"><span>Weekday evenings</span></label>
+                <label class="f-check"><input type="checkbox" name="availability" value="Saturday mornings"><span>Saturday mornings</span></label>
+                <label class="f-check"><input type="checkbox" name="availability" value="Saturday afternoons"><span>Saturday afternoons</span></label>
+                <label class="f-check"><input type="checkbox" name="availability" value="Sunday afternoons"><span>Sunday afternoons</span></label>
+              </div>
+            </div>
+            <div class="f-grid">
+              <label class="f-field"><span class="f-label">What budget could you commit to a 12-week program? <em>*</em></span>
+                <select name="budget" data-other="budget_other" required>
+                  <option value="">Choose one</option>
+                  <option>N100,000</option>
+                  <option>N150,000 to N250,000</option>
+                  <option>N250,000 to N400,000</option>
+                  <option>Above N400,000</option>
+                  <option>Other</option>
+                </select>
+                <input type="text" class="f-other" id="budget_other" name="budget_other" placeholder="Tell us your budget" hidden>
+              </label>
+              <label class="f-field"><span class="f-label">Would an instalment payment plan affect your decision? <em>*</em></span>
+                <select name="instalments" required>
+                  <option value="">Choose one</option>
+                  <option>Yes, I would need one to join</option>
+                  <option>It would help, but not essential</option>
+                  <option>No, I would pay in full</option>
+                </select>
+              </label>
+            </div>
+            <label class="f-field"><span class="f-label">When could you start? <em>*</em></span>
+              <select name="start" required>
+                <option value="">Choose one</option>
+                <option>Within 1 month</option>
+                <option>In 1 to 3 months</option>
+                <option>In 3+ months</option>
+              </select>
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Pilot cohort</legend>
+            <p class="f-note">A small pilot cohort will run at a reduced fee in exchange for detailed feedback and a testimonial.</p>
+            <div class="f-grid">
+              <label class="f-field"><span class="f-label">Would you like to be considered? <em>*</em></span>
+                <select name="pilot" required>
+                  <option value="">Choose one</option>
+                  <option>Yes</option>
+                  <option>Maybe, tell me more</option>
+                  <option>No</option>
+                </select>
+              </label>
+              <label class="f-field"><span class="f-label">How did you hear about this training? <em>*</em></span>
+                <select name="source" data-other="source_other" required>
+                  <option value="">Choose one</option>
+                  <option>LinkedIn</option>
+                  <option>X (Twitter)</option>
+                  <option>WhatsApp</option>
+                  <option>Referral from a friend or colleague</option>
+                  <option>Other</option>
+                </select>
+                <input type="text" class="f-other" id="source_other" name="source_other" placeholder="Where did you hear about it?" hidden>
+              </label>
+            </div>
+            <label class="f-check f-consent">
+              <input type="checkbox" name="consent" value="Yes" required>
+              <span>I agree to be contacted about this training. My details will be used only for that purpose. <em>*</em></span>
+            </label>
+          </fieldset>
+
+          <div class="f-hp" aria-hidden="true">
+            <label>Company<input type="text" name="company" tabindex="-1" autocomplete="off"></label>
           </div>
+
+          <div class="f-submit">
+            <button type="submit" class="btn btn-light" id="submit-btn">Join the waitlist</button>
+            <p class="f-status" id="form-status" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+
+        <div class="f-done" id="form-done" hidden>
+          <h3>You're on the list.</h3>
+          <p>Dates, pricing, and pilot cohort details will reach you by email and WhatsApp. Keep an eye on your spam folder just in case.</p>
         </div>
-        <a class="fallback" id="form-fallback" href="#" target="_blank" rel="noopener" hidden>Form not loading? Open it in a new tab.</a>
       </div>
     </div>
   </section>
@@ -536,34 +731,140 @@
 
 <script>
   /* =====================================================================
-     SETUP: paste your full Google Form link below (the long link that
-     ends in /viewform, not the forms.gle short link).
+     SETUP: paste your Apps Script Web app URL below. It ends in /exec.
+     Instructions are in waitlist-endpoint.gs.
      ===================================================================== */
-  var FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfCLLMQaT6BnHYXI2gMC0kvWesr9XGSYMAz3QEssjkoVZhFDw/viewform?usp=dialog";
+  var ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbzx1hcb_pWjo-ubpZgmI2056Q5gshLByoJ2tr1M1qSOBSpVAiMcIcEgADHLhAxK_40Y/exec";
 
   (function(){
-    var frameWrap = document.getElementById("form-frame");
-    var fallback = document.getElementById("form-fallback");
-    var embedUrl = null;
+    var form = document.getElementById("waitlist-form");
+    var statusEl = document.getElementById("form-status");
+    var submitBtn = document.getElementById("submit-btn");
+    var doneEl = document.getElementById("form-done");
 
-    try{
-      var u = new URL(FORM_URL);
-      if(u.hostname === "docs.google.com" && u.pathname.indexOf("/forms/") === 0){
-        u.searchParams.set("embedded", "true");
-        embedUrl = u.toString();
-      }
-      fallback.href = FORM_URL;
-      fallback.hidden = false;
-    }catch(e){ /* placeholder not replaced yet */ }
-
-    if(embedUrl){
-      var frame = document.createElement("iframe");
-      frame.src = embedUrl;
-      frame.title = "BA Bridge Cohort waitlist form";
-      frame.loading = "lazy";
-      frameWrap.innerHTML = "";
-      frameWrap.appendChild(frame);
+    /* "Other" text inputs: reveal when Other is picked */
+    function toggleOther(control, targetId, active){
+      var box = document.getElementById(targetId);
+      if(!box) return;
+      box.hidden = !active;
+      if(active){ box.focus(); } else { box.value = ""; }
     }
+    document.querySelectorAll("select[data-other]").forEach(function(sel){
+      sel.addEventListener("change", function(){
+        toggleOther(sel, sel.dataset.other, sel.value === "Other");
+      });
+    });
+    document.querySelectorAll("input[type=checkbox][data-other]").forEach(function(box){
+      box.addEventListener("change", function(){
+        toggleOther(box, box.dataset.other, box.checked);
+      });
+    });
+
+    /* Checkbox pills: visual state, and cap on multi-select groups */
+    document.querySelectorAll(".f-checks").forEach(function(group){
+      var max = parseInt(group.dataset.max || "0", 10);
+      group.addEventListener("change", function(){
+        var boxes = group.querySelectorAll("input[type=checkbox]");
+        var checked = group.querySelectorAll("input[type=checkbox]:checked").length;
+        boxes.forEach(function(box){
+          var pill = box.closest(".f-check");
+          pill.classList.toggle("checked", box.checked);
+          if(max){
+            var atMax = checked >= max && !box.checked;
+            box.disabled = atMax;
+            pill.classList.toggle("maxed", atMax);
+          }
+        });
+      });
+    });
+    document.querySelectorAll(".f-consent input").forEach(function(box){
+      box.addEventListener("change", function(){
+        box.closest(".f-check").classList.toggle("checked", box.checked);
+      });
+    });
+
+    function showError(msg, el){
+      statusEl.textContent = msg;
+      statusEl.classList.remove("ok");
+      if(el){
+        el.classList.add("invalid");
+        el.focus({ preventScroll:false });
+        el.addEventListener("input", function once(){ el.classList.remove("invalid"); el.removeEventListener("input", once); }, false);
+      }
+    }
+
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      statusEl.textContent = "";
+
+      /* Validation */
+      var required = form.querySelectorAll("[required]");
+      for(var i = 0; i < required.length; i++){
+        var el = required[i];
+        if(el.type === "checkbox"){
+          if(!el.checked){ showError("Please tick the consent box to continue.", el); return; }
+        } else if(!el.value.trim()){
+          showError("Please fill in every field marked with a star.", el); return;
+        } else if(el.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value)){
+          showError("That email address does not look right.", el); return;
+        }
+      }
+      var wants = form.querySelectorAll("input[name=wants]:checked");
+      if(wants.length === 0){ showError("Pick at least one thing you want from the program."); return; }
+      var avail = form.querySelectorAll("input[name=availability]:checked");
+      if(avail.length === 0){ showError("Pick at least one time you could attend."); return; }
+
+      if(ENDPOINT_URL.indexOf("http") !== 0){
+        showError("This form is not connected yet. Set ENDPOINT_URL in the page source.");
+        return;
+      }
+
+      /* Collect: checkbox groups join into one comma-separated value */
+      var payload = new URLSearchParams();
+      var raw = new FormData(form);
+      var grouped = {};
+      raw.forEach(function(value, key){
+        if(grouped[key] === undefined){ grouped[key] = value; }
+        else { grouped[key] = grouped[key] + ", " + value; }
+      });
+
+      /* Fold any "Other" text into its parent answer, so the sheet keeps
+         one column per question. */
+      ["background", "wants", "budget", "source"].forEach(function(key){
+        var extra = (grouped[key + "_other"] || "").trim();
+        delete grouped[key + "_other"];
+        if(extra && grouped[key]){
+          grouped[key] = grouped[key].replace(/\bOther\b/, "Other: " + extra);
+        }
+      });
+
+      Object.keys(grouped).forEach(function(k){ payload.append(k, grouped[k]); });
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Sending...";
+
+      function succeed(){
+        form.hidden = true;
+        doneEl.hidden = false;
+        doneEl.scrollIntoView({ behavior:"smooth", block:"center" });
+      }
+      function fail(){
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Join the waitlist";
+        showError("That did not go through. Please try again, or email ubonanalyst@gmail.com.");
+      }
+
+      fetch(ENDPOINT_URL, { method:"POST", body:payload })
+        .then(function(r){ return r.json(); })
+        .then(function(res){ if(res && res.result === "ok"){ succeed(); } else { fail(); } })
+        .catch(function(){
+          /* Some browsers block reading the response; retry blind so a real
+             submission still lands in the sheet. */
+          fetch(ENDPOINT_URL, { method:"POST", mode:"no-cors", body:payload })
+            .then(succeed)
+            .catch(fail);
+        });
+    });
 
     var items = document.querySelectorAll(".reveal");
     if(!("IntersectionObserver" in window)){
