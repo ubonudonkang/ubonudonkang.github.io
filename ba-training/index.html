@@ -83,6 +83,8 @@
   .lede{font-size:19px; color:var(--ink-soft); max-width:34em; margin:0 0 30px;}
   .hero-actions{display:flex; flex-wrap:wrap; align-items:center; gap:16px 24px;}
   .reassure{font-size:14px; color:var(--ink-soft); margin:18px 0 0;}
+  .reassure .hl-strike{text-decoration:line-through; text-decoration-color:var(--pin); text-decoration-thickness:2px; margin-left:4px;}
+  .reassure em{font-style:normal; color:var(--pin);}
 
   /* ---------- Story card (signature) ---------- */
   .story{
@@ -169,8 +171,10 @@
   .price-card{display:grid; grid-template-columns:0.9fr 1.1fr; gap:0; background:var(--card); border:2px solid var(--ink); border-radius:14px; overflow:hidden; box-shadow:8px 8px 0 var(--sticky); max-width:900px;}
   .price-main{padding:32px 30px; border-right:1px solid var(--line); display:flex; flex-direction:column; gap:16px; align-items:flex-start;}
   .price-tag{display:flex; flex-direction:column;}
+  .price-was{font-family:var(--mono); font-size:18px; font-weight:600; color:var(--ink-soft); text-decoration:line-through; text-decoration-color:var(--pin); text-decoration-thickness:2px;}
   .price-amount{font-family:var(--display); font-weight:800; font-size:clamp(38px,5vw,52px); line-height:1; letter-spacing:-0.02em;}
   .price-sub{font-family:var(--mono); font-size:12.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-soft); margin-top:8px;}
+  .price-footnote{margin:2px 0 0; font-size:13px; color:var(--ink-soft);}
   .price-blurb{margin:0; font-size:15.5px; color:var(--ink-soft);}
   .price-list{list-style:none; padding:26px 30px; margin:0;}
   .price-list li{position:relative; padding:9px 0 9px 28px; font-size:15.5px; border-bottom:1px dashed var(--line);}
@@ -348,7 +352,7 @@
           <a class="btn btn-primary" href="#join">Enrol for November</a>
           <a class="quiet-link" href="#weeks">See the 12 weeks</a>
         </div>
-        <p class="reassure">N80,000 for the full 12 weeks. Cohort starts November 2026.</p>
+        <p class="reassure">N80,000 for the full 12 weeks* <span class="hl-strike">N100,000</span>. Cohort starts November 2026. <em>*First 5 students only.</em></p>
       </div>
 
       <article class="story" aria-label="The program, written as a user story">
@@ -500,8 +504,10 @@
       <div class="price-card reveal">
         <div class="price-main">
           <div class="price-tag">
+            <span class="price-was">N100,000</span>
             <span class="price-amount">N80,000</span>
             <span class="price-sub">for the full 12 weeks</span>
+            <p class="price-footnote">*For the first 5 students to enrol</p>
           </div>
           <p class="price-blurb">Payment is by bank transfer, in full, at enrolment. Your place is confirmed once the transfer is verified, usually within 24 hours.</p>
           <a class="btn btn-primary" href="#join">Enrol for November</a>
@@ -580,7 +586,7 @@
         </details>
         <details>
           <summary>What is the refund policy?</summary>
-          <p>REFUND POLICY GOES HERE. Set out the window for a full refund before the cohort starts, what happens after it begins, and what occurs if the cohort is postponed.</p>
+          <p>If you withdraw before the cohort begins, you can request a refund less a 10% administrative fee, or transfer your place once to the next cohort at no cost. Once training has commenced, fees are non-refundable and non-transferable. If BA Bridge postpones or cancels the cohort, you may choose a full refund with no deduction or a place in the next cohort. Refund requests must be sent in writing to <a class="quiet-link" href="mailto:ubonanalyst@gmail.com">ubonanalyst@gmail.com</a> and are processed within 14 working days.</p>
         </details>
       </div>
     </div>
