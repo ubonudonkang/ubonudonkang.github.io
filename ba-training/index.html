@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BA Bridge Cohort | Move into IT Business Analysis</title>
-<meta name="description" content="A 12-week live cohort for career changers moving into IT business analysis. Build a real portfolio, get interview-ready, and learn from a practising IT Business Analyst.">
-<meta property="og:title" content="BA Bridge Cohort | Move into IT Business Analysis">
-<meta property="og:description" content="A 12-week live cohort for career changers. Leave with a portfolio, not just a certificate. Pilot cohort forming now.">
+<title>BA Bridge Cohort | Enrol for November 2026</title>
+<meta name="description" content="A 12-week live cohort for career changers moving into IT business analysis. N100,000, starting November 2026. Build a real portfolio and get interview-ready.">
+<meta property="og:title" content="BA Bridge Cohort | Enrol for November 2026">
+<meta property="og:description" content="A 12-week live cohort for career changers. N100,000, starting November 2026. Enrolment open.">
 <meta property="og:type" content="website">
 <script>document.documentElement.className += " js";</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -148,7 +148,11 @@
   .phase .weeks::before{content:""; width:10px; height:10px; border-radius:50%; border:2px solid var(--pin); background:var(--card); flex-shrink:0;}
   .phase h3{font-size:20px; line-height:1.15; margin-bottom:10px;}
   .phase p{font-size:15px; color:var(--ink-soft); margin:0 0 16px;}
-  .deliv{margin-top:auto; font-size:14px; border-top:1px dashed var(--line); padding-top:12px;}
+  .tools{margin-top:auto; font-size:13.5px; color:var(--ink-soft); padding-top:12px;}
+  .tools b{display:block; font-family:var(--mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--moss); margin-bottom:2px;}
+  .phase-goal .tools{color:var(--ink);}
+  .phase-goal .tools b{color:#5A6E30;}
+  .deliv{margin-top:14px; font-size:14px; border-top:1px dashed var(--line); padding-top:12px;}
   .deliv b{display:block; font-family:var(--mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--pin); margin-bottom:2px;}
   .phase-goal{background:var(--sticky); border-color:#DDB72A;}
   .phase-goal p, .phase-goal .weeks{color:var(--ink);}
@@ -161,17 +165,17 @@
   .run dt{font-family:var(--mono); font-size:12.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; padding-top:3px;}
   .run dd{margin:0; color:var(--ink-soft);}
 
-  /* ---------- Tiers ---------- */
-  .tiers{display:grid; grid-template-columns:repeat(3, 1fr); gap:18px; align-items:stretch;}
-  .tier{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:26px; display:flex; flex-direction:column;}
-  .tier h3{font-size:24px; margin-bottom:6px;}
-  .tier .who{color:var(--ink-soft); font-size:15.5px; margin:0 0 18px;}
-  .tier ul{list-style:none; padding:0; margin:0; border-top:1px dashed var(--line);}
-  .tier li{position:relative; padding:10px 0 10px 26px; border-bottom:1px dashed var(--line); font-size:15.5px;}
-  .tier li::before{content:"\2713"; position:absolute; left:2px; color:var(--pin); font-weight:700;}
-  .tier-featured{border:2px solid var(--ink); box-shadow:6px 6px 0 var(--sticky);}
-  .tag{align-self:flex-start; font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; background:var(--ink); color:#FFFFFF; border-radius:4px; padding:4px 8px; margin-bottom:14px;}
-  .price-note{margin:28px 0 0; padding:18px 20px; background:var(--card); border-left:4px solid var(--pin); border-radius:0 8px 8px 0; max-width:760px; font-size:15.5px;}
+  /* ---------- Price card ---------- */
+  .price-card{display:grid; grid-template-columns:0.9fr 1.1fr; gap:0; background:var(--card); border:2px solid var(--ink); border-radius:14px; overflow:hidden; box-shadow:8px 8px 0 var(--sticky); max-width:900px;}
+  .price-main{padding:32px 30px; border-right:1px solid var(--line); display:flex; flex-direction:column; gap:16px; align-items:flex-start;}
+  .price-tag{display:flex; flex-direction:column;}
+  .price-amount{font-family:var(--display); font-weight:800; font-size:clamp(38px,5vw,52px); line-height:1; letter-spacing:-0.02em;}
+  .price-sub{font-family:var(--mono); font-size:12.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-soft); margin-top:8px;}
+  .price-blurb{margin:0; font-size:15.5px; color:var(--ink-soft);}
+  .price-list{list-style:none; padding:26px 30px; margin:0;}
+  .price-list li{position:relative; padding:9px 0 9px 28px; font-size:15.5px; border-bottom:1px dashed var(--line);}
+  .price-list li:last-child{border-bottom:none;}
+  .price-list li::before{content:"\2713"; position:absolute; left:2px; color:var(--pin); font-weight:700;}
 
   /* ---------- Instructor ---------- */
   .bio{display:grid; grid-template-columns:auto 1fr; gap:30px; align-items:start; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:32px;}
@@ -241,6 +245,39 @@
   .foot{padding:36px 0 48px; font-size:14.5px; color:var(--ink-soft);}
   .foot .wrap{display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px;}
 
+  /* ---------- Payment modal ---------- */
+  .pay-overlay{position:fixed; inset:0; z-index:50; background:rgba(19,38,43,0.72); display:flex; align-items:flex-start; justify-content:center; padding:24px 16px; overflow-y:auto;}
+  .pay-overlay[hidden]{display:none;}
+  .pay-modal{background:var(--card); border:2px solid var(--ink); border-radius:16px; width:100%; max-width:520px; padding:30px 28px 28px; margin:auto; box-shadow:0 30px 60px -20px rgba(0,0,0,0.5);}
+  .pay-step{font-family:var(--mono); font-size:11.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--pin); margin:0 0 8px;}
+  .pay-head h3{font-family:var(--display); font-size:28px; letter-spacing:-0.02em; margin:0 0 8px;}
+  .pay-intro{margin:0 0 20px; font-size:15px; color:var(--ink-soft);}
+  .pay-amount{display:flex; align-items:baseline; justify-content:space-between; gap:12px; background:var(--ink); color:#FFFFFF; border-radius:10px; padding:16px 20px; margin-bottom:18px;}
+  .pay-amount-label{font-family:var(--mono); font-size:11.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--sage);}
+  .pay-amount-value{font-family:var(--display); font-weight:800; font-size:34px; letter-spacing:-0.02em;}
+  .pay-details{margin:0 0 12px; border-top:1px solid var(--line);}
+  .pay-row{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:11px 0; border-bottom:1px solid var(--line);}
+  .pay-row dt{font-family:var(--mono); font-size:11.5px; letter-spacing:0.07em; text-transform:uppercase; color:var(--ink-soft); flex-shrink:0;}
+  .pay-row dd{margin:0; display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px; text-align:right;}
+  .pay-row-ref dd{color:var(--pin);}
+  .pay-copyable{font-family:var(--mono); letter-spacing:0.02em;}
+  .pay-copy{font-family:var(--mono); font-size:11px; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer; background:var(--parchment-deep, #EFEADA); border:1px solid var(--line); border-radius:5px; padding:4px 8px; color:var(--ink);}
+  .pay-copy:hover{background:var(--sticky);}
+  .pay-hint{margin:0 0 22px; font-size:14px; color:var(--ink-soft); background:rgba(247,213,72,0.28); border-left:3px solid var(--sticky); padding:10px 12px; border-radius:0 6px 6px 0;}
+  .pay-confirm{border-top:1px solid var(--line); padding-top:20px;}
+  .pay-confirm .f-label{color:var(--ink); font-size:14.5px;}
+  .pay-confirm .f-label em{color:var(--pin);}
+  .pay-confirm .f-label small{color:var(--ink-soft);}
+  .pay-confirm input{width:100%; font-family:var(--body); font-size:16px; border:2px solid var(--line); border-radius:8px; padding:10px 12px; background:#FFFFFF; color:var(--ink);}
+  .pay-confirm input:focus{outline:none; border-color:var(--ink);}
+  .pay-confirm .invalid{border-color:var(--pin);}
+  .pay-confirm .btn{width:100%; justify-content:center; margin-top:4px;}
+  .pay-confirm .btn[disabled]{opacity:0.6; cursor:progress;}
+  .pay-status{margin:0 0 12px; font-size:14.5px; color:var(--pin); min-height:1px;}
+  .pay-later{display:block; width:100%; margin-top:12px; background:none; border:none; cursor:pointer; font-family:var(--body); font-size:14px; color:var(--ink-soft); text-decoration:underline; text-underline-offset:4px;}
+  .f-done-ref{font-family:var(--mono); font-size:15px;}
+  .f-done-ref strong{color:var(--sticky); letter-spacing:0.05em;}
+
   /* ---------- Scroll reveal ---------- */
   .js .reveal{opacity:0; transform:translateY(18px); transition:opacity 0.6s ease, transform 0.6s ease;}
   .js .reveal.in{opacity:1; transform:none;}
@@ -260,7 +297,8 @@
     .phases::before{display:none;}
     .phase-goal{grid-column:1 / -1;}
     .runs{grid-template-columns:1fr;}
-    .tiers{grid-template-columns:1fr; max-width:560px;}
+    .price-card{grid-template-columns:1fr; max-width:560px;}
+    .price-main{border-right:none; border-bottom:1px solid var(--line);}
   }
   @media (max-width:600px){
     body{font-size:16px;}
@@ -287,7 +325,7 @@
 <header class="top">
   <div class="wrap">
     <a class="brand" href="#top">BA Bridge</a>
-    <a class="btn btn-primary btn-small" href="#join">Join <span class="hide-sm">the </span>waitlist</a>
+    <a class="btn btn-primary btn-small" href="#join">Enrol<span class="hide-sm"> now</span></a>
   </div>
 </header>
 
@@ -297,14 +335,14 @@
   <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <div class="pilot">Pilot cohort forming now</div>
+        <div class="pilot">Enrolment open, November 2026 cohort</div>
         <h1>Move into IT business analysis with <span class="hl">a portfolio</span>, not just a certificate.</h1>
         <p class="lede">A 12-week live cohort for career changers. Taught by a practising IT Business Analyst and built around one real project you'll take into interviews.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#join">Join the waitlist</a>
+          <a class="btn btn-primary" href="#join">Enrol for November</a>
           <a class="quiet-link" href="#weeks">See the 12 weeks</a>
         </div>
-        <p class="reassure">Free to join. No payment at this stage.</p>
+        <p class="reassure">N100,000 for the full 12 weeks. Cohort starts November 2026.</p>
       </div>
 
       <article class="story" aria-label="The program, written as a user story">
@@ -319,7 +357,7 @@
         </dl>
         <div class="story-foot">
           <span class="chip">Estimate: 12 weeks</span>
-          <span class="chip chip-open">Status: Open</span>
+          <span class="chip chip-open">Starts: November 2026</span>
         </div>
       </article>
     </div>
@@ -387,30 +425,35 @@
           <div class="weeks">Weeks 1 to 2</div>
           <h3>Foundations</h3>
           <p>The IT BA role, the SDLC, Agile and Scrum vs Waterfall, and how BAs work with PMs and Product Owners.</p>
+          <div class="tools"><b>Tools</b>Scrum ceremonies, Jira boards, Confluence</div>
           <div class="deliv"><b>Deliverable</b>Capstone project brief</div>
         </div>
         <div class="phase reveal">
           <div class="weeks">Weeks 3 to 5</div>
           <h3>Stakeholders and elicitation</h3>
-          <p>Interviews, workshops, stakeholder mapping, and the 4C Framework: Clarity, Conflict, Consensus, Commitment.</p>
+          <p>Interviews and workshops, stakeholder mapping, prioritisation, and the 4C Framework: Clarity, Conflict, Consensus, Commitment.</p>
+          <div class="tools"><b>Tools</b>MoSCoW, RICE, 5 Whys, fishbone, story mapping</div>
           <div class="deliv"><b>Deliverable</b>Stakeholder map and elicitation notes</div>
         </div>
         <div class="phase reveal">
           <div class="weeks">Weeks 6 to 8</div>
           <h3>Requirements and modeling</h3>
-          <p>BRDs and FRDs, user stories, acceptance criteria, BPMN, use cases, Jira and Confluence, and basic SQL.</p>
+          <p>BRDs and FRDs, user stories and acceptance criteria, process and data modeling, and reading an API like a BA.</p>
+          <div class="tools"><b>Tools</b>BPMN 2.0, UML, ERDs, SQL joins, REST and JSON in Postman, Figma wireframes</div>
           <div class="deliv"><b>Deliverable</b>BRD, process maps, and backlog</div>
         </div>
         <div class="phase reveal">
           <div class="weeks">Weeks 9 to 10</div>
           <h3>Delivery</h3>
           <p>Traceability, UAT, change management, and working in regulated environments like fintech and telecoms.</p>
+          <div class="tools"><b>Tools</b>Test case design, defect triage, RTM, integrations and webhooks, RPA basics</div>
           <div class="deliv"><b>Deliverable</b>UAT plan and traceability matrix</div>
         </div>
         <div class="phase phase-goal reveal">
           <div class="weeks">Weeks 11 to 12</div>
           <h3>Career launch</h3>
           <p>Capstone presentation, CV and LinkedIn rewrite, mock interviews, and your ECBA roadmap.</p>
+          <div class="tools"><b>Tools</b>Portfolio review, STAR interview practice, BABOK mapping</div>
           <div class="deliv"><b>Deliverable</b>Portfolio and interview-ready CV</div>
         </div>
       </div>
@@ -446,42 +489,28 @@
   <!-- ================= OPTIONS ================= -->
   <section class="section">
     <div class="wrap">
-      <p class="eyebrow">Options</p>
-      <h2>Three ways to join.</h2>
-      <div class="tiers">
-        <div class="tier reveal">
-          <h3>Self-paced</h3>
-          <p class="who">For disciplined self-starters on a tight schedule.</p>
-          <ul>
-            <li>All session recordings</li>
-            <li>BA templates: BRD, user stories, UAT plan</li>
-            <li>Capstone brief and guide</li>
-          </ul>
+      <p class="eyebrow">Enrolment</p>
+      <h2>One price, everything included.</h2>
+      <div class="price-card reveal">
+        <div class="price-main">
+          <div class="price-tag">
+            <span class="price-amount">N100,000</span>
+            <span class="price-sub">for the full 12 weeks</span>
+          </div>
+          <p class="price-blurb">Payment is by bank transfer, in full, at enrolment. Your place is confirmed once the transfer is verified, usually within 24 hours.</p>
+          <a class="btn btn-primary" href="#join">Enrol for November</a>
         </div>
-        <div class="tier tier-featured reveal">
-          <span class="tag">Recommended</span>
-          <h3>Core cohort</h3>
-          <p class="who">The full live experience, start to finish.</p>
-          <ul>
-            <li>Two live sessions a week</li>
-            <li>Weekly written feedback</li>
-            <li>Capstone project and peer pod</li>
-            <li>Career launch weeks</li>
-          </ul>
-        </div>
-        <div class="tier reveal">
-          <h3>Premium</h3>
-          <p class="who">For faster, more personal support.</p>
-          <ul>
-            <li>Everything in Core</li>
-            <li>1:1 mentorship sessions</li>
-            <li>Personal CV and LinkedIn revamp</li>
-            <li>Mock interviews with feedback</li>
-            <li>3 months of support after the program</li>
-          </ul>
-        </div>
+        <ul class="price-list">
+          <li>Two live sessions a week for 12 weeks</li>
+          <li>Every session recorded</li>
+          <li>Weekly written feedback on assignments</li>
+          <li>Capstone project and peer review pod</li>
+          <li>BA template pack: BRD, user stories, UAT plan, RTM</li>
+          <li>CV and LinkedIn rewrite</li>
+          <li>Mock interviews with feedback</li>
+          <li>ECBA certification roadmap</li>
+        </ul>
       </div>
-      <p class="price-note">Fees are being finalised. Share your budget in the waitlist form; it directly shapes final pricing. Pilot places come at a reduced fee.</p>
     </div>
   </section>
 
@@ -532,12 +561,20 @@
           <p>No honest program can promise that. You will leave with a portfolio, a sharper CV, and interview practice, which is what hiring managers look for.</p>
         </details>
         <details>
-          <summary>What is the pilot cohort?</summary>
-          <p>A small first group at a reduced fee, in exchange for detailed feedback and a testimonial. Waitlist members hear about it first.</p>
+          <summary>When does it start?</summary>
+          <p>The first cohort begins in November 2026. Exact dates and the session timetable are sent to enrolled students by email and WhatsApp once the cohort is full.</p>
         </details>
         <details>
-          <summary>When does it start?</summary>
-          <p>Dates are shared with the waitlist first. Joining now keeps your place in line.</p>
+          <summary>How do I pay?</summary>
+          <p>By bank transfer. After you complete the enrolment form, your account details and a personal reference appear on screen. Use that reference as the transfer narration so your payment can be matched to you.</p>
+        </details>
+        <details>
+          <summary>When is my place confirmed?</summary>
+          <p>Once the transfer lands and is verified, usually within 24 hours. You will get a WhatsApp or email confirmation. Until then your place is reserved, not confirmed.</p>
+        </details>
+        <details>
+          <summary>What is the refund policy?</summary>
+          <p>REFUND POLICY GOES HERE. Set out the window for a full refund before the cohort starts, what happens after it begins, and what occurs if the cohort is postponed.</p>
         </details>
       </div>
     </div>
@@ -547,9 +584,9 @@
   <section class="section" id="join">
     <div class="wrap">
       <div class="join">
-        <p class="eyebrow">Join the waitlist</p>
-        <h2>Get first access to the pilot cohort.</h2>
-        <p class="section-lede">It takes about 3 minutes. Your answers on format and budget shape how the program runs.</p>
+        <p class="eyebrow">Enrol</p>
+        <h2>Secure your place for November.</h2>
+        <p class="section-lede">The form takes about 3 minutes. Payment details appear as soon as you submit it.</p>
         <form id="waitlist-form" novalidate>
 
           <fieldset>
@@ -623,7 +660,7 @@
           </fieldset>
 
           <fieldset>
-            <legend>Format and budget</legend>
+            <legend>Format and availability</legend>
             <label class="f-field"><span class="f-label">Which format would suit you best? <em>*</em></span>
               <select name="format" required>
                 <option value="">Choose one</option>
@@ -641,27 +678,6 @@
                 <label class="f-check"><input type="checkbox" name="availability" value="Sunday afternoons"><span>Sunday afternoons</span></label>
               </div>
             </div>
-            <div class="f-grid">
-              <label class="f-field"><span class="f-label">What budget could you commit to a 12-week program? <em>*</em></span>
-                <select name="budget" data-other="budget_other" required>
-                  <option value="">Choose one</option>
-                  <option>N100,000</option>
-                  <option>N150,000 to N250,000</option>
-                  <option>N250,000 to N400,000</option>
-                  <option>Above N400,000</option>
-                  <option>Other</option>
-                </select>
-                <input type="text" class="f-other" id="budget_other" name="budget_other" placeholder="Tell us your budget" hidden>
-              </label>
-              <label class="f-field"><span class="f-label">Would an instalment payment plan affect your decision? <em>*</em></span>
-                <select name="instalments" required>
-                  <option value="">Choose one</option>
-                  <option>Yes, I would need one to join</option>
-                  <option>It would help, but not essential</option>
-                  <option>No, I would pay in full</option>
-                </select>
-              </label>
-            </div>
             <label class="f-field"><span class="f-label">When could you start? <em>*</em></span>
               <select name="start" required>
                 <option value="">Choose one</option>
@@ -673,17 +689,8 @@
           </fieldset>
 
           <fieldset>
-            <legend>Pilot cohort</legend>
-            <p class="f-note">A small pilot cohort will run at a reduced fee in exchange for detailed feedback and a testimonial.</p>
+            <legend>Last step</legend>
             <div class="f-grid">
-              <label class="f-field"><span class="f-label">Would you like to be considered? <em>*</em></span>
-                <select name="pilot" required>
-                  <option value="">Choose one</option>
-                  <option>Yes</option>
-                  <option>Maybe, tell me more</option>
-                  <option>No</option>
-                </select>
-              </label>
               <label class="f-field"><span class="f-label">How did you hear about this training? <em>*</em></span>
                 <select name="source" data-other="source_other" required>
                   <option value="">Choose one</option>
@@ -707,20 +714,72 @@
           </div>
 
           <div class="f-submit">
-            <button type="submit" class="btn btn-light" id="submit-btn">Join the waitlist</button>
+            <button type="submit" class="btn btn-light" id="submit-btn">Continue to payment</button>
             <p class="f-status" id="form-status" role="status" aria-live="polite"></p>
           </div>
         </form>
 
         <div class="f-done" id="form-done" hidden>
-          <h3>You're on the list.</h3>
-          <p>Dates, pricing, and pilot cohort details will reach you by email and WhatsApp. Keep an eye on your spam folder just in case.</p>
+          <h3>Your place is reserved.</h3>
+          <p>We are checking for your transfer now. Once it is verified, usually within 24 hours, you will get a confirmation by email and WhatsApp with your cohort dates and joining details.</p>
+          <p class="f-done-ref">Your reference: <strong id="done-ref"></strong></p>
+          <p>If anything is unclear, email <a href="mailto:ubonanalyst@gmail.com">ubonanalyst@gmail.com</a> quoting that reference.</p>
         </div>
       </div>
     </div>
   </section>
 
 </main>
+
+<!-- ================= PAYMENT MODAL ================= -->
+<div class="pay-overlay" id="pay-overlay" hidden>
+  <div class="pay-modal" role="dialog" aria-modal="true" aria-labelledby="pay-title">
+    <div class="pay-head">
+      <p class="pay-step">Step 2 of 2</p>
+      <h3 id="pay-title">Make your transfer</h3>
+      <p class="pay-intro">Transfer the fee to the account below, then come back and confirm. Your details are already saved.</p>
+    </div>
+
+    <div class="pay-amount">
+      <span class="pay-amount-label">Amount</span>
+      <span class="pay-amount-value">N100,000</span>
+    </div>
+
+    <dl class="pay-details">
+      <div class="pay-row">
+        <dt>Bank</dt>
+        <dd>Guaranty Trust Bank</dd>
+      </div>
+      <div class="pay-row">
+        <dt>Account name</dt>
+        <dd>Ubon Udonkang</dd>
+      </div>
+      <div class="pay-row">
+        <dt>Account number</dt>
+        <dd><span class="pay-copyable" id="pay-acct">0218472380</span>
+          <button type="button" class="pay-copy" data-copy="pay-acct">Copy</button></dd>
+      </div>
+      <div class="pay-row pay-row-ref">
+        <dt>Your reference</dt>
+        <dd><span class="pay-copyable" id="pay-ref"></span>
+          <button type="button" class="pay-copy" data-copy="pay-ref">Copy</button></dd>
+      </div>
+    </dl>
+    <p class="pay-hint">Put that reference in the transfer narration or remark. It is how your payment gets matched to your name.</p>
+
+    <div class="pay-confirm">
+      <label class="f-field"><span class="f-label">Name on the account you paid from <em>*</em></span>
+        <input type="text" id="pay-sender" placeholder="If different from your own name">
+      </label>
+      <label class="f-field"><span class="f-label">Transfer or receipt number <small>Optional</small></span>
+        <input type="text" id="pay-receipt">
+      </label>
+      <p class="pay-status" id="pay-status" role="status" aria-live="polite"></p>
+      <button type="button" class="btn btn-primary" id="pay-done-btn">I have made the transfer</button>
+      <button type="button" class="pay-later" id="pay-later-btn">I will pay later</button>
+    </div>
+  </div>
+</div>
 
 <footer class="foot">
   <div class="wrap">
@@ -734,7 +793,7 @@
      SETUP: paste your Apps Script Web app URL below. It ends in /exec.
      Instructions are in waitlist-endpoint.gs.
      ===================================================================== */
-  var ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbzx1hcb_pWjo-ubpZgmI2056Q5gshLByoJ2tr1M1qSOBSpVAiMcIcEgADHLhAxK_40Y/exec";
+  var ENDPOINT_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
 
   (function(){
     var form = document.getElementById("waitlist-form");
@@ -838,33 +897,108 @@
         }
       });
 
+      /* A short reference the student quotes in the transfer narration */
+      var ref = "BAB-" + Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+      grouped.reference = ref;
+      grouped.amount = "100000";
+      grouped.payment_status = "Awaiting transfer";
+      grouped.action = "signup";
+
       Object.keys(grouped).forEach(function(k){ payload.append(k, grouped[k]); });
 
       submitBtn.disabled = true;
-      submitBtn.textContent = "Sending...";
+      submitBtn.textContent = "Saving...";
 
-      function succeed(){
-        form.hidden = true;
-        doneEl.hidden = false;
-        doneEl.scrollIntoView({ behavior:"smooth", block:"center" });
+      function openPayment(){
+        document.getElementById("pay-ref").textContent = ref;
+        document.getElementById("done-ref").textContent = ref;
+        overlay.hidden = false;
+        document.body.style.overflow = "hidden";
+        lastFocus = submitBtn;
+        document.getElementById("pay-sender").focus();
       }
       function fail(){
         submitBtn.disabled = false;
-        submitBtn.textContent = "Join the waitlist";
+        submitBtn.textContent = "Continue to payment";
         showError("That did not go through. Please try again, or email ubonanalyst@gmail.com.");
       }
 
-      fetch(ENDPOINT_URL, { method:"POST", body:payload })
-        .then(function(r){ return r.json(); })
-        .then(function(res){ if(res && res.result === "ok"){ succeed(); } else { fail(); } })
-        .catch(function(){
-          /* Some browsers block reading the response; retry blind so a real
-             submission still lands in the sheet. */
-          fetch(ENDPOINT_URL, { method:"POST", mode:"no-cors", body:payload })
-            .then(succeed)
-            .catch(fail);
-        });
+      post(payload)
+        .then(openPayment)
+        .catch(fail);
     });
+
+    /* ---------- Payment modal ---------- */
+    var overlay = document.getElementById("pay-overlay");
+    var payBtn = document.getElementById("pay-done-btn");
+    var payStatus = document.getElementById("pay-status");
+    var lastFocus = null;
+
+    function closePayment(){
+      overlay.hidden = true;
+      document.body.style.overflow = "";
+      form.hidden = true;
+      doneEl.hidden = false;
+      doneEl.scrollIntoView({ behavior:"smooth", block:"center" });
+      if(lastFocus){ lastFocus.focus(); }
+    }
+
+    document.querySelectorAll(".pay-copy").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var text = document.getElementById(btn.dataset.copy).textContent;
+        navigator.clipboard.writeText(text).then(function(){
+          var was = btn.textContent;
+          btn.textContent = "Copied";
+          setTimeout(function(){ btn.textContent = was; }, 1400);
+        }).catch(function(){});
+      });
+    });
+
+    payBtn.addEventListener("click", function(){
+      var sender = document.getElementById("pay-sender");
+      if(!sender.value.trim()){
+        payStatus.textContent = "Please tell us the name on the account you paid from.";
+        sender.classList.add("invalid");
+        sender.focus();
+        return;
+      }
+      sender.classList.remove("invalid");
+      payStatus.textContent = "";
+      payBtn.disabled = true;
+      payBtn.textContent = "Recording...";
+
+      var body = new URLSearchParams();
+      body.append("action", "declare");
+      body.append("reference", document.getElementById("pay-ref").textContent);
+      body.append("sender_name", sender.value.trim());
+      body.append("payment_ref", document.getElementById("pay-receipt").value.trim());
+
+      post(body).then(closePayment).catch(function(){
+        payBtn.disabled = false;
+        payBtn.textContent = "I have made the transfer";
+        payStatus.textContent = "That did not save. Please try again, or email ubonanalyst@gmail.com with your reference.";
+      });
+    });
+
+    document.getElementById("pay-later-btn").addEventListener("click", closePayment);
+    overlay.addEventListener("click", function(e){ if(e.target === overlay){ closePayment(); } });
+    document.addEventListener("keydown", function(e){
+      if(e.key === "Escape" && !overlay.hidden){ closePayment(); }
+    });
+
+    /* Posts to the endpoint, falling back to a blind send if the browser
+       will not let us read the response. */
+    function post(body){
+      return fetch(ENDPOINT_URL, { method:"POST", body:body })
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          if(!res || res.result !== "ok"){ throw new Error("rejected"); }
+        })
+        .catch(function(err){
+          if(err && err.message === "rejected"){ throw err; }
+          return fetch(ENDPOINT_URL, { method:"POST", mode:"no-cors", body:body }).then(function(){ return; });
+        });
+    }
 
     var items = document.querySelectorAll(".reveal");
     if(!("IntersectionObserver" in window)){
