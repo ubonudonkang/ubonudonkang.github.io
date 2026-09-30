@@ -1,263 +1,445 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ubon Udonkang · Senior Business Analyst</title>
-  <meta name="description" content="Senior BA in fintech, Open Banking, and process automation. Lagos, Nigeria."/>
-  <link rel="stylesheet" href="/css/style.css"/>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%230A0A0A'/><text x='16' y='22' text-anchor='middle' font-family='monospace' font-size='12' font-weight='700' fill='white'>UU</text></svg>"/>
+  <meta name="description" content="Senior Business Analyst in fintech, Open Banking and process automation. Lagos, Nigeria. Now enrolling the BA Bridge Cohort."/>
+  <meta name="theme-color" content="#FFFFFF"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap"/>
+  <link rel="stylesheet" href="/css/site.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23111'/><text x='16' y='22.5' text-anchor='middle' font-family='Georgia,serif' font-size='16' fill='white'>U</text></svg>"/>
+  <script>document.documentElement.classList.add('js')</script>
 </head>
 <body>
 
-<header class="topbar">
-  <a class="topbar__logo" href="/">Ubon Udonkang</a>
-  <div class="topbar__right">
-    <div class="topbar__avail"><span class="topbar__dot"></span><span>Available</span></div>
-    <span data-clock>00:00:00 WAT</span>
+<header class="topbar" id="topbar">
+  <a class="topbar__name" href="/">Ubon Udonkang</a>
+  <div class="topbar__meta">
+    <span class="avail"><span class="avail__dot"></span>Available</span>
+    <span class="topbar__clock" data-clock>00:00 WAT</span>
   </div>
 </header>
 
-<main class="page-in">
-<div class="col">
+<main>
 
   <!-- ══ HERO ══════════════════════════════════════════════════ -->
-  <section class="hero">
-    <div>
-      <div class="hero__avatar">UU</div>
-        <h1 class="hero__name">Ubon Udonkang</h1>
-        <p class="hero__role">Senior Business Analyst</p>
-        <p class="hero__bio">
-          I'm a Business Analyst at <a href="/about/">MTN</a>, Nigeria. With five years across Nigerian banking, fintech and telecoms; I turn ambiguous briefs into signed-off requirements, and requirements into systems that save hours, not minutes.
-        </p>
+  <section class="hero wrap">
+    <div class="hero__label">
+      <span class="label">Senior Business Analyst</span>
+      <span class="label">Fintech · Banking · Telecoms</span>
+      <span class="label">Lagos, Nigeria</span>
+    </div>
+
+    <h1 class="hero__name"><span>Ubon</span><span>Udonkang</span></h1>
+
+    <div class="hero__row">
+      <p class="hero__lede">
+        I turn ambiguous briefs into <span class="ink">signed-off</span> requirements, and requirements into systems that <strong>save hours, not minutes.</strong>
+      </p>
+      <div class="hero__cta">
         <div class="hero__actions">
-          <a href="/projects/" class="btn btn-dark">View Work</a>
-          <a href="/contact/"  class="btn btn-line">Hire Me</a>
-          <span class="email-hint" data-copy>Press <kbd>C</kbd> to copy email</span>
+          <a href="/ba-training/" class="btn btn-primary">Join the November cohort
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+          </a>
+          <a href="#work" class="btn btn-line">See my work</a>
         </div>
-        <div class="hero__stats rvg">
-          <div class="stat rv"><div class="stat__num"><span data-to="365" data-pre="₦" data-suf="B">₦0B</span></div><div class="stat__lbl">Rights issue<br/>digitised</div></div>
-          <div class="stat rv"><div class="stat__num"><span data-to="89" data-suf="%">0%</span></div><div class="stat__lbl">GL cycle<br/>time saved</div></div>
-          <div class="stat rv"><div class="stat__num"><span data-to="13" data-suf="+">0+</span></div><div class="stat__lbl">African<br/>markets</div></div>
+        <span class="hero__note">BA Bridge Cohort · 12 weeks live · ₦80,000 <s>₦100,000</s> for the first 5</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat rv"><div class="stat__num" data-to="365" data-pre="₦" data-suf="B">₦365B</div><div class="stat__lbl">Rights issue digitised</div></div>
+      <div class="stat rv"><div class="stat__num" data-to="89" data-suf="%">89%</div><div class="stat__lbl">GL reconciliation time saved</div></div>
+      <div class="stat rv"><div class="stat__num" data-to="13" data-suf="+">13+</div><div class="stat__lbl">African markets in one rollout</div></div>
+    </div>
+  </div>
+
+  <!-- ══ CASE FILE (about) ═════════════════════════════════════ -->
+  <section class="sec wrap" id="about">
+    <div class="sec__hd rv">
+      <div>
+        <span class="label">File 01 · Who I am</span>
+        <h2 class="h-sec">The case file <em>on me</em></h2>
+      </div>
+      <a href="/about/" class="sec__link">Full profile →</a>
+    </div>
+
+    <div class="casefile rv" id="casefile">
+      <div class="folder"><span class="folder__tab">Case file · UU-2026</span><span class="folder__edge"></span></div>
+
+      <article class="sheet">
+        <span class="clip" aria-hidden="true"></span>
+        <div class="sheet__head"><span>Profile summary</span><span>Rev. 6.0</span></div>
+        <h3>Five years making the requirements everyone signs.</h3>
+        <p>I'm a Business Analyst at MTN Nigeria. Before that I worked on core banking and fintech delivery at Access Bank and Bluechip Technologies.</p>
+        <p>I sit between the people who know the problem and the people who build the fix, and I write things down until nobody has to guess.</p>
+        <dl>
+          <dt>Now</dt><dd>Business Analyst, MTN Nigeria</dd>
+          <dt>Before</dt><dd>Access Bank · Bluechip Technologies</dd>
+          <dt>Method</dt><dd>4C Framework for stakeholder alignment</dd>
+          <dt>Tools</dt><dd>BPMN · Jira · SQL · Power BI · UiPath</dd>
+        </dl>
+        <div class="sheet__sign">
+          <span class="sheet__sig">Ubon U.<small>Signed off · Lagos</small></span>
+          <a href="/about/" class="sheet__link">Read more →</a>
         </div>
+      </article>
+
+      <div class="collage-row">
+        <!-- ID card -->
+        <div class="doc doc-id" data-drag aria-label="Staff ID card">
+          <div class="doc-id__top"><span>Business Analyst</span><span>ID · 0526</span></div>
+          <div class="doc-id__body">
+            <div class="doc-id__photo">UU</div>
+            <div>
+              <div class="doc-id__field">Name</div><div class="doc-id__val">Ubon Udonkang</div>
+              <div class="doc-id__field">Role</div><div class="doc-id__val">Senior Business Analyst</div>
+              <div class="doc-id__field">Base</div><div class="doc-id__val">Lagos · WAT</div>
+            </div>
+          </div>
+          <div class="doc-id__bar"></div>
+        </div>
+
+        <!-- sticky note -->
+        <div class="doc doc-note" data-drag>
+          <div class="doc-note__big">8h → 45m</div>
+          <div class="doc-note__small">End-of-day GL reconciliation after the RPA rollout at Access Bank.</div>
+        </div>
+
+        <!-- BRD cover -->
+        <div class="doc doc-brd" data-drag aria-label="Approved business requirements document">
+          <div class="doc-brd__ref">BRD-OB-014 · v3.2</div>
+          <div class="doc-brd__title">Open Banking Implementation</div>
+          <div class="doc-brd__sub">Business Requirements Document</div>
+          <div class="doc-brd__lines"><span></span><span></span><span></span><span></span></div>
+          <div class="stamp">APPROVED<small>ALL STAKEHOLDERS</small></div>
+        </div>
+      </div>
+
+      <!-- BPMN fragment -->
+      <div class="doc doc-bpmn" data-drag aria-hidden="true">
+        <div class="doc-bpmn__cap"><span>To-be · Loan approval</span><span>BPMN 2.0</span></div>
+        <svg viewBox="0 0 300 96" fill="none" stroke="#111" stroke-width="1.4">
+          <circle cx="14" cy="48" r="9"/>
+          <path d="M23 48h19"/><path d="M38 44l4 4-4 4"/>
+          <rect x="44" y="30" width="62" height="36" rx="7"/>
+          <text x="75" y="52" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#111" stroke="none">Submit</text>
+          <path d="M106 48h16"/><path d="M118 44l4 4-4 4"/>
+          <path d="M138 32l16 16-16 16-16-16z"/>
+          <path d="M132 42l12 12M144 42l-12 12" stroke-width="1.2"/>
+          <path d="M154 48h14"/><path d="M164 44l4 4-4 4"/>
+          <rect x="170" y="30" width="62" height="36" rx="7" stroke="#1F3BD6"/>
+          <text x="201" y="47" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#1F3BD6" stroke="none">RPA bot</text>
+          <text x="201" y="58" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#1F3BD6" stroke="none">checks</text>
+          <path d="M232 48h22"/><path d="M250 44l4 4-4 4"/>
+          <circle cx="266" cy="48" r="10" stroke-width="3"/>
+          <path d="M138 64v18h63V66" stroke-dasharray="3 3"/>
+          <text x="170" y="92" text-anchor="middle" font-family="Inter,sans-serif" font-size="8" fill="#8A8782" stroke="none">exception → analyst</text>
+        </svg>
+      </div>
+
+      <!-- RTM excerpt -->
+      <div class="doc doc-rtm" data-drag aria-hidden="true">
+        <table>
+          <thead><tr><th>Req</th><th>Source</th><th>Test</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>FR-021</td><td>CBN §4.2</td><td>UAT-07</td><td class="ok">Passed</td></tr>
+            <tr><td>FR-022</td><td>Ops wkshp</td><td>UAT-08</td><td class="ok">Passed</td></tr>
+            <tr><td>FR-023</td><td>Treasury</td><td>UAT-11</td><td class="ok">Passed</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <span class="doc__hint">Drag the papers around</span>
     </div>
   </section>
 
   <!-- ══ SERVICES ══════════════════════════════════════════════ -->
-  <section class="sec">
-    <div class="sec__hd"><span class="sec__title">What I Offer</span><a href="/contact/" class="sec__link">Enquire →</a></div>
-    <div class="svc-list rvg">
-
-      <div class="svc-row rv">
-        <span class="svc-n">01</span>
-        <div class="svc-info">
-          <div class="svc-info__title">Requirements Engineering</div>
-          <div class="svc-info__desc">BRDs, FRS, RTMs, and user stories developers can build from without calling back for clarification.</div>
-        </div>
-        <div class="svc-tags"><span class="tag">BRD</span><span class="tag">FRS</span><span class="tag">RTM</span></div>
+  <section class="sec wrap" id="services">
+    <div class="sec__hd rv">
+      <div>
+        <span class="label">File 02 · What I offer</span>
+        <h2 class="h-sec">Six ways I <em>de-risk</em> delivery</h2>
       </div>
+      <a href="/contact/" class="sec__link">Enquire →</a>
+    </div>
 
-      <div class="svc-row rv">
-        <span class="svc-n">02</span>
-        <div class="svc-info">
-          <div class="svc-info__title">Process Automation Strategy</div>
-          <div class="svc-info__desc">RPA opportunity assessment, bot specification, and implementation coordination from as-is mapping to live deployment on ProcessMaker, UiPath, and Power Platform.</div>
+    <div class="svc">
+      <article class="svc-card" style="--i:0">
+        <div>
+          <span class="label">Requirements</span>
+          <h3 class="svc-card__title">Requirements Engineering</h3>
+          <p class="svc-card__desc">BRDs, FRSs, traceability matrices and user stories that developers can build from without calling back for clarification.</p>
+          <div class="tags"><span class="tag">BRD</span><span class="tag">FRS</span><span class="tag">RTM</span><span class="tag">User stories</span></div>
         </div>
-        <div class="svc-tags"><span class="tag">RPA</span><span class="tag">BPMN</span></div>
-      </div>
+        <span class="svc-card__num">(01)</span>
+      </article>
 
-      <div class="svc-row rv">
-        <span class="svc-n">03</span>
-        <div class="svc-info">
-          <div class="svc-info__title">Digital Transformation</div>
-          <div class="svc-info__desc">End-to-end digitisation of manual operations; from paper-based workflows to integrated digital platforms. Proven across banking, government, and fintech environments.</div>
+      <article class="svc-card" style="--i:1">
+        <div>
+          <span class="label">Automation</span>
+          <h3 class="svc-card__title">Process Automation Strategy</h3>
+          <p class="svc-card__desc">RPA opportunity assessment, bot specification and delivery coordination, from as-is mapping to live deployment on ProcessMaker, UiPath and Power Platform.</p>
+          <div class="tags"><span class="tag">RPA</span><span class="tag">BPMN</span><span class="tag">UiPath</span></div>
         </div>
-        <div class="svc-tags"><span class="tag">Digitisation</span><span class="tag">Change Mgmt</span></div>
-      </div>
+        <span class="svc-card__num">(02)</span>
+      </article>
 
-      <div class="svc-row rv">
-        <span class="svc-n">04</span>
-        <div class="svc-info">
-          <div class="svc-info__title">Open Banking Advisory</div>
-          <div class="svc-info__desc">Nigeria Open Banking implementation aligned to CBN Operational Guidelines; API documentation and regulatory compliance mapping for financial institutions.</div>
+      <article class="svc-card" style="--i:2">
+        <div>
+          <span class="label">Transformation</span>
+          <h3 class="svc-card__title">Digital Transformation</h3>
+          <p class="svc-card__desc">End-to-end digitisation of manual operations, from paper-based workflows to integrated platforms. Proven across banking, government and fintech.</p>
+          <div class="tags"><span class="tag">Digitisation</span><span class="tag">Change management</span></div>
         </div>
-        <div class="svc-tags"><span class="tag">CBN</span><span class="tag">RegTech</span></div>
-      </div>
+        <span class="svc-card__num">(03)</span>
+      </article>
 
-      <div class="svc-row rv">
-        <span class="svc-n">05</span>
-        <div class="svc-info">
-          <div class="svc-info__title">Stakeholder Alignment</div>
-          <div class="svc-info__desc">Facilitated workshops, RACI mapping, and sign-off management using the 4C Framework. No verbal agreements; only documented ones.</div>
+      <article class="svc-card" style="--i:3">
+        <div>
+          <span class="label">Regulation</span>
+          <h3 class="svc-card__title">Open Banking Advisory</h3>
+          <p class="svc-card__desc">Nigeria Open Banking implementation aligned to the CBN Operational Guidelines, with API documentation and compliance mapping for financial institutions.</p>
+          <div class="tags"><span class="tag">CBN</span><span class="tag">APIs</span><span class="tag">RegTech</span></div>
         </div>
-        <div class="svc-tags"><span class="tag">4C</span><span class="tag">RACI</span></div>
-      </div>
+        <span class="svc-card__num">(04)</span>
+      </article>
 
-      <div class="svc-row rv">
-        <span class="svc-n">06</span>
-        <div class="svc-info">
-          <div class="svc-info__title">Data Analysis &amp; Reporting</div>
-          <div class="svc-info__desc">Gap analysis, data warehouse scoping, and BI report consolidation across multi-department environments.</div>
+      <article class="svc-card" style="--i:4">
+        <div>
+          <span class="label">People</span>
+          <h3 class="svc-card__title">Stakeholder Alignment</h3>
+          <p class="svc-card__desc">Facilitated workshops, RACI mapping and sign-off management using the 4C Framework. No verbal agreements, only documented ones.</p>
+          <div class="tags"><span class="tag">4C Framework</span><span class="tag">RACI</span><span class="tag">Workshops</span></div>
         </div>
-        <div class="svc-tags"><span class="tag">SQL</span><span class="tag">Power BI</span></div>
-      </div>
+        <span class="svc-card__num">(05)</span>
+      </article>
 
+      <article class="svc-card" style="--i:5">
+        <div>
+          <span class="label">Data</span>
+          <h3 class="svc-card__title">Data Analysis &amp; Reporting</h3>
+          <p class="svc-card__desc">Gap analysis, data warehouse scoping and BI report consolidation across multi-department environments.</p>
+          <div class="tags"><span class="tag">SQL</span><span class="tag">Power BI</span><span class="tag">Gap analysis</span></div>
+        </div>
+        <span class="svc-card__num">(06)</span>
+      </article>
     </div>
   </section>
 
-  <!-- ══ FEATURED WORK (dark cards) ════════════════════════════ -->
-  <section class="sec">
-    <div class="sec__hd"><span class="sec__title">Selected Work</span><a href="/projects/" class="sec__link">All projects →</a></div>
-    <div class="dk-grid rvg">
-
-      <a href="/project-rpa-treasury/" class="dk-card rv">
-        <div class="dk-card__vis dk-g1"><span class="dk-card__metric">8h → 45m</span></div>
-        <div class="dk-card__body">
-          <div class="dk-card__co">Access Bank PLC</div>
-          <div class="dk-card__title">RPA Automation for Treasury Digitalization</div>
-          <div class="dk-card__desc">Led RPA implementation that reduced the end-of-day GL reconciliation cycle by 89%; eliminating manual keying errors and unlocking faster overnight reporting.</div>
-          <div class="dk-card__tags"><span class="dk-tag">RPA</span><span class="dk-tag">Process Mapping</span><span class="dk-tag">Banking Ops</span></div>
-        </div>
-      </a>
-
-      <a href="/project-rights-issue/" class="dk-card rv">
-        <div class="dk-card__vis dk-g2"><span class="dk-card__metric">₦365B</span></div>
-        <div class="dk-card__body">
-          <div class="dk-card__co">Access Bank PLC</div>
-          <div class="dk-card__title">₦365B Rights Issue Digitisation</div>
-          <div class="dk-card__desc">BA lead for end-to-end digitisation of a ₦365 billion rights issue; mapping paper workflows and coordinating zero-error data validation at capital-markets scale.</div>
-          <div class="dk-card__tags"><span class="dk-tag">Capital Markets</span><span class="dk-tag">FRS</span><span class="dk-tag">Digitisation</span></div>
-        </div>
-      </a>
-
-      <a href="/project-ams/" class="dk-card rv">
-        <div class="dk-card__vis dk-g5"><span class="dk-card__metric">6 Modules</span></div>
-        <div class="dk-card__body">
-          <div class="dk-card__co">Client: Classified</div>
-          <div class="dk-card__title">Accounting Management System</div>
-          <div class="dk-card__desc">Sole BA for a government agency AMS; end-to-end requirements for voucher workflow automation, GL management, budget tracking, and GIFMIS payment integration.</div>
-          <div class="dk-card__tags"><span class="dk-tag">AMS</span><span class="dk-tag">GIFMIS</span><span class="dk-tag">GL Posting</span><span class="dk-tag">Government</span></div>
-        </div>
-      </a>
-
-      <a href="/project-open-banking/" class="dk-card rv">
-        <div class="dk-card__vis dk-g3"><span class="dk-card__metric">CBN-Ready</span></div>
-        <div class="dk-card__body">
-          <div class="dk-card__co">Bluechip Technologies</div>
-          <div class="dk-card__title">Open Banking Implementation</div>
-          <div class="dk-card__desc">Authored BRDs, BPMN flows, and API documentation for Nigeria's Open Banking rollout; aligned to CBN Operational Guidelines for multiple financial institutions.</div>
-          <div class="dk-card__tags"><span class="dk-tag">Open Banking</span><span class="dk-tag">BRD</span><span class="dk-tag">CBN</span></div>
-        </div>
-      </a>
-
-      <a href="/project-loan-approval/" class="dk-card rv">
-        <div class="dk-card__vis dk-g4"><span class="dk-card__metric">13+ Markets</span></div>
-        <div class="dk-card__body">
-          <div class="dk-card__co">Access Bank PLC</div>
-          <div class="dk-card__title">Loan Approval Automation</div>
-          <div class="dk-card__desc">Coordinated cross-border RPA deployment across 13+ African subsidiaries; standardising loan approval workflows while adapting to each market's regulatory requirements.</div>
-          <div class="dk-card__tags"><span class="dk-tag">RPA</span><span class="dk-tag">Cross-border</span><span class="dk-tag">Compliance</span></div>
-        </div>
-      </a>
-
-    </div>
-  </section>
-
-  <!-- ══ TESTIMONIALS (carousel) ═══════════════════════════════ -->
-  <section class="sec">
-    <div class="sec__hd"><span class="sec__title">What Colleagues Say</span></div>
-    <div class="tesi-wrap">
-      <div class="tesi-track">
-        <!-- Original -->
-        <div class="tesi-card">
-          <span class="tesi-card__mark">&ldquo;</span>
-          <p class="tesi-card__text">Ubon's requirements work on the GL automation was exceptional. He asked the right questions, managed a difficult stakeholder group with real patience, and delivered a specification our developers could actually build from. The 45-minute result speaks for itself.</p>
-          <div class="tesi-card__author"><div class="tesi-card__av">CA</div><div><div class="tesi-card__name">Chukwuemeka Adeyemi</div><div class="tesi-card__role">Head of Operations · Access Bank PLC</div></div></div>
-        </div>
-        <div class="tesi-card">
-          <span class="tesi-card__mark">&ldquo;</span>
-          <p class="tesi-card__text">Working with Ubon on the CBN Open Banking BRD was a masterclass in translating regulatory complexity into actionable requirements. His ability to hold three competing stakeholder views and produce a document everyone signed off on is genuinely rare.</p>
-          <div class="tesi-card__author"><div class="tesi-card__av">AO</div><div><div class="tesi-card__name">Adenike Ogunleye</div><div class="tesi-card__role">Project Director · Bluechip Technologies</div></div></div>
-        </div>
-        <div class="tesi-card">
-          <span class="tesi-card__mark">&ldquo;</span>
-          <p class="tesi-card__text">The RTM and FRS Ubon produced for our bid management platform is the most thorough requirements artefact I've seen in 12 years of delivery. Every requirement traceable, every edge case covered. Implementation ran on schedule because of that groundwork.</p>
-          <div class="tesi-card__author"><div class="tesi-card__av">KS</div><div><div class="tesi-card__name">Kamlesh Seetohul</div><div class="tesi-card__role">Technical Director · Bluechip Technologies</div></div></div>
-        </div>
-        <div class="tesi-card">
-          <span class="tesi-card__mark">&ldquo;</span>
-          <p class="tesi-card__text">Ubon captured our requirements accurately and delivered a comprehensive BRD that became our project bible. His stakeholder management skills ensured all parties were aligned throughout the engagement. Highly recommended for complex financial systems work.</p>
-          <div class="tesi-card__author"><div class="tesi-card__av">EO</div><div><div class="tesi-card__name">Emmanuel Obi</div><div class="tesi-card__role">Head of Digital Banking · Fidelity Bank</div></div></div>
-        </div>
-        <!-- Duplicates for seamless loop -->
-        <div class="tesi-card">
-          <span class="tesi-card__mark">&ldquo;</span>
-          <p class="tesi-card__text">Ubon's requirements work on the GL automation was exceptional. He asked the right questions, managed a difficult stakeholder group with real patience, and delivered a specification our developers could actually build from. The 45-minute result speaks for itself.</p>
-          <div class="tesi-card__author"><div class="tesi-card__av">CA</div><div><div class="tesi-card__name">Chukwuemeka Adeyemi</div><div class="tesi-card__role">Head of Operations · Access Bank PLC</div></div></div>
-        </div>
-        <div class="tesi-card">
-          <span class="tesi-card__mark">&ldquo;</span>
-          <p class="tesi-card__text">Working with Ubon on the CBN Open Banking BRD was a masterclass in translating regulatory complexity into actionable requirements. His ability to hold three competing stakeholder views and produce a document everyone signed off on is genuinely rare.</p>
-          <div class="tesi-card__author"><div class="tesi-card__av">AO</div><div><div class="tesi-card__name">Adenike Ogunleye</div><div class="tesi-card__role">Project Director · Bluechip Technologies</div></div></div>
-        </div>
-        <div class="tesi-card">
-          <span class="tesi-card__mark">&ldquo;</span>
-          <p class="tesi-card__text">The RTM and FRS Ubon produced for our bid management platform is the most thorough requirements artefact I've seen in 12 years of delivery. Every requirement traceable, every edge case covered. Implementation ran on schedule because of that groundwork.</p>
-          <div class="tesi-card__author"><div class="tesi-card__av">KS</div><div><div class="tesi-card__name">Kamlesh Seetohul</div><div class="tesi-card__role">Technical Director · Bluechip Technologies</div></div></div>
-        </div>
-        <div class="tesi-card">
-          <span class="tesi-card__mark">&ldquo;</span>
-          <p class="tesi-card__text">Ubon captured our requirements accurately and delivered a comprehensive BRD that became our project bible. His stakeholder management skills ensured all parties were aligned throughout the engagement. Highly recommended for complex financial systems work.</p>
-          <div class="tesi-card__author"><div class="tesi-card__av">EO</div><div><div class="tesi-card__name">Emmanuel Obi</div><div class="tesi-card__role">Head of Digital Banking · Fidelity Bank</div></div></div>
-        </div>
+  <!-- ══ WORK ══════════════════════════════════════════════════ -->
+  <section class="sec wrap" id="work">
+    <div class="sec__hd rv">
+      <div>
+        <span class="label">File 03 · Selected work</span>
+        <h2 class="h-sec">Results, <em>then</em> the story</h2>
       </div>
+      <a href="/projects/" class="sec__link">All projects →</a>
     </div>
-  </section>
 
-  <!-- ══ RESOURCES ══════════════════════════════════════════════ -->
-  <section class="sec">
-    <div class="sec__hd"><span class="sec__title">Resources &amp; Store</span><a href="/resources/" class="sec__link">See all →</a></div>
-    <div class="res-list rvg">
-      <a href="/ba-training/" class="res-row rv" style="display:flex;">
-        <div class="res-left"><div class="res-ico">🎓</div><div><div class="res-title">BA Bridge Cohort</div><div class="res-desc">12-week live cohort into IT business analysis · Enrolling for November 2026</div></div></div>
-        <div class="res-right"><span class="res-badge badge-paid">Cohort</span><span class="res-price">₦80,000</span><span class="res-arr">↗</span></div>
+    <div class="work">
+      <a href="/project-rpa-treasury/" class="work-card rv">
+        <div class="work-card__top"><span>Access Bank PLC</span><span>RPA · Treasury</span></div>
+        <div class="work-card__metric">8h → 45m</div>
+        <div>
+          <h3 class="work-card__title">RPA automation for treasury digitalisation</h3>
+          <p class="work-card__desc">Cut the end-of-day GL reconciliation cycle by 89%, removing manual keying errors and unlocking faster overnight reporting.</p>
+          <div class="tags"><span class="tag">RPA</span><span class="tag">Process mapping</span></div>
+        </div>
+        <span class="work-card__arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </a>
-      <a href="/contact/" class="res-row rv" style="display:flex;">
-        <div class="res-left"><div class="res-ico">⚙️</div><div><div class="res-title">BA Workbench</div><div class="res-desc">Five-module HTML toolkit for practising BAs</div></div></div>
-        <div class="res-right"><span class="res-badge badge-tool">Tool</span><span class="res-price">Free</span><span class="res-arr">↗</span></div>
+
+      <a href="/project-rights-issue/" class="work-card rv">
+        <div class="work-card__top"><span>Access Bank PLC</span><span>Capital markets</span></div>
+        <div class="work-card__metric">₦365B</div>
+        <div>
+          <h3 class="work-card__title">Rights issue digitisation</h3>
+          <p class="work-card__desc">BA lead for digitising a ₦365 billion rights issue: mapping paper workflows and coordinating zero-error data validation at capital-markets scale.</p>
+          <div class="tags"><span class="tag">FRS</span><span class="tag">Digitisation</span></div>
+        </div>
+        <span class="work-card__arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </a>
-      <a href="https://selar.co" target="_blank" rel="noopener" class="res-row rv" style="display:flex;">
-        <div class="res-left"><div class="res-ico">📘</div><div><div class="res-title">Apply Like You Mean It</div><div class="res-desc">The Audacity Advantage for Job Seekers · Ebook</div></div></div>
-        <div class="res-right"><span class="res-badge badge-paid">Paid</span><span class="res-price">₦5,000</span><span class="res-arr">↗</span></div>
+
+      <a href="/project-open-banking/" class="work-card rv">
+        <div class="work-card__top"><span>Bluechip Tech</span><span>Regulatory</span></div>
+        <div class="work-card__metric">CBN-ready</div>
+        <div>
+          <h3 class="work-card__title">Open Banking implementation</h3>
+          <p class="work-card__desc">BRDs, BPMN flows and API documentation for Nigeria's Open Banking rollout across multiple institutions.</p>
+          <div class="tags"><span class="tag">BRD</span><span class="tag">CBN</span></div>
+        </div>
+        <span class="work-card__arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </a>
-      <a href="/contact/" class="res-row rv" style="display:flex;">
-        <div class="res-left"><div class="res-ico">📋</div><div><div class="res-title">4C Framework Starter Kit</div><div class="res-desc">Stakeholder alignment templates and workshop guides</div></div></div>
-        <div class="res-right"><span class="res-badge badge-paid">Paid</span><span class="res-price">₦8,000</span><span class="res-arr">↗</span></div>
+
+      <a href="/project-loan-approval/" class="work-card rv">
+        <div class="work-card__top"><span>Access Bank PLC</span><span>Cross-border</span></div>
+        <div class="work-card__metric">13+ markets</div>
+        <div>
+          <h3 class="work-card__title">Loan approval automation</h3>
+          <p class="work-card__desc">Cross-border RPA rollout across African subsidiaries, adapted to each market's regulation.</p>
+          <div class="tags"><span class="tag">RPA</span><span class="tag">Compliance</span></div>
+        </div>
+        <span class="work-card__arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </a>
+
+      <a href="/project-ams/" class="work-card rv">
+        <div class="work-card__top"><span>Government agency</span><span>Public finance</span></div>
+        <div class="work-card__metric">6 modules</div>
+        <div>
+          <h3 class="work-card__title">Accounting management system</h3>
+          <p class="work-card__desc">Sole BA: voucher workflows, GL management, budget tracking and GIFMIS payment integration.</p>
+          <div class="tags"><span class="tag">GIFMIS</span><span class="tag">GL</span></div>
+        </div>
+        <span class="work-card__arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </a>
     </div>
   </section>
 
-  <footer class="foot rv">
-    <span class="foot__copy">&copy; 2026 Ubon Udonkang</span>
-    <div class="foot__links">
-      <a href="https://linkedin.com/in/ubonudonkang" target="_blank" class="foot__link">LinkedIn</a>
-      <a href="https://github.com/ubonudonkang"      target="_blank" class="foot__link">GitHub</a>
-      <a href="mailto:ubonudonkang@gmail.com"                class="foot__link">Email</a>
+  <!-- ══ COHORT ════════════════════════════════════════════════ -->
+  <section class="sec wrap" id="cohort">
+    <div class="cohort rv">
+      <div>
+        <span class="cohort__eyebrow label"><span class="cohort__pulse"></span>Enrolling · November 2026</span>
+        <h2>Move into IT business analysis with a <em>portfolio,</em> not just a certificate.</h2>
+        <p>The BA Bridge Cohort is 12 weeks of live sessions for career changers, taught by a practising BA and built around one real project you take into interviews.</p>
+        <div class="cohort__price"><strong>₦80,000</strong><s>₦100,000</s><span>First 5 students only</span></div>
+        <div class="hero__actions">
+          <a href="/ba-training/" class="btn btn-primary">Enrol for November
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+          </a>
+          <a href="/ba-training/#weeks" class="btn btn-line">See the 12 weeks</a>
+        </div>
+      </div>
+
+      <div class="story" aria-label="The cohort, written as a user story">
+        <div class="story__head"><span>BA-001 · User story</span><span>Priority: Must</span></div>
+        <p class="story__line"><b>As a</b>career changer with transferable skills</p>
+        <p class="story__line"><b>I want</b>a structured, hands-on path into IT business analysis</p>
+        <p class="story__line"><b>So that</b>I can walk into interviews with real work to show</p>
+        <ul class="story__ac">
+          <li>A BRD, BPMN maps and a user story backlog</li>
+          <li>A UAT plan and traceability matrix</li>
+          <li>A rewritten CV and LinkedIn profile</li>
+        </ul>
+        <div class="story__foot"><span>Estimate: 12 weeks</span><span>2 live sessions / week</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ TESTIMONIALS ══════════════════════════════════════════ -->
+  <section class="sec wrap" id="words">
+    <div class="sec__hd rv">
+      <div>
+        <span class="label">File 04 · Sign-off notes</span>
+        <h2 class="h-sec">What colleagues <em>wrote</em></h2>
+      </div>
+    </div>
+
+    <div class="quote rv" data-quotes>
+      <div class="quote__stage" aria-live="polite">
+        <figure class="quote__item is-on" style="margin:0">
+          <blockquote class="quote__text" style="margin:0 0 32px">Ubon's requirements work on the GL automation was exceptional. He asked the right questions, managed a difficult stakeholder group with real patience, and delivered a specification our developers could actually build from.</blockquote>
+          <figcaption class="quote__who"><span class="quote__av">CA</span><span><span class="quote__name">Chukwuemeka Adeyemi</span><br/><span class="quote__role">Head of Operations · Access Bank PLC</span></span></figcaption>
+        </figure>
+        <figure class="quote__item" style="margin:0">
+          <blockquote class="quote__text" style="margin:0 0 32px">Working with Ubon on the CBN Open Banking BRD was a masterclass in translating regulatory complexity into actionable requirements. Producing a document everyone signed off on is genuinely rare.</blockquote>
+          <figcaption class="quote__who"><span class="quote__av">AO</span><span><span class="quote__name">Adenike Ogunleye</span><br/><span class="quote__role">Project Director · Bluechip Technologies</span></span></figcaption>
+        </figure>
+        <figure class="quote__item" style="margin:0">
+          <blockquote class="quote__text" style="margin:0 0 32px">The RTM and FRS Ubon produced for our bid management platform is the most thorough requirements artefact I've seen in 12 years of delivery. Every requirement traceable, every edge case covered.</blockquote>
+          <figcaption class="quote__who"><span class="quote__av">KS</span><span><span class="quote__name">Kamlesh Seetohul</span><br/><span class="quote__role">Technical Director · Bluechip Technologies</span></span></figcaption>
+        </figure>
+        <figure class="quote__item" style="margin:0">
+          <blockquote class="quote__text" style="margin:0 0 32px">Ubon delivered a comprehensive BRD that became our project bible. His stakeholder management kept every party aligned throughout the engagement.</blockquote>
+          <figcaption class="quote__who"><span class="quote__av">EO</span><span><span class="quote__name">Emmanuel Obi</span><br/><span class="quote__role">Head of Digital Banking · Fidelity Bank</span></span></figcaption>
+        </figure>
+      </div>
+      <div class="quote__nav">
+        <span class="quote__count" data-count>01 / 04</span>
+        <button class="icon-btn" data-prev aria-label="Previous quote"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8H3M7 4 3 8l4 4"/></svg></button>
+        <button class="icon-btn" data-next aria-label="Next quote"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ RESOURCES ═════════════════════════════════════════════ -->
+  <section class="sec wrap" id="resources">
+    <div class="sec__hd rv">
+      <div>
+        <span class="label">File 05 · Resources</span>
+        <h2 class="h-sec">Tools for <em>working</em> BAs</h2>
+      </div>
+      <a href="/resources/" class="sec__link">See all →</a>
+    </div>
+    <div class="res rv">
+      <a href="/ba-training/" class="res-row">
+        <span class="res-row__n">R-01</span>
+        <span><span class="res-row__title">BA Bridge Cohort</span><span class="res-row__desc" style="display:block">12-week live cohort into IT business analysis</span></span>
+        <span class="res-row__kind">Cohort</span>
+        <span class="res-row__price">₦80,000</span>
+      </a>
+      <a href="/resources/" class="res-row">
+        <span class="res-row__n">R-02</span>
+        <span><span class="res-row__title">4C Framework Starter Kit</span><span class="res-row__desc" style="display:block">Stakeholder alignment templates and workshop guides</span></span>
+        <span class="res-row__kind">Templates</span>
+        <span class="res-row__price">₦8,000</span>
+      </a>
+      <a href="/resources/" class="res-row">
+        <span class="res-row__n">R-03</span>
+        <span><span class="res-row__title">Apply Like You Mean It</span><span class="res-row__desc" style="display:block">The Audacity Advantage for job seekers</span></span>
+        <span class="res-row__kind">Ebook</span>
+        <span class="res-row__price">₦5,000</span>
+      </a>
+      <a href="/contact/" class="res-row">
+        <span class="res-row__n">R-04</span>
+        <span><span class="res-row__title">BA Workbench</span><span class="res-row__desc" style="display:block">Five-module HTML toolkit for practising BAs</span></span>
+        <span class="res-row__kind">Tool</span>
+        <span class="res-row__price">Free</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ══ CLOSING ═══════════════════════════════════════════════ -->
+  <section class="closing wrap" id="contact">
+    <span class="label">File 06 · Next step</span>
+    <h2 class="closing__big">Let's <em>talk.</em></h2>
+    <div class="closing__row">
+      <a href="/contact/" class="btn btn-dark">Start a conversation</a>
+      <button class="btn btn-line" data-copy>ubonudonkang@gmail.com</button>
+      <span class="kbd-hint">or press <kbd>C</kbd> to copy</span>
+    </div>
+  </section>
+
+  <footer class="wrap">
+    <div class="foot">
+      <span>&copy; 2026 Ubon Udonkang · Lagos</span>
+      <div class="foot__links">
+        <a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://github.com/ubonudonkang" target="_blank" rel="noopener">GitHub</a>
+        <a href="mailto:ubonudonkang@gmail.com">Email</a>
+      </div>
     </div>
   </footer>
 
-</div>
 </main>
 
-<nav class="dock">
+<nav class="dock" aria-label="Site">
   <a href="/" class="dock-item" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg><span class="dock-tip">Home</span></a>
   <a href="/about/" class="dock-item" aria-label="About"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg><span class="dock-tip">About</span></a>
   <a href="/projects/" class="dock-item" aria-label="Work"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg><span class="dock-tip">Work</span></a>
+  <a href="/ba-training/" class="dock-item" aria-label="BA Training"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5 12 5l10 4.5-10 4.5Z"/><path d="M6 11.3V16c0 1.4 2.7 3 6 3s6-1.6 6-3v-4.7"/><path d="M22 9.5V15"/></svg><span class="dock-tip">BA Training</span></a>
   <a href="/resources/" class="dock-item" aria-label="Resources"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="dock-tip">Resources</span></a>
+  <span class="dock-sep" aria-hidden="true"></span>
   <a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener" class="dock-item" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M7 10v8M7 7v.01M11 18v-5a2 2 0 0 1 4 0v5M11 13h4"/></svg><span class="dock-tip">LinkedIn</span></a>
   <a href="/contact/" class="dock-item" aria-label="Contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><span class="dock-tip">Contact</span></a>
 </nav>
 
-<div class="toast" id="toast"></div>
-<script src="/js/main.js"></script>
+<div class="toast" id="toast" role="status"></div>
+<script src="/js/site.js"></script>
 </body>
 </html>
