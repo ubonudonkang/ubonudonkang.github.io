@@ -98,8 +98,12 @@ document.querySelectorAll('[data-copy-email]').forEach(el => el.addEventListener
     coolTimer = setTimeout(() => dockEl.classList.remove('is-warm'), 300);
   });
 
-  // magnification only for a real mouse, and never with reduced motion
-  const MAX = 1.4, SPREAD = 110, LIFT = 10;
+  // Magnification, Mac style: tiles grow toward the pointer, neighbours slide
+  // apart to make room, and the glass background widens to match. Only for a
+  // real mouse, and never with reduced motion.
+  const MAX = 1.4, SPREAD = 140, LIFT = 12;
+  const bg = dockEl.querySelector('.dock-bg');
+  const slots = [...dockEl.children].filter(el => el.matches('.dock-item, .dock-sep'));
   const springs = items.map(() => makeSpring(1, { damping: 1, response: 0.22 }));
   let raf = 0, last = 0;
 
@@ -107,11 +111,25 @@ document.querySelectorAll('[data-copy-email]').forEach(el => el.addEventListener
     const dt = Math.min((now - last) / 1000, 1 / 20);
     last = now;
     let live = false;
-    items.forEach((item, i) => {
-      if (stepSpring(springs[i], dt)) live = true;
-      const s = springs[i].value;
-      item.style.transform = s === 1 ? '' : `translateY(${((1 - s) * LIFT / (MAX - 1)).toFixed(2)}px) scale(${s.toFixed(4)})`;
+    items.forEach((_, i) => { if (stepSpring(springs[i], dt)) live = true; });
+
+    // extra width each slot gains, then spread it evenly around the dock's centre
+    const extra = slots.map(el => {
+      const i = items.indexOf(el);
+      return i < 0 ? 0 : (springs[i].value - 1) * el.offsetWidth;
     });
+    const total = extra.reduce((a, b) => a + b, 0);
+    let run = -total / 2;
+    slots.forEach((el, k) => {
+      const shift = run + extra[k] / 2;
+      run += extra[k];
+      const i = items.indexOf(el);
+      const s = i < 0 ? 1 : springs[i].value;
+      el.style.transform = Math.abs(shift) < 0.01 && s === 1 ? '' :
+        `translate(${shift.toFixed(2)}px, ${((1 - s) * LIFT / (MAX - 1)).toFixed(2)}px) scale(${s.toFixed(4)})`;
+    });
+    if (bg) bg.style.inset = total < 0.01 ? '' : `0 ${(-total / 2).toFixed(2)}px`;
+
     raf = live ? requestAnimationFrame(frame) : 0;
   }
   function kick() {
@@ -120,10 +138,10 @@ document.querySelectorAll('[data-copy-email]').forEach(el => el.addEventListener
 
   dockEl.addEventListener('pointermove', e => {
     if (e.pointerType !== 'mouse' || !finePointer.matches || reduceMotion.matches) return;
+    // measure resting positions (offsetLeft ignores transforms), so tiles never chase the pointer
+    const left = dockEl.getBoundingClientRect().left + dockEl.clientLeft;
     items.forEach((item, i) => {
-      const r = item.getBoundingClientRect();
-      // use the unscaled centre so items don't chase themselves
-      const cx = r.left + r.width / 2;
+      const cx = left + item.offsetLeft + item.offsetWidth / 2;
       const t = Math.max(0, 1 - Math.abs(e.clientX - cx) / SPREAD);
       springs[i].target = 1 + (MAX - 1) * t * t * (3 - 2 * t);
     });
@@ -340,4 +358,22 @@ document.querySelectorAll('[data-copy-email]').forEach(el => el.addEventListener
       open(row.dataset.pdf, row.dataset.title, btn);
     });
   });
+})();
+
+/* ── Contact form: prefill a document request (?request=…&from=…) ── */
+(function prefillRequest() {
+  const form = document.getElementById('contact-form');
+  if (!form) return;
+  const params = new URLSearchParams(location.search);
+  const doc = params.get('request');
+  if (!doc) return;
+  const from = params.get('from');
+  const type = form.querySelector('#ty');
+  const msg = form.querySelector('#msg');
+  if (type) type.value = 'resource';
+  if (msg && !msg.value) {
+    msg.value = `Hi Ubon, I'd like to request the "${doc}" document${from ? ` from the ${from}` : ''}. `;
+  }
+  (form.closest('.form-card') || form).scrollIntoView({ block: 'start' });
+  form.querySelector('#fn')?.focus({ preventScroll: true });
 })();

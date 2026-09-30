@@ -1,57 +1,52 @@
-# Ubon Udonkang · Portfolio v5
+# Ubon Udonkang · Portfolio v6
 
-**Deploy URL:** https://ubonudonkang.github.io
+**Live site:** https://ubonudonkang.github.io
 
-## Deployment
+A static site served by GitHub Pages from the root of `main`. There is no build step: edit the HTML, CSS and JS directly.
+
+## Publishing changes
+
+Work on a branch, open a pull request, and merge it. GitHub Pages redeploys `main` automatically, usually within a minute or two.
+
 ```bash
-cd portfolio-v5
-git init && git add .
-git commit -m "v5 launch"
-git branch -M main
-git remote add origin https://github.com/ubonudonkang/ubonudonkang.github.io.git
-git push -f origin main
-```
-GitHub → Settings → Pages → Source: main / root → Save.
-
-## Activate Contact Form
-Replace `action="https://formspree.io/f/your-form-id"` in `contact.html` with your real Formspree endpoint.
-
-## Add Profile Photo
-In `index.html`, replace:
-```html
-<div class="hero__avatar">UU</div>
-```
-with:
-```html
-<div class="hero__avatar"><img src="photo.jpg" alt="Ubon Udonkang"/></div>
+git checkout -b my-change
+git add .
+git commit -m "Describe the change"
+git push -u origin my-change
 ```
 
-## File Structure
+Never force-push to `main`: it rewrites history and can wipe out other changes.
+
+## File structure
+
 ```
-index.html              Home + hero (Africa SVG, dark project cards, testimonial carousel)
-projects.html           All 6 project cards (dark grid)
-about.html              Bio, 4C Framework, skills, timeline, certifications
-contact.html            Form + contact info (Formspree)
-resources.html          Paid and free resources
-project-rights-issue.html
-project-ams.html
-project-rpa-treasury.html
-project-open-banking.html
-project-bid-management.html
-project-loan-approval.html
-css/style.css           Full design system
-js/main.js              Spring dock, WAT clock, carousel, email copy
+index.html                     Home: hero with portrait, case file, services, work, cohort, testimonials, resources
+about/index.html               Bio, 4C Framework, skills, experience, certifications, full LinkedIn recommendations
+projects/index.html            Work: the five case studies
+project-rights-issue/          Case study: ₦351B rights issue digitisation (Access Bank, 2024)
+project-treasury-management/   Case study: treasury management system (Access Bank)
+project-ams/                   Case study: accounting management system (government client)
+project-rpa-treasury/          Case study: RPA for treasury digitalisation (Access Bank)
+project-loan-approval/         Case study: loan approval automation across African subsidiaries (Access Bank)
+resources/index.html           Paid and free resources
+contact/index.html             Contact details and enquiry form (Formspree)
+ba-training/index.html         BA Bridge Cohort: page-specific styles, enrolment form and payment modal
+css/site.css                   Design system shared by every page
+js/site.js                     Dock, WAT clock, email copy (press C), scroll reveals, testimonials, draggable case file, PDF viewer
+img/ubon-udonkang.jpg          Portrait used on the home and About pages
+docs/ams/                      AMS case study documents opened in the PDF viewer
 ```
 
-## Key v5 Changes
-1. Dark project card grid (2-col, matching v2 screenshot)
-2. Testimonial carousel (auto-scroll right to left, infinite loop, pause on hover)
-3. Clock shows WAT (UTC+1)
-4. Avatar square frame above name; name on single line
-5. Removed "Est. 2017·Lagos" meta line
-6. Dock: smaller (42px), spring-physics per-item animation
-7. Email: ubonudonkang@gmail.com
-8. Digital Transformation added as service
-9. Responsive: tablet (1024px) and mobile (768px, 480px) breakpoints
-10. Africa network SVG illustration in hero (Lagos as hub, 7 connected markets)
-11. Six project detail pages with full case study content
+## Common edits
+
+- **Contact form:** posts to Formspree form `xdaqwayj` (see `contact/index.html`).
+- **Portrait:** replace `img/ubon-udonkang.jpg` with another photo of the same name. A 4:5 portrait works best.
+- **AMS documents:** add a PDF to `docs/ams/`, then give its row in `project-ams/index.html` a `data-pdf` path and a `View` button, like the Data Dictionary row.
+- **Testimonials:** short quotes live in the home page carousel. The full recommendations are on the About page.
+
+## Design notes
+
+- White editorial layout: Instrument Serif headings, Inter body text, JetBrains Mono labels.
+- One accent colour, signature blue `#1F3BD6`. Stamp red is used only on the "Approved" and "Delivered" stamps.
+- The dock is the main navigation on every page. Its magnification only runs with a mouse.
+- Respects reduced motion, reduced transparency and higher-contrast settings.
