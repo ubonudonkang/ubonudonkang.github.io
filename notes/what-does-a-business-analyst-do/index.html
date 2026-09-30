@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>What Does a Business Analyst Do? A Week on a Banking Project</title>
+  <meta name="description" content="What an IT business analyst really does day to day: workshops, process maps, requirements, developer questions, UAT and sign-off on a banking project."/>
+  <meta name="theme-color" content="#FFFFFF"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap"/>
+  <link rel="stylesheet" href="/css/site.css?v=4a3558e7"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23111'/><text x='16' y='22.5' text-anchor='middle' font-family='Georgia,serif' font-size='16' fill='white'>U</text></svg>"/>
+  <script>document.documentElement.classList.add('js')</script>
+  <link rel="alternate" type="application/rss+xml" title="Notes · Ubon Udonkang" href="/notes/feed.xml"/>
+  <!--seo-->
+  <link rel="canonical" href="https://ubonudonkang.github.io/notes/what-does-a-business-analyst-do/"/>
+  <meta property="og:type" content="article"/>
+  <meta property="og:site_name" content="Ubon Udonkang"/>
+  <meta property="og:title" content="What Does a Business Analyst Do? A Week on a Banking Project"/>
+  <meta property="og:description" content="What an IT business analyst really does day to day: workshops, process maps, requirements, developer questions, UAT and sign-off on a banking project."/>
+  <meta property="og:image" content="https://ubonudonkang.github.io/img/og-card.png"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:image:alt" content="Ubon Udonkang, Senior Business Analyst, Lagos"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="What Does a Business Analyst Do? A Week on a Banking Project"/>
+  <meta name="twitter:description" content="What an IT business analyst really does day to day: workshops, process maps, requirements, developer questions, UAT and sign-off on a banking project."/>
+  <meta name="twitter:image" content="https://ubonudonkang.github.io/img/og-card.png"/>
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png"/>
+  <meta property="og:url" content="https://ubonudonkang.github.io/notes/what-does-a-business-analyst-do/"/>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "What Does a Business Analyst Actually Do? A Week on a Banking Project", "description": "What an IT business analyst really does day to day: workshops, process maps, requirements, developer questions, UAT and sign-off on a banking project.", "url": "https://ubonudonkang.github.io/notes/what-does-a-business-analyst-do/", "mainEntityOfPage": "https://ubonudonkang.github.io/notes/what-does-a-business-analyst-do/", "image": "https://ubonudonkang.github.io/img/og-card.png", "datePublished": "2026-09-30", "dateModified": "2026-09-30", "articleSection": "Career", "inLanguage": "en", "wordCount": 718, "author": {"@type": "Person", "@id": "https://ubonudonkang.github.io/#person", "name": "Ubon Udonkang", "url": "https://ubonudonkang.github.io/about/"}, "publisher": {"@id": "https://ubonudonkang.github.io/#person"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://ubonudonkang.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Notes", "item": "https://ubonudonkang.github.io/notes/"}, {"@type": "ListItem", "position": 3, "name": "What Does a Business Analyst Actually Do? A Week on a Banking Project", "item": "https://ubonudonkang.github.io/notes/what-does-a-business-analyst-do/"}]}]}</script>
+  <!--/seo-->
+</head>
+<body>
+
+<header class="topbar" id="topbar">
+  <a class="topbar__name" href="/">Ubon Udonkang</a>
+  <div class="topbar__meta">
+    <span class="avail"><span class="avail__dot"></span>Available</span>
+    <span class="topbar__clock" data-clock>00:00 WAT</span>
+  </div>
+</header>
+
+<main>
+
+  <article>
+    <section class="phero wrap">
+      <a href="/notes/" class="phero__back"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8H3M7 4 3 8l4 4"/></svg>Notes</a>
+      <div class="phero__label"><span class="label">Career</span><span class="label">4 min read</span></div>
+      <h1 class="phero__title phero__title--article">What Does a Business Analyst Actually Do? A Week on a Banking Project</h1>
+      <p class="phero__sub">Job descriptions make business analysis sound like "gathering requirements". The real work is more varied, and more human, than that. Here's what a week looks like on a banking automation project, drawn from the kind of work I did on RPA and treasury projects at Access Bank.</p>
+      <div class="byline">
+        <img src="/img/ubon-udonkang.jpg" alt="" width="862" height="1080" loading="lazy" decoding="async"/>
+        <div>
+          <a href="/about/" class="byline__name">Ubon Udonkang</a>
+          <span class="byline__meta">Senior Business Analyst · <time datetime="2026-09-30">30 September 2026</time></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap sec" style="padding-top:clamp(24px,4vw,48px)">
+      <div class="cs">
+        <nav class="cs-toc" aria-label="On this page">
+          <span class="label">Contents</span>
+          <ol>
+          <li><a href="#the-short-answer"><span>01</span>The short answer</a></li>
+          <li><a href="#monday-understand-the-problem"><span>02</span>Monday: understand the problem</a></li>
+          <li><a href="#tuesday-map-the-process"><span>03</span>Tuesday: map the process</a></li>
+          <li><a href="#wednesday-write-the-requirements"><span>04</span>Wednesday: write the requirements</a></li>
+          <li><a href="#thursday-answer-the-developers"><span>05</span>Thursday: answer the developers</a></li>
+          <li><a href="#friday-test-and-sign-off"><span>06</span>Friday: test and sign off</a></li>
+          <li><a href="#what-the-job-is-not"><span>07</span>What the job is not</a></li>
+          <li><a href="#the-skills-that-matter-most"><span>08</span>The skills that matter most</a></li>
+          <li><a href="#questions"><span>09</span>Common questions</a></li>
+          </ol>
+        </nav>
+        <div>
+        <section class="cs-sec rv" id="the-short-answer">
+          <h2><span>01</span>The short answer</h2>
+          <div class="prose article-prose">
+            <p>A business analyst makes sure the right thing gets built. That means understanding a business problem properly, agreeing what the solution must do with everyone who has a stake in it, writing that down so developers can build from it, and confirming at the end that what was delivered actually works for the people who use it.</p>
+<p>This week is a composite. It isn't one specific week, but every activity in it is the kind of work that fills a BA's calendar on a real automation project in a bank.</p>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="monday-understand-the-problem">
+          <h2><span>02</span>Monday: understand the problem</h2>
+          <div class="prose article-prose">
+            <p>The week starts with a discovery workshop with the finance operations team whose reconciliation process is being automated. The goal isn't to design anything yet. It's to understand how the work happens today and where it hurts.</p>
+<ul>
+  <li>Walk through the process step by step with the people who do it every day.</li>
+  <li>Ask what happens when things go wrong. That's where the real requirements hide.</li>
+  <li>Agree, in writing, what problem the project is solving and how success will be measured.</li>
+</ul>
+<p>That last point is the first step of the <a href="/resources/4c-framework/">4C Framework</a>: Clarity. If the room doesn't agree on the problem, nothing downstream will hold.</p>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="tuesday-map-the-process">
+          <h2><span>03</span>Tuesday: map the process</h2>
+          <div class="prose article-prose">
+            <p>Tuesday is spent turning workshop notes into an as-is process map in BPMN. Every step, decision point, hand-off and system gets drawn, with the pain points marked: the step that takes two hours, the spreadsheet that gets re-keyed, the approval that sits in someone's inbox.</p>
+<p>The map then goes back to the operations team to check. It's almost never right the first time, and that's the point: a wrong map found on Tuesday costs an hour; a wrong assumption found in testing costs weeks.</p>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="wednesday-write-the-requirements">
+          <h2><span>04</span>Wednesday: write the requirements</h2>
+          <div class="prose article-prose">
+            <p>With the process agreed, the BA writes the requirements. For an automation project that means a bot specification for each process:</p>
+<ul>
+  <li><strong>Trigger:</strong> what starts the bot, and when.</li>
+  <li><strong>Inputs:</strong> which files, systems and fields it needs.</li>
+  <li><strong>Processing rules:</strong> each step the bot performs, in order.</li>
+  <li><strong>Exceptions:</strong> what the bot does when something doesn't match, and who it escalates to.</li>
+  <li><strong>Outputs:</strong> what it produces, in what format, and who receives it.</li>
+</ul>
+<p>On a non-automation project, this would be a business requirements document and user stories instead. The <a href="/notes/how-to-write-a-brd/">BRD guide</a> covers how to write one.</p>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="thursday-answer-the-developers">
+          <h2><span>05</span>Thursday: answer the developers</h2>
+          <div class="prose article-prose">
+            <p>Thursday belongs to the delivery team. Developers walk through the specification and ask the questions that only come up when you try to build something: What if the file arrives late? What if two records match? Which system is the source of truth?</p>
+<p>Every answer gets written back into the specification, not left in a chat thread. A developer I worked with at Access Bank described how my early user-flow wireframes meant they could "identify and resolve a critical navigation logic gap before any code was written". That's the job: catching problems while they're still cheap.</p>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="friday-test-and-sign-off">
+          <h2><span>06</span>Friday: test and sign off</h2>
+          <div class="prose article-prose">
+            <p>Friday is user acceptance testing. The BA plans the test cases from the requirements, runs the sessions with Finance, IT and Audit, logs defects, and agrees with stakeholders which ones must be fixed before go-live.</p>
+<p>When the tests pass, the BA collects formal sign-off: named people, dated approvals, no verbal agreements. After go-live there's usually a hypercare period, when the BA monitors how the solution performs in real use. On the treasury automation project that period was 30 days, and the result was end-of-day reconciliation cut <a href="/project-rpa-treasury/">from eight hours to 45 minutes</a>.</p>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="what-the-job-is-not">
+          <h2><span>07</span>What the job is not</h2>
+          <div class="prose article-prose">
+            <ul>
+  <li><strong>It's not taking orders.</strong> A BA questions requests until the underlying need is clear.</li>
+  <li><strong>It's not writing documents for their own sake.</strong> Documents exist to create shared understanding and a record of decisions.</li>
+  <li><strong>It's not coding.</strong> You need to understand how systems work, but you don't build them.</li>
+</ul>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="the-skills-that-matter-most">
+          <h2><span>08</span>The skills that matter most</h2>
+          <div class="prose article-prose">
+            <ol>
+  <li><strong>Listening and questioning</strong>, to find the real problem behind the request.</li>
+  <li><strong>Clear writing</strong>, so requirements can't be misread.</li>
+  <li><strong>Process thinking</strong>, to see how work flows between people and systems.</li>
+  <li><strong>Stakeholder management</strong>, to turn disagreement into documented decisions.</li>
+  <li><strong>Enough technical understanding</strong> to talk to developers about data, integrations and testing.</li>
+</ol>
+<p>If that sounds like work you'd enjoy, the <a href="/notes/how-to-become-a-business-analyst-in-nigeria/">guide to becoming a business analyst in Nigeria</a> sets out how to get there.</p>
+          </div>
+        </section>
+          <section class="cs-sec rv" id="questions">
+            <h2><span>09</span>Common questions</h2>
+            <div class="qa">
+            <details>
+              <summary>What does a business analyst do day to day?</summary>
+              <p>Runs workshops with business teams, maps processes, writes requirements and user stories, answers developers' questions, plans and runs user acceptance testing, and gets formal sign-off.</p>
+            </details>
+            <details>
+              <summary>Is a business analyst a technical role?</summary>
+              <p>It sits between business and technical teams. You need to understand systems, data and integrations well enough to discuss them, but you don't write code.</p>
+            </details>
+            <details>
+              <summary>What is the difference between a business analyst and a project manager?</summary>
+              <p>A project manager owns the plan, budget and timeline. A business analyst owns understanding what the solution must do and making sure it meets the business need.</p>
+            </details>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </article>
+
+  <section class="wrap">
+    <div class="band rv">
+      <div>
+        <span class="label">Now enrolling</span>
+        <h2>The BA Bridge Cohort starts in <em>November.</em></h2>
+      </div>
+      <div class="hero__actions">
+        <a href="/ba-training/" class="btn btn-primary">See the cohort <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+        <a href="/contact/" class="btn btn-line">Ask a question</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap sec sec--last" style="margin-top:0">
+    <div class="sec__hd rv">
+      <div>
+        <span class="label">Keep reading</span>
+        <h2 class="h-sec">More <em>notes</em></h2>
+      </div>
+      <a href="/notes/" class="sec__link">All notes →</a>
+    </div>
+    <div class="note-grid">
+      <a href="/notes/how-to-become-a-business-analyst-in-nigeria/" class="note-card rv">
+        <span class="note-card__meta"><span class="label">Career</span><span class="label">5 min read</span></span>
+        <span class="note-card__title">How to Become a Business Analyst in Nigeria (No Tech Background Needed)</span>
+        <span class="note-card__desc">A practising BA's step-by-step path into IT business analysis in Nigeria: the skills, tools, portfolio and certifications that get you hired.</span>
+        <span class="note-card__more">Read the note <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </a>
+      <a href="/notes/how-to-write-a-brd/" class="note-card rv">
+        <span class="note-card__meta"><span class="label">Practice</span><span class="label">4 min read</span></span>
+        <span class="note-card__title">How to Write a BRD: Structure, Example and Checklist</span>
+        <span class="note-card__desc">How to write a business requirements document that gets signed off: a section-by-section structure, a worked banking example and a 20-point quality checklist.</span>
+        <span class="note-card__more">Read the note <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </a>
+      <a href="/notes/how-to-choose-processes-for-rpa/" class="note-card rv">
+        <span class="note-card__meta"><span class="label">Practice</span><span class="label">3 min read</span></span>
+        <span class="note-card__title">How to Choose Processes for RPA: A Scoring Method That Works</span>
+        <span class="note-card__desc">Most RPA projects go wrong at process selection. Score candidates on frequency, manual effort, error rate and systems touched, then prioritise with confidence.</span>
+        <span class="note-card__more">Read the note <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </a>
+    </div>
+  </section>
+
+  <footer class="wrap">
+    <div class="foot">
+      <span>&copy; 2026 Ubon Udonkang · Lagos</span>
+      <div class="foot__links">
+        <a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://github.com/ubonudonkang" target="_blank" rel="noopener">GitHub</a>
+        <a href="mailto:ubonudonkang@gmail.com">Email</a>
+      </div>
+    </div>
+  </footer>
+
+</main>
+
+<nav class="dock" aria-label="Site">
+  <span class="dock-bg" aria-hidden="true"></span>
+  <a href="/" class="dock-item app-home" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="duo" d="M4 10.4 12 4l8 6.4v8.1a1.5 1.5 0 0 1-1.5 1.5H15v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5H5.5A1.5 1.5 0 0 1 4 18.5z"/></svg><span class="dock-tip">Home</span></a>
+  <a href="/about/" class="dock-item app-about" aria-label="About"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect class="duo" x="3" y="5.5" width="18" height="13" rx="2.5"/><circle cx="8.75" cy="10.75" r="1.9"/><path d="M5.9 15.5c.5-1.4 1.6-2.2 2.85-2.2s2.35.8 2.85 2.2M14 10h3.5M14 13.5h3.5"/></svg><span class="dock-tip">About</span></a>
+  <a href="/projects/" class="dock-item app-work" aria-label="Work"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="duo" d="M3.5 7A1.5 1.5 0 0 1 5 5.5h4.4l2.1 2.2H19a1.5 1.5 0 0 1 1.5 1.5v8.3A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z"/><path d="M3.5 10.5h17"/></svg><span class="dock-tip">Work</span></a>
+  <a href="/ba-training/" class="dock-item app-training" aria-label="BA Training"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="duo" d="M12 4.75 2.75 9.25 12 13.75l9.25-4.5z"/><path d="M6.5 11.4v4.35c0 1.35 2.45 2.75 5.5 2.75s5.5-1.4 5.5-2.75V11.4M21.25 9.25v5"/></svg><span class="dock-tip">BA Training</span></a>
+  <a href="/resources/" class="dock-item app-resources" aria-label="Resources"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="duo" d="M12 7.2C10.4 5.9 8.3 5.25 5.75 5.25H3.5v12.5h2.25c2.55 0 4.65.65 6.25 1.95 1.6-1.3 3.7-1.95 6.25-1.95h2.25V5.25h-2.25c-2.55 0-4.65.65-6.25 1.95z"/><path d="M12 7.2v12.5"/></svg><span class="dock-tip">Resources</span></a>
+  <span class="dock-sep" aria-hidden="true"></span>
+  <a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener" class="dock-item app-linkedin" aria-label="LinkedIn (opens in a new tab)"><svg class="brand" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45z"/></svg><span class="dock-tip">LinkedIn</span></a>
+  <a href="/contact/" class="dock-item app-contact" aria-label="Contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect class="duo" x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m3.75 7.5 8.25 5.75 8.25-5.75"/></svg><span class="dock-tip">Contact</span></a>
+</nav>
+
+<div class="toast" id="toast" role="status"></div>
+<script src="/js/site.js?v=638b42d9"></script>
+</body>
+</html>

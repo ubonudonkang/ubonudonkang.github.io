@@ -372,7 +372,7 @@ document.querySelectorAll('[data-copy-email]').forEach(el => el.addEventListener
   const msg = form.querySelector('#msg');
   if (type) type.value = 'resource';
   if (msg && !msg.value) {
-    msg.value = `Hi Ubon, I'd like to request the "${doc}" document${from ? ` from the ${from}` : ''}. `;
+    msg.value = `Hi Ubon, I'd like to request "${doc}"${from ? ` (from the ${from})` : ''}. `;
   }
   (form.closest('.form-card') || form).scrollIntoView({ block: 'start' });
   form.querySelector('#fn')?.focus({ preventScroll: true });

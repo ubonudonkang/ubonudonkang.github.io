@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BA Workbench · Free Business Analysis Toolkit</title>
+<meta name="description" content="A free, browser-based toolkit for business analysts: stakeholder map, process and RPA scorer, RACI builder, compliance tracker and BRD generator.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23111'/><text x='16' y='22.5' text-anchor='middle' font-family='Georgia,serif' font-size='16' fill='white'>U</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#10172A;
+    --slate:#1F2E47;
+    --slate-light:#2C415F;
+    --parchment:#F7F4EC;
+    --parchment-deep:#EFEADA;
+    --paper-line:#DED6BF;
+    --amber:#B97A24;
+    --amber-soft:#E9C792;
+    --moss:#3F6B4F;
+    --moss-soft:#C7DBCC;
+    --rust:#A8482F;
+    --rust-soft:#E9C9BF;
+    --ink-soft:#5B6478;
+    --white:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'IBM Plex Sans', sans-serif;
+    background:var(--parchment);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:'Fraunces', serif; margin:0; font-weight:600;}
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  #app{display:flex; min-height:100vh;}
+
+  /* ---------- Rail ---------- */
+  .rail{
+    width:236px; flex-shrink:0; background:var(--ink); color:var(--parchment);
+    display:flex; flex-direction:column; padding:22px 16px;
+  }
+  .brand{display:flex; flex-direction:column; gap:2px; padding:0 8px 22px 8px; border-bottom:1px solid rgba(247,244,236,0.12); margin-bottom:18px;}
+  .brand .mark{font-family:'Fraunces', serif; font-size:20px; font-weight:700; letter-spacing:0.2px;}
+  .brand .sub{font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber-soft); margin-top:2px;}
+  .nav-group{font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:rgba(247,244,236,0.4); padding:14px 8px 6px 8px;}
+  .nav-item{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:9px 10px; border-radius:7px; cursor:pointer; font-size:14px; color:rgba(247,244,236,0.85);
+    transition:background 0.15s ease;
+  }
+  .nav-item:hover{background:rgba(247,244,236,0.07);}
+  .nav-item.active{background:rgba(185,122,36,0.22); color:#fff;}
+  .nav-item.disabled{opacity:0.35; cursor:not-allowed;}
+  .nav-dot{width:7px; height:7px; border-radius:50%; flex-shrink:0;}
+  .dot-draft{background:rgba(247,244,236,0.3);}
+  .dot-review{background:var(--amber);}
+  .dot-complete{background:#7FBE93;}
+  .brand .by{font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:rgba(247,244,236,0.55); text-decoration:none; margin-top:6px;}
+  .brand .by:hover{color:var(--amber-soft);}
+  .rail-foot a{color:rgba(247,244,236,0.6);}
+  .rail-foot{margin-top:auto; padding:10px 8px 0 8px; font-size:11px; color:rgba(247,244,236,0.35); font-family:'IBM Plex Mono', monospace;}
+
+  /* ---------- Main ---------- */
+  .main{flex:1; display:flex; flex-direction:column; min-width:0;}
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:18px 30px; border-bottom:1px solid var(--paper-line); background:var(--white);
+  }
+  .topbar-left{display:flex; align-items:baseline; gap:10px; min-width:0;}
+  .topbar-left h1{font-size:19px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .breadcrumb{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:1px;}
+  .content{flex:1; padding:28px 30px 60px 30px; overflow-y:auto;}
+
+  /* ---------- Stamp (signature element) ---------- */
+  .stamp{
+    font-family:'IBM Plex Mono', monospace; font-size:10px; font-weight:600; letter-spacing:1.2px; text-transform:uppercase;
+    display:inline-flex; align-items:center; justify-content:center; text-align:center;
+    width:60px; height:60px; border-radius:50%; transform:rotate(-7deg);
+    border:2px solid currentColor; box-shadow:0 0 0 3px currentColor inset; flex-shrink:0;
+    animation:stampIn 0.25s ease;
+  }
+  .stamp span{display:block; line-height:1.25;}
+  @keyframes stampIn{from{transform:rotate(-7deg) scale(0.6); opacity:0;} to{transform:rotate(-7deg) scale(1); opacity:1;}}
+  .stamp.draft{color:var(--ink-soft);}
+  .stamp.review{color:var(--amber);}
+  .stamp.complete{color:var(--moss);}
+  .stamp-row{display:flex; align-items:center; gap:16px; margin-bottom:22px;}
+  .stamp-row .meta h2{font-size:22px; margin-bottom:4px;}
+  .stamp-row .meta p{margin:0; color:var(--ink-soft); font-size:13.5px; max-width:60ch;}
+  .status-select{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.8px;
+    border:1px solid var(--paper-line); border-radius:6px; padding:6px 9px; background:var(--white); color:var(--ink); margin-left:auto;
+  }
+
+  /* ---------- Cards / Tables ---------- */
+  .card{background:var(--white); border:1px solid var(--paper-line); border-radius:10px; padding:20px; margin-bottom:18px;}
+  .empty{
+    border:1px dashed var(--paper-line); border-radius:10px; padding:34px 24px; text-align:center; color:var(--ink-soft);
+    background:rgba(255,255,255,0.5);
+  }
+  .empty p{margin:0 0 14px 0; font-size:14px;}
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  th{
+    text-align:left; font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:0.8px; text-transform:uppercase;
+    color:var(--ink-soft); padding:0 10px 8px 10px; border-bottom:1px solid var(--paper-line); font-weight:500;
+  }
+  td{padding:9px 10px; border-bottom:1px solid var(--parchment-deep); vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  input[type=text], input[type=number], textarea, select{
+    font-family:'IBM Plex Sans', sans-serif; font-size:13.5px; border:1px solid transparent; border-radius:6px;
+    padding:6px 7px; background:transparent; width:100%; color:var(--ink);
+  }
+  input[type=text]:hover, input[type=number]:hover, textarea:hover, select:hover{border-color:var(--paper-line);}
+  input[type=text]:focus, input[type=number]:focus, textarea:focus, select:focus{
+    outline:none; border-color:var(--amber); background:var(--white);
+  }
+  textarea{resize:vertical; min-height:34px; line-height:1.4;}
+  .col-narrow{width:90px;}
+  .col-xnarrow{width:64px;}
+  .badge{
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; font-weight:600; letter-spacing:0.4px;
+    padding:3px 8px; border-radius:20px; display:inline-block; white-space:nowrap;
+  }
+  .badge-high{background:var(--moss-soft); color:var(--moss);}
+  .badge-medium{background:var(--amber-soft); color:var(--amber);}
+  .badge-low{background:var(--parchment-deep); color:var(--ink-soft);}
+  .badge-strategic{background:#DCE3F0; color:#3A4F7A;}
+  .badge-risk{background:var(--rust-soft); color:var(--rust);}
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    font-family:'IBM Plex Sans', sans-serif; font-size:13px; font-weight:600; cursor:pointer;
+    border-radius:7px; padding:8px 14px; border:1px solid transparent; display:inline-flex; align-items:center; gap:6px;
+    transition:opacity 0.15s ease;
+  }
+  .btn:hover{opacity:0.85;}
+  .btn-primary{background:var(--ink); color:var(--white);}
+  .btn-ghost{background:transparent; color:var(--ink); border-color:var(--paper-line);}
+  .btn-amber{background:var(--amber); color:var(--white);}
+  .btn-danger{background:transparent; color:var(--rust); border-color:var(--rust-soft);}
+  .btn-sm{padding:4px 9px; font-size:12px; border-radius:6px;}
+  .icon-btn{background:transparent; border:none; cursor:pointer; color:var(--ink-soft); font-size:15px; padding:4px 6px; border-radius:5px;}
+  .icon-btn:hover{background:var(--parchment-deep); color:var(--rust);}
+
+  /* ---------- Dashboard ---------- */
+  .project-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(250px,1fr)); gap:14px;}
+  .project-card{
+    background:var(--white); border:1px solid var(--paper-line); border-radius:10px; padding:18px; cursor:pointer;
+    transition:border-color 0.15s ease, transform 0.1s ease;
+  }
+  .project-card:hover{border-color:var(--amber); transform:translateY(-1px);}
+  .project-card h3{font-size:16px; margin-bottom:6px;}
+  .project-card p{margin:0 0 12px 0; font-size:12.5px; color:var(--ink-soft); min-height:18px;}
+  .stamp-strip{display:flex; gap:5px;}
+  .mini-dot{width:9px; height:9px; border-radius:50%; border:1.5px solid currentColor;}
+  .new-project-card{
+    border:1.5px dashed var(--paper-line); border-radius:10px; display:flex; align-items:center; justify-content:center;
+    color:var(--ink-soft); cursor:pointer; min-height:108px; font-size:13.5px; font-weight:600;
+  }
+  .new-project-card:hover{border-color:var(--amber); color:var(--amber);}
+  .inline-form{display:flex; flex-direction:column; gap:10px; max-width:420px;}
+  .inline-form label{font-family:'IBM Plex Mono', monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.8px; color:var(--ink-soft);}
+  .inline-form input, .inline-form textarea{border:1px solid var(--paper-line); background:var(--white);}
+  .form-actions{display:flex; gap:8px; margin-top:4px;}
+
+  /* ---------- RACI grid ---------- */
+  .raci-grid{display:grid; grid-template-columns:1.4fr 0.9fr 0.9fr 1.3fr 1.3fr; gap:0; font-size:12.5px;}
+  .raci-grid > div{padding:9px 10px; border-bottom:1px solid var(--parchment-deep);}
+  .raci-head{font-family:'IBM Plex Mono', monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.7px; color:var(--ink-soft); border-bottom:1px solid var(--paper-line) !important;}
+  .check-list{display:flex; flex-wrap:wrap; gap:6px;}
+  .check-pill{display:flex; align-items:center; gap:4px; font-size:11.5px; background:var(--parchment-deep); border-radius:14px; padding:2px 8px 2px 4px;}
+  .check-pill input{width:auto; padding:0;}
+
+  /* ---------- BRD ---------- */
+  .brd-toolbar{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;}
+  .brd-output{
+    width:100%; min-height:520px; font-family:'IBM Plex Mono', monospace; font-size:12.5px; line-height:1.6;
+    border:1px solid var(--paper-line); border-radius:8px; padding:18px; background:var(--white); white-space:pre-wrap;
+  }
+
+  @media (max-width:760px){
+    #app{flex-direction:column;}
+    .rail{width:100%; flex-direction:row; align-items:center; overflow-x:auto; padding:14px;}
+    .brand{border-bottom:none; padding:0 10px 0 0; margin-bottom:0; border-right:1px solid rgba(247,244,236,0.12); padding-right:14px;}
+    .nav-group{display:none;}
+    .nav-item{white-space:nowrap;}
+    .rail-foot{display:none;}
+    .raci-grid{grid-template-columns:1fr; }
+    .raci-grid .raci-head:not(:first-child){display:none;}
+  }
+</style>
+  <!--seo-->
+  <link rel="canonical" href="https://ubonudonkang.github.io/resources/ba-workbench/"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="Ubon Udonkang"/>
+  <meta property="og:title" content="BA Workbench · Free Business Analysis Toolkit"/>
+  <meta property="og:description" content="A free, browser-based toolkit for business analysts: stakeholder map, process and RPA scorer, RACI builder, compliance tracker and BRD generator."/>
+  <meta property="og:image" content="https://ubonudonkang.github.io/img/og-card.png"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:image:alt" content="Ubon Udonkang, Senior Business Analyst, Lagos"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="BA Workbench · Free Business Analysis Toolkit"/>
+  <meta name="twitter:description" content="A free, browser-based toolkit for business analysts: stakeholder map, process and RPA scorer, RACI builder, compliance tracker and BRD generator."/>
+  <meta name="twitter:image" content="https://ubonudonkang.github.io/img/og-card.png"/>
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png"/>
+  <meta property="og:url" content="https://ubonudonkang.github.io/resources/ba-workbench/"/>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "SoftwareApplication", "name": "BA Workbench", "url": "https://ubonudonkang.github.io/resources/ba-workbench/", "applicationCategory": "BusinessApplication", "operatingSystem": "Any (web browser)", "description": "A free, browser-based toolkit for business analysts: stakeholder map, process and RPA scorer, RACI builder, compliance tracker and BRD generator.", "author": {"@id": "https://ubonudonkang.github.io/#person"}, "offers": {"@type": "Offer", "price": 0, "priceCurrency": "NGN"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://ubonudonkang.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Resources", "item": "https://ubonudonkang.github.io/resources/"}, {"@type": "ListItem", "position": 3, "name": "BA Workbench", "item": "https://ubonudonkang.github.io/resources/ba-workbench/"}]}]}</script>
+  <!--/seo-->
+</head>
+<body>
+<div id="app">
+  <aside class="rail">
+    <div class="brand">
+      <div class="mark">BA Workbench</div>
+      <div class="sub" id="project-sub">No project open</div>
+      <a class="by" href="/">by Ubon Udonkang ↗</a>
+    </div>
+    <div class="nav-group">Workspace</div>
+    <div class="nav-item" data-action="nav" data-module="dashboard" id="nav-dashboard">Dashboard</div>
+    <div class="nav-group">Modules</div>
+    <div class="nav-item" data-action="nav" data-module="stakeholders" id="nav-stakeholders">
+      <span>Stakeholder Map</span><span class="nav-dot dot-draft" id="dot-stakeholders"></span>
+    </div>
+    <div class="nav-item" data-action="nav" data-module="process" id="nav-process">
+      <span>Process &amp; RPA Scorer</span><span class="nav-dot dot-draft" id="dot-process"></span>
+    </div>
+    <div class="nav-item" data-action="nav" data-module="raci" id="nav-raci">
+      <span>RACI Builder</span><span class="nav-dot dot-draft" id="dot-raci"></span>
+    </div>
+    <div class="nav-item" data-action="nav" data-module="compliance" id="nav-compliance">
+      <span>Compliance Tracker</span><span class="nav-dot dot-draft" id="dot-compliance"></span>
+    </div>
+    <div class="nav-item" data-action="nav" data-module="brd" id="nav-brd">
+      <span>BRD Generator</span><span class="nav-dot dot-draft" id="dot-brd"></span>
+    </div>
+    <div class="rail-foot">Your projects are saved in this browser only. Nothing is sent to a server.<br><br><a href="/resources/">More resources</a></div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1 id="topbar-title">Dashboard</h1>
+      </div>
+      <div class="breadcrumb" id="topbar-crumb"></div>
+    </div>
+    <div class="content" id="content">
+      <p class="mono" style="color:var(--ink-soft);">Loading workbench…</p>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // Hosted on the website: save to this browser. (window.storage only exists inside a Claude artifact.)
+  if(!window.storage){
+    var PREFIX = "ba-workbench:";
+    window.storage = {
+      get: async function(k){ var v = localStorage.getItem(PREFIX + k); return v === null ? null : {key:k, value:v}; },
+      set: async function(k, v){ localStorage.setItem(PREFIX + k, v); return {key:k, value:v}; },
+      delete: async function(k){ localStorage.removeItem(PREFIX + k); return {key:k, deleted:true}; }
+    };
+  }
+
+  // ---------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------
+  var projects = [];          // [{id,name,description,createdAt}]
+  var currentProjectId = null;
+  var projectData = null;     // full data object for current project
+  var currentModule = "dashboard";
+  var saveTimer = null;
+
+  var MODULE_LABELS = {
+    dashboard:"Dashboard", stakeholders:"Stakeholder Map", process:"Process & RPA Scorer",
+    raci:"RACI Builder", compliance:"Compliance Tracker", brd:"BRD Generator"
+  };
+  var STATUS_LABELS = {draft:"Draft", review:"In Review", complete:"Complete"};
+
+  function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
+
+  function emptyProjectData(){
+    return {
+      stakeholders: [],
+      processSteps: [],
+      compliance: [],
+      raci: {},               // stepId -> {R:'', A:'', C:[], I:[]}
+      brd: { purpose:"", openQuestions:"" },
+      moduleStatus: { stakeholders:"draft", process:"draft", raci:"draft", compliance:"draft", brd:"draft" }
+    };
+  }
+
+  // ---------------------------------------------------------------
+  // Storage helpers
+  // ---------------------------------------------------------------
+  async function safeGet(key){
+    try{
+      var r = await window.storage.get(key, false);
+      return r ? r.value : null;
+    }catch(e){ return null; }
+  }
+  async function safeSet(key, value){
+    try{ return await window.storage.set(key, value, false); }
+    catch(e){ console.error("storage set failed", key, e); return null; }
+  }
+  async function safeDelete(key){
+    try{ return await window.storage.delete(key, false); }
+    catch(e){ return null; }
+  }
+
+  async function loadProjects(){
+    var raw = await safeGet("projects-list");
+    projects = raw ? JSON.parse(raw) : [];
+  }
+  async function saveProjects(){
+    await safeSet("projects-list", JSON.stringify(projects));
+  }
+  async function loadProjectData(id){
+    var raw = await safeGet("project-data:" + id);
+    return raw ? JSON.parse(raw) : emptyProjectData();
+  }
+  function scheduleSave(){
+    if(saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){
+      if(currentProjectId && projectData){
+        safeSet("project-data:" + currentProjectId, JSON.stringify(projectData));
+      }
+    }, 500);
+  }
+  async function saveAppState(){
+    await safeSet("app-state", JSON.stringify({ lastProjectId: currentProjectId }));
+  }
+
+  // ---------------------------------------------------------------
+  // Scoring logic
+  // ---------------------------------------------------------------
+  function computeValueScore(step){
+    var freq = Number(step.frequency) || 0;
+    var mins = Number(step.manualMinutes) || 0;
+    var err = Number(step.errorRate) || 0;
+    var freqScore = Math.min(freq/40, 1) * 40;
+    var timeScore = Math.min(mins/90, 1) * 35;
+    var errScore = Math.min(err/100, 1) * 25;
+    return Math.round(freqScore + timeScore + errScore);
+  }
+  function computeComplexity(step){
+    var sys = Number(step.systems) || 0;
+    if(sys <= 1) return "Low";
+    if(sys <= 3) return "Medium";
+    return "High";
+  }
+  function computeTier(step){
+    var v = computeValueScore(step);
+    var c = computeComplexity(step);
+    if(v >= 70 && c !== "High") return {label:"High Priority", cls:"badge-high"};
+    if(v >= 70 && c === "High") return {label:"Strategic (Phased)", cls:"badge-strategic"};
+    if(v >= 40) return {label:"Medium Priority", cls:"badge-medium"};
+    return {label:"Low Priority", cls:"badge-low"};
+  }
+  function monthlyHours(step){
+    var freq = Number(step.frequency) || 0;
+    var mins = Number(step.manualMinutes) || 0;
+    return Math.round((freq * mins / 60) * 10) / 10;
+  }
+
+  // ---------------------------------------------------------------
+  // Rendering: shell
+  // ---------------------------------------------------------------
+  function escapeHtml(s){
+    return (s===undefined||s===null?"":String(s)).replace(/[&<>"']/g, function(c){
+      return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[c];
+    });
+  }
+
+  function renderShell(){
+    document.getElementById("project-sub").textContent =
+      currentProjectId ? truncate(getCurrentProjectMeta().name, 26) : "No project open";
+
+    document.querySelectorAll(".nav-item").forEach(function(el){ el.classList.remove("active"); });
+    var activeNav = document.getElementById("nav-" + currentModule);
+    if(activeNav) activeNav.classList.add("active");
+
+    ["stakeholders","process","raci","compliance","brd"].forEach(function(m){
+      var navItem = document.getElementById("nav-" + m);
+      var dot = document.getElementById("dot-" + m);
+      if(!currentProjectId){
+        navItem.classList.add("disabled");
+        dot.className = "nav-dot dot-draft";
+      } else {
+        navItem.classList.remove("disabled");
+        var status = projectData.moduleStatus[m] || "draft";
+        dot.className = "nav-dot " + (status === "complete" ? "dot-complete" : status === "review" ? "dot-review" : "dot-draft");
+      }
+    });
+
+    document.getElementById("topbar-title").textContent = MODULE_LABELS[currentModule];
+    document.getElementById("topbar-crumb").textContent =
+      currentProjectId ? truncate(getCurrentProjectMeta().name, 40).toUpperCase() : "BA WORKBENCH";
+  }
+
+  function truncate(s, n){ s = s || ""; return s.length > n ? s.slice(0,n-1) + "…" : s; }
+  function getCurrentProjectMeta(){
+    return projects.find(function(p){ return p.id === currentProjectId; }) || {name:""};
+  }
+
+  function stampHtml(moduleKey){
+    var status = projectData.moduleStatus[moduleKey] || "draft";
+    var cls = status === "complete" ? "complete" : status === "review" ? "review" : "draft";
+    var text = status === "complete" ? "Complete" : status === "review" ? "In Review" : "Draft";
+    return '<div class="stamp ' + cls + '"><span>' + text + '</span></div>';
+  }
+
+  function statusSelectHtml(moduleKey){
+    var status = projectData.moduleStatus[moduleKey] || "draft";
+    var opts = ["draft","review","complete"].map(function(s){
+      return '<option value="'+s+'"'+(s===status?' selected':'')+'>'+STATUS_LABELS[s]+'</option>';
+    }).join("");
+    return '<select class="status-select" data-action="set-status" data-module="'+moduleKey+'">'+opts+'</select>';
+  }
+
+  // ---------------------------------------------------------------
+  // Dashboard
+  // ---------------------------------------------------------------
+  function renderDashboard(showForm){
+    var html = '<div class="card" style="margin-bottom:22px;">' +
+      '<h2 style="font-size:18px; margin-bottom:6px;">Projects</h2>' +
+      '<p style="color:var(--ink-soft); font-size:13.5px; margin:0;">Each project is one process or initiative. Open one to map stakeholders, score automation potential, build a RACI, track compliance, and assemble a BRD from the same data.</p>' +
+      '</div>';
+
+    html += '<div class="project-grid">';
+    projects.forEach(function(p){
+      html += '<div class="project-card" data-action="open-project" data-id="'+p.id+'">' +
+        '<h3>'+escapeHtml(p.name)+'</h3>' +
+        '<p>'+escapeHtml(p.description||"No description yet.")+'</p>' +
+        '<div class="stamp-strip">' + projectDotsHtml(p.id) + '</div>' +
+        '</div>';
+    });
+    html += '<div class="new-project-card" data-action="new-project">+ New project</div>';
+    html += '</div>';
+
+    if(showForm){
+      html += '<div class="card" style="margin-top:18px;">' +
+        '<h2 style="font-size:15px; margin-bottom:14px;">New project</h2>' +
+        '<div class="inline-form">' +
+          '<div><label>Project name</label><input type="text" id="np-name" placeholder="e.g. Vendor onboarding automation"></div>' +
+          '<div><label>Description</label><textarea id="np-desc" rows="2" placeholder="One line on what this covers"></textarea></div>' +
+          '<div class="form-actions">' +
+            '<button class="btn btn-primary" data-action="create-project">Create project</button>' +
+            '<button class="btn btn-ghost" data-action="cancel-new-project">Cancel</button>' +
+          '</div>' +
+        '</div></div>';
+    }
+
+    if(projects.length === 0 && !showForm){
+      html = '<div class="empty"><p>No projects yet. Create one to start mapping a process.</p>' +
+        '<button class="btn btn-amber" data-action="new-project">+ New project</button></div>' + html;
+    }
+
+    document.getElementById("content").innerHTML = html;
+    if(showForm){ document.getElementById("np-name").focus(); }
+  }
+
+  function projectDotsHtml(projectId){
+    // lightweight: pulls from cache if it's the open project, otherwise shows neutral dots
+    if(projectId === currentProjectId && projectData){
+      return ["stakeholders","process","raci","compliance","brd"].map(function(m){
+        var s = projectData.moduleStatus[m];
+        var color = s === "complete" ? "var(--moss)" : s === "review" ? "var(--amber)" : "var(--ink-soft)";
+        return '<span class="mini-dot" style="color:'+color+'; opacity:'+(s==="draft"?"0.35":"1")+'"></span>';
+      }).join("");
+    }
+    return ["#","#","#","#","#"].map(function(){ return '<span class="mini-dot" style="color:var(--ink-soft); opacity:0.25"></span>'; }).join("");
+  }
+
+  // ---------------------------------------------------------------
+  // Stakeholders module
+  // ---------------------------------------------------------------
+  function renderStakeholders(){
+    var rows = projectData.stakeholders;
+    var html = '<div class="stamp-row">' + stampHtml("stakeholders") +
+      '<div class="meta"><h2>Stakeholder Map</h2><p>Track who is involved, where alignment stands, and what it will take to get to commitment.</p></div>' +
+      statusSelectHtml("stakeholders") + '</div>';
+
+    if(rows.length === 0){
+      html += '<div class="empty"><p>No stakeholders mapped yet. Add the people who can approve, block, or shape this initiative.</p>' +
+        '<button class="btn btn-amber" data-action="add-stakeholder">+ Add stakeholder</button></div>';
+    } else {
+      html += '<div class="card"><table><thead><tr>' +
+        '<th style="width:16%">Name</th><th style="width:14%">Role</th><th class="col-narrow">Influence</th><th class="col-narrow">Interest</th>' +
+        '<th style="width:16%">Consensus</th><th style="width:16%">Commitment</th><th style="width:14%">Notes</th><th class="col-xnarrow"></th>' +
+        '</tr></thead><tbody>';
+      rows.forEach(function(s){
+        html += '<tr>' +
+          field("text", "stakeholders", s.id, "name", s.name, "Name") +
+          field("text", "stakeholders", s.id, "role", s.role, "e.g. Sponsor") +
+          selectField("stakeholders", s.id, "influence", s.influence, ["Low","Medium","High"]) +
+          selectField("stakeholders", s.id, "interest", s.interest, ["Low","Medium","High"]) +
+          selectField("stakeholders", s.id, "consensus", s.consensus, ["Not aligned","Partially aligned","Aligned"]) +
+          selectField("stakeholders", s.id, "commitment", s.commitment, ["Not committed","Verbal","Formal"]) +
+          field("text", "stakeholders", s.id, "notes", s.notes, "Conflict / clarity notes") +
+          '<td><button class="icon-btn" data-action="delete-stakeholder" data-id="'+s.id+'" title="Remove">✕</button></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div>' +
+        '<button class="btn btn-ghost" data-action="add-stakeholder">+ Add stakeholder</button>';
+    }
+    document.getElementById("content").innerHTML = html;
+  }
+
+  // ---------------------------------------------------------------
+  // Process & RPA Scorer module
+  // ---------------------------------------------------------------
+  function renderProcess(){
+    var rows = projectData.processSteps;
+    var html = '<div class="stamp-row">' + stampHtml("process") +
+      '<div class="meta"><h2>Process &amp; RPA Scorer</h2><p>Score each process step on frequency, manual effort, and error rate to surface automation priorities.</p></div>' +
+      statusSelectHtml("process") + '</div>';
+
+    if(rows.length === 0){
+      html += '<div class="empty"><p>No process steps yet. Break the process down to see where automation pays off first.</p>' +
+        '<button class="btn btn-amber" data-action="add-step">+ Add process step</button></div>';
+    } else {
+      html += '<div class="card"><table><thead><tr>' +
+        '<th style="width:22%">Step</th>' +
+        '<th class="col-narrow">Freq / mo</th><th class="col-narrow">Manual min</th><th class="col-narrow">Error %</th><th class="col-narrow">Systems</th>' +
+        '<th class="col-narrow">Manual hrs / mo</th><th class="col-narrow">Value</th><th style="width:14%">Tier</th><th class="col-xnarrow"></th>' +
+        '</tr></thead><tbody>';
+      rows.forEach(function(s){
+        var tier = computeTier(s);
+        html += '<tr id="proc-row-'+s.id+'">' +
+          field("text", "processSteps", s.id, "name", s.name, "Step description") +
+          numField("processSteps", s.id, "frequency", s.frequency) +
+          numField("processSteps", s.id, "manualMinutes", s.manualMinutes) +
+          numField("processSteps", s.id, "errorRate", s.errorRate) +
+          numField("processSteps", s.id, "systems", s.systems) +
+          '<td class="mono" id="proc-hours-'+s.id+'">'+monthlyHours(s)+'</td>' +
+          '<td class="mono" id="proc-value-'+s.id+'">'+computeValueScore(s)+'</td>' +
+          '<td id="proc-tier-'+s.id+'"><span class="badge '+tier.cls+'">'+tier.label+'</span></td>' +
+          '<td><button class="icon-btn" data-action="delete-step" data-id="'+s.id+'" title="Remove">✕</button></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div>' +
+        '<button class="btn btn-ghost" data-action="add-step">+ Add process step</button>';
+    }
+    document.getElementById("content").innerHTML = html;
+  }
+
+  function updateProcessRow(stepId){
+    var step = projectData.processSteps.find(function(s){ return s.id === stepId; });
+    if(!step) return;
+    var hoursEl = document.getElementById("proc-hours-" + stepId);
+    var valueEl = document.getElementById("proc-value-" + stepId);
+    var tierEl = document.getElementById("proc-tier-" + stepId);
+    if(hoursEl) hoursEl.textContent = monthlyHours(step);
+    if(valueEl) valueEl.textContent = computeValueScore(step);
+    if(tierEl){
+      var tier = computeTier(step);
+      tierEl.innerHTML = '<span class="badge '+tier.cls+'">'+tier.label+'</span>';
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // RACI module
+  // ---------------------------------------------------------------
+  function renderRaci(){
+    var steps = projectData.processSteps;
+    var stakeholders = projectData.stakeholders;
+    var html = '<div class="stamp-row">' + stampHtml("raci") +
+      '<div class="meta"><h2>RACI Builder</h2><p>Assign Responsible, Accountable, Consulted, and Informed for each process step, drawn from your stakeholder list.</p></div>' +
+      statusSelectHtml("raci") + '</div>';
+
+    if(steps.length === 0 || stakeholders.length === 0){
+      html += '<div class="empty"><p>' +
+        (steps.length === 0 ? "Add process steps" : "Add stakeholders") +
+        ' before building a RACI, since each row needs both a step and a name to assign.</p></div>';
+      document.getElementById("content").innerHTML = html;
+      return;
+    }
+
+    html += '<div class="card"><div class="raci-grid">' +
+      '<div class="raci-head">Step</div><div class="raci-head">Responsible</div><div class="raci-head">Accountable</div><div class="raci-head">Consulted</div><div class="raci-head">Informed</div>';
+
+    steps.forEach(function(step){
+      var r = projectData.raci[step.id] || {R:"", A:"", C:[], I:[]};
+      html += '<div>' + escapeHtml(step.name || "(Unnamed step)") + '</div>';
+      html += '<div>' + personSelect(step.id, "R", r.R, stakeholders) + '</div>';
+      html += '<div>' + personSelect(step.id, "A", r.A, stakeholders) + '</div>';
+      html += '<div>' + personChecklist(step.id, "C", r.C, stakeholders) + '</div>';
+      html += '<div>' + personChecklist(step.id, "I", r.I, stakeholders) + '</div>';
+    });
+    html += '</div></div>';
+    document.getElementById("content").innerHTML = html;
+  }
+
+  function personSelect(stepId, role, value, stakeholders){
+    var opts = '<option value="">(none)</option>' + stakeholders.map(function(s){
+      return '<option value="'+escapeHtml(s.name)+'"'+(s.name===value?' selected':'')+'>'+escapeHtml(s.name||"(unnamed)")+'</option>';
+    }).join("");
+    return '<select data-action="raci-single" data-step="'+stepId+'" data-role="'+role+'">'+opts+'</select>';
+  }
+  function personChecklist(stepId, role, values, stakeholders){
+    values = values || [];
+    return '<div class="check-list">' + stakeholders.map(function(s){
+      var checked = values.indexOf(s.name) > -1;
+      return '<label class="check-pill"><input type="checkbox" data-action="raci-multi" data-step="'+stepId+'" data-role="'+role+'" data-name="'+escapeHtml(s.name)+'" '+(checked?'checked':'')+'>'+escapeHtml(truncate(s.name||"unnamed", 14))+'</label>';
+    }).join("") + '</div>';
+  }
+
+  // ---------------------------------------------------------------
+  // Compliance module
+  // ---------------------------------------------------------------
+  function renderCompliance(){
+    var rows = projectData.compliance;
+    var html = '<div class="stamp-row">' + stampHtml("compliance") +
+      '<div class="meta"><h2>Compliance Tracker</h2><p>Track regulatory or policy requirements against the deliverables that satisfy them.</p></div>' +
+      statusSelectHtml("compliance") + '</div>';
+
+    if(rows.length === 0){
+      html += '<div class="empty"><p>No compliance items yet. Add the regulations or policies this initiative must satisfy.</p>' +
+        '<button class="btn btn-amber" data-action="add-compliance">+ Add requirement</button></div>';
+    } else {
+      html += '<div class="card"><table><thead><tr>' +
+        '<th style="width:18%">Reference</th><th style="width:30%">Requirement</th><th style="width:16%">Linked step</th><th class="col-narrow">Status</th><th style="width:14%">Owner</th><th class="col-xnarrow"></th>' +
+        '</tr></thead><tbody>';
+      rows.forEach(function(c){
+        html += '<tr>' +
+          field("text", "compliance", c.id, "ref", c.ref, "e.g. CBN Open Banking s.4.2") +
+          field("text", "compliance", c.id, "description", c.description, "What's required") +
+          stepLinkSelect(c.id, c.linkedStepId) +
+          selectField("compliance", c.id, "status", c.status, ["Not started","In progress","Met","At risk"]) +
+          field("text", "compliance", c.id, "owner", c.owner, "Owner") +
+          '<td><button class="icon-btn" data-action="delete-compliance" data-id="'+c.id+'" title="Remove">✕</button></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div>' +
+        '<button class="btn btn-ghost" data-action="add-compliance">+ Add requirement</button>';
+    }
+    document.getElementById("content").innerHTML = html;
+  }
+
+  function stepLinkSelect(itemId, value){
+    var opts = '<option value="">(none)</option>' + projectData.processSteps.map(function(s){
+      return '<option value="'+s.id+'"'+(s.id===value?' selected':'')+'>'+escapeHtml(truncate(s.name||"(unnamed)",24))+'</option>';
+    }).join("");
+    return '<td><select data-action="compliance-link" data-id="'+itemId+'">'+opts+'</select></td>';
+  }
+
+  // ---------------------------------------------------------------
+  // BRD module
+  // ---------------------------------------------------------------
+  function buildBrdText(){
+    var meta = getCurrentProjectMeta();
+    var lines = [];
+    lines.push("BUSINESS REQUIREMENTS DOCUMENT");
+    lines.push(meta.name || "Untitled project");
+    lines.push("Generated " + new Date().toLocaleDateString());
+    lines.push("");
+    lines.push("1. PURPOSE / BACKGROUND");
+    lines.push(projectData.brd.purpose || "(add background in the field below, then regenerate)");
+    lines.push("");
+    lines.push("2. STAKEHOLDERS");
+    if(projectData.stakeholders.length === 0){
+      lines.push("(no stakeholders mapped yet)");
+    } else {
+      projectData.stakeholders.forEach(function(s){
+        lines.push("- " + (s.name||"(unnamed)") + ", " + (s.role||"role tbc") + " | influence: " + (s.influence||"n/a") + " | consensus: " + (s.consensus||"n/a") + " | commitment: " + (s.commitment||"n/a"));
+      });
+    }
+    lines.push("");
+    lines.push("3. PROCESS OVERVIEW & AUTOMATION OPPORTUNITIES");
+    if(projectData.processSteps.length === 0){
+      lines.push("(no process steps mapped yet)");
+    } else {
+      projectData.processSteps.forEach(function(s){
+        lines.push("- " + (s.name||"(unnamed step)") + ", value score: " + computeValueScore(s) + "/100, complexity: " + computeComplexity(s) + ", tier: " + computeTier(s).label + ", est. manual hours/mo: " + monthlyHours(s));
+      });
+    }
+    lines.push("");
+    lines.push("4. RACI MATRIX");
+    if(projectData.processSteps.length === 0){
+      lines.push("(no steps to assign yet)");
+    } else {
+      projectData.processSteps.forEach(function(s){
+        var r = projectData.raci[s.id] || {R:"",A:"",C:[],I:[]};
+        lines.push("- " + (s.name||"(unnamed step)") + " | R: " + (r.R||"n/a") + " | A: " + (r.A||"n/a") + " | C: " + ((r.C||[]).join(", ")||"n/a") + " | I: " + ((r.I||[]).join(", ")||"n/a"));
+      });
+    }
+    lines.push("");
+    lines.push("5. COMPLIANCE & REGULATORY CONSIDERATIONS");
+    if(projectData.compliance.length === 0){
+      lines.push("(no compliance items tracked yet)");
+    } else {
+      projectData.compliance.forEach(function(c){
+        lines.push("- [" + (c.ref||"ref tbc") + "] " + (c.description||"") + ", status: " + (c.status||"Not started") + (c.owner?(", owner: "+c.owner):""));
+      });
+    }
+    lines.push("");
+    lines.push("6. OPEN QUESTIONS / NOTES");
+    lines.push(projectData.brd.openQuestions || "(add open questions in the field below, then regenerate)");
+    return lines.join("\n");
+  }
+
+  function renderBrd(){
+    var html = '<div class="stamp-row">' + stampHtml("brd") +
+      '<div class="meta"><h2>BRD Generator</h2><p>Assembles a draft BRD from your stakeholders, process steps, RACI, and compliance data.</p></div>' +
+      statusSelectHtml("brd") + '</div>';
+
+    html += '<div class="card"><div class="inline-form" style="max-width:none;">' +
+      '<div><label>Purpose / background</label><textarea data-action="brd-field" data-field="purpose" rows="3" placeholder="Why this initiative exists, in a few sentences">'+escapeHtml(projectData.brd.purpose)+'</textarea></div>' +
+      '<div><label>Open questions / notes</label><textarea data-action="brd-field" data-field="openQuestions" rows="3" placeholder="Anything unresolved that needs a decision">'+escapeHtml(projectData.brd.openQuestions)+'</textarea></div>' +
+      '</div></div>';
+
+    html += '<div class="brd-toolbar">' +
+      '<button class="btn btn-amber" data-action="regen-brd">↻ Regenerate from project data</button>' +
+      '<button class="btn btn-ghost" data-action="copy-brd">Copy to clipboard</button>' +
+      '<button class="btn btn-ghost" data-action="download-brd">Download .md</button>' +
+      '</div>';
+
+    html += '<textarea class="brd-output" id="brd-output">' + escapeHtml(buildBrdText()) + '</textarea>';
+
+    document.getElementById("content").innerHTML = html;
+  }
+
+  // ---------------------------------------------------------------
+  // Field builders (delegated input editing)
+  // ---------------------------------------------------------------
+  function field(type, arr, id, key, value, placeholder){
+    return '<td><input type="text" data-action="edit" data-arr="'+arr+'" data-id="'+id+'" data-field="'+key+'" placeholder="'+escapeHtml(placeholder||"")+'" value="'+escapeHtml(value)+'"></td>';
+  }
+  function numField(arr, id, key, value){
+    return '<td><input type="number" data-action="edit" data-arr="'+arr+'" data-id="'+id+'" data-field="'+key+'" data-numeric="1" value="'+(value===undefined||value===""?"":value)+'"></td>';
+  }
+  function selectField(arr, id, key, value, options){
+    var opts = '<option value=""></option>' + options.map(function(o){
+      return '<option value="'+o+'"'+(o===value?' selected':'')+'>'+o+'</option>';
+    }).join("");
+    return '<td><select data-action="edit" data-arr="'+arr+'" data-id="'+id+'" data-field="'+key+'">'+opts+'</select></td>';
+  }
+
+  // ---------------------------------------------------------------
+  // Render dispatcher
+  // ---------------------------------------------------------------
+  function render(){
+    renderShell();
+    if(currentModule === "dashboard" || !currentProjectId){ renderDashboard(false); return; }
+    if(currentModule === "stakeholders") return renderStakeholders();
+    if(currentModule === "process") return renderProcess();
+    if(currentModule === "raci") return renderRaci();
+    if(currentModule === "compliance") return renderCompliance();
+    if(currentModule === "brd") return renderBrd();
+  }
+
+  // ---------------------------------------------------------------
+  // Event delegation
+  // ---------------------------------------------------------------
+  document.addEventListener("click", function(e){
+    var t = e.target.closest("[data-action]");
+    if(!t) return;
+    var action = t.dataset.action;
+
+    if(action === "nav"){
+      var m = t.dataset.module;
+      if(t.classList.contains("disabled")) return;
+      currentModule = m;
+      render();
+    }
+    else if(action === "new-project"){ renderDashboard(true); }
+    else if(action === "cancel-new-project"){ renderDashboard(false); }
+    else if(action === "create-project"){
+      var name = document.getElementById("np-name").value.trim();
+      if(!name){ document.getElementById("np-name").focus(); return; }
+      var desc = document.getElementById("np-desc").value.trim();
+      var id = uid();
+      projects.push({id:id, name:name, description:desc, createdAt:Date.now()});
+      saveProjects();
+      openProject(id);
+    }
+    else if(action === "open-project"){ openProject(t.dataset.id); }
+    else if(action === "add-stakeholder"){
+      projectData.stakeholders.push({id:uid(), name:"", role:"", influence:"", interest:"", consensus:"", commitment:"", notes:""});
+      scheduleSave(); renderStakeholders();
+    }
+    else if(action === "delete-stakeholder"){
+      projectData.stakeholders = projectData.stakeholders.filter(function(s){ return s.id !== t.dataset.id; });
+      scheduleSave(); renderStakeholders();
+    }
+    else if(action === "add-step"){
+      projectData.processSteps.push({id:uid(), name:"", frequency:"", manualMinutes:"", errorRate:"", systems:""});
+      scheduleSave(); renderProcess();
+    }
+    else if(action === "delete-step"){
+      projectData.processSteps = projectData.processSteps.filter(function(s){ return s.id !== t.dataset.id; });
+      delete projectData.raci[t.dataset.id];
+      scheduleSave(); renderProcess();
+    }
+    else if(action === "add-compliance"){
+      projectData.compliance.push({id:uid(), ref:"", description:"", linkedStepId:"", status:"", owner:""});
+      scheduleSave(); renderCompliance();
+    }
+    else if(action === "delete-compliance"){
+      projectData.compliance = projectData.compliance.filter(function(c){ return c.id !== t.dataset.id; });
+      scheduleSave(); renderCompliance();
+    }
+    else if(action === "regen-brd"){
+      document.getElementById("brd-output").value = buildBrdText();
+    }
+    else if(action === "copy-brd"){
+      var text = document.getElementById("brd-output").value;
+      navigator.clipboard.writeText(text).then(function(){
+        t.textContent = "Copied ✓";
+        setTimeout(function(){ t.textContent = "Copy to clipboard"; }, 1400);
+      }).catch(function(){});
+    }
+    else if(action === "download-brd"){
+      var text2 = document.getElementById("brd-output").value;
+      var blob = new Blob([text2], {type:"text/markdown"});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = (getCurrentProjectMeta().name || "brd").replace(/[^a-z0-9]+/gi,"-").toLowerCase() + "-brd.md";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  });
+
+  document.addEventListener("input", function(e){
+    var t = e.target;
+    if(t.dataset.action === "edit"){
+      var arr = t.dataset.arr, id = t.dataset.id, field = t.dataset.field;
+      var val = t.dataset.numeric ? (t.value === "" ? "" : Number(t.value)) : t.value;
+      var item = projectData[arr].find(function(i){ return i.id === id; });
+      if(item){ item[field] = val; }
+      scheduleSave();
+      if(arr === "processSteps") updateProcessRow(id);
+    }
+    else if(t.dataset.action === "brd-field"){
+      projectData.brd[t.dataset.field] = t.value;
+      scheduleSave();
+    }
+  });
+
+  document.addEventListener("change", function(e){
+    var t = e.target;
+    if(t.dataset.action === "edit"){
+      var arr = t.dataset.arr, id = t.dataset.id, field = t.dataset.field;
+      var item = projectData[arr].find(function(i){ return i.id === id; });
+      if(item){ item[field] = t.value; }
+      scheduleSave();
+    }
+    else if(t.dataset.action === "set-status"){
+      projectData.moduleStatus[t.dataset.module] = t.value;
+      scheduleSave();
+      render();
+    }
+    else if(t.dataset.action === "compliance-link"){
+      var citem = projectData.compliance.find(function(c){ return c.id === t.dataset.id; });
+      if(citem){ citem.linkedStepId = t.value; }
+      scheduleSave();
+    }
+    else if(t.dataset.action === "raci-single"){
+      var stepId = t.dataset.step, role = t.dataset.role;
+      if(!projectData.raci[stepId]) projectData.raci[stepId] = {R:"",A:"",C:[],I:[]};
+      projectData.raci[stepId][role] = t.value;
+      scheduleSave();
+    }
+    else if(t.dataset.action === "raci-multi"){
+      var stepId2 = t.dataset.step, role2 = t.dataset.role, name = t.dataset.name;
+      if(!projectData.raci[stepId2]) projectData.raci[stepId2] = {R:"",A:"",C:[],I:[]};
+      var list = projectData.raci[stepId2][role2] || [];
+      var idx = list.indexOf(name);
+      if(t.checked && idx === -1) list.push(name);
+      if(!t.checked && idx > -1) list.splice(idx,1);
+      projectData.raci[stepId2][role2] = list;
+      scheduleSave();
+    }
+  });
+
+  // ---------------------------------------------------------------
+  // Project open / init
+  // ---------------------------------------------------------------
+  async function openProject(id){
+    currentProjectId = id;
+    projectData = await loadProjectData(id);
+    currentModule = "stakeholders";
+    saveAppState();
+    render();
+  }
+
+  async function init(){
+    await loadProjects();
+    var stateRaw = await safeGet("app-state");
+    var state = stateRaw ? JSON.parse(stateRaw) : null;
+    if(state && state.lastProjectId && projects.find(function(p){ return p.id === state.lastProjectId; })){
+      await openProject(state.lastProjectId);
+    } else {
+      currentModule = "dashboard";
+      render();
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
