@@ -44,6 +44,15 @@ docs/ams/                      AMS case study documents opened in the PDF viewer
 - **AMS documents:** add a PDF to `docs/ams/`, then give its row in `project-ams/index.html` a `data-pdf` path and a `View` button, like the Data Dictionary row.
 - **Testimonials:** short quotes live in the home page carousel. The full recommendations are on the About page.
 
+## SEO and caching
+
+- **Every page's `<head>`** has its own title, description, canonical URL, link-preview tags (Open Graph and Twitter) and structured data, between `<!--seo-->` and `<!--/seo-->`. Keep titles under 60 characters and descriptions between 110 and 160.
+- **Structured data:** a Person and WebSite on the home page, ProfilePage on About, Course on BA Training, and breadcrumbs on the other pages. Check with Google's Rich Results Test after changes.
+- **`sitemap.xml`** lists every public page. Add new pages to it and submit it in Google Search Console. **`robots.txt`** points to the sitemap and keeps `/docs/` out of search.
+- **`404.html`** is the page GitHub Pages shows for missing URLs.
+- **Share image:** `img/og-card.png` (1200×630). **Home-screen icon:** `img/apple-touch-icon.png`.
+- **Cache busting:** pages load `/css/site.css?v=…` and `/js/site.js?v=…`. **Whenever you change `css/site.css` or `js/site.js`, change the `v=` value on every page.** Otherwise browsers can pair new pages with an old cached stylesheet for up to 10 minutes, which shows up as black dock icons or a squeezed photo.
+
 ## Design notes
 
 - White editorial layout: Instrument Serif headings, Inter body text, JetBrains Mono labels.
