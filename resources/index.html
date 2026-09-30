@@ -1,86 +1,142 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Resources · Ubon Udonkang</title>
-  <link rel="stylesheet" href="/css/style.css"/>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%230A0A0A'/><text x='16' y='22' text-anchor='middle' font-family='monospace' font-size='12' font-weight='700' fill='white'>UU</text></svg>"/>
+  <meta name="description" content="Practical tools, templates and guides for business analysts, built from real fintech and banking delivery."/>
+  <meta name="theme-color" content="#FFFFFF"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap"/>
+  <link rel="stylesheet" href="/css/site.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23111'/><text x='16' y='22.5' text-anchor='middle' font-family='Georgia,serif' font-size='16' fill='white'>U</text></svg>"/>
+  <script>document.documentElement.classList.add('js')</script>
 </head>
 <body>
-<header class="topbar">
-  <a class="topbar__logo" href="/">Ubon Udonkang</a>
-  <div class="topbar__right"><span data-clock>00:00:00 WAT</span></div>
+
+<header class="topbar" id="topbar">
+  <a class="topbar__name" href="/">Ubon Udonkang</a>
+  <div class="topbar__meta">
+    <span class="avail"><span class="avail__dot"></span>Available</span>
+    <span class="topbar__clock" data-clock>00:00 WAT</span>
+  </div>
 </header>
 
-<main class="page-in">
-<div class="col">
+<main>
 
-  <section class="phero">
-    <span class="lbl">Resources &amp; Store</span>
-    <h1>Tools and Guides</h1>
+  <section class="phero wrap">
+    <div class="phero__label"><span class="label">Resources &amp; store</span></div>
+    <h1 class="phero__title">Tools and <em>guides</em></h1>
     <p class="phero__sub">Practical resources built from real fintech and BA experience. Available to download, use, or purchase.</p>
   </section>
 
-  <section class="sec" style="border-top:none; padding-top:52px;">
-    <div class="sec__hd"><span class="sec__title">Paid</span></div>
-    <div class="res-list rvg">
-      <a href="/ba-training/" class="res-row rv" style="display:flex;">
-        <div class="res-left"><div class="res-ico">🎓</div><div><div class="res-title">BA Bridge Cohort</div><div class="res-desc">12-week live cohort into IT business analysis · Enrolling for November 2026</div></div></div>
-        <div class="res-right"><span class="res-badge badge-paid">Cohort</span><span class="res-price">₦80,000</span><span class="res-arr">↗</span></div>
-      </a>
-      <a href="https://selar.co" target="_blank" rel="noopener" class="res-row rv" style="display:flex;">
-        <div class="res-left"><div class="res-ico">📘</div><div><div class="res-title">Apply Like You Mean It</div><div class="res-desc">The Audacity Advantage for Job Seekers · Ebook</div></div></div>
-        <div class="res-right"><span class="res-badge badge-paid">Ebook</span><span class="res-price">₦5,000</span><span class="res-arr">↗</span></div>
-      </a>
-      <a href="/contact/" class="res-row rv" style="display:flex;">
-        <div class="res-left"><div class="res-ico">📋</div><div><div class="res-title">4C Framework Starter Kit</div><div class="res-desc">Templates, facilitation guides, and workshop scripts for stakeholder alignment</div></div></div>
-        <div class="res-right"><span class="res-badge badge-paid">Template Pack</span><span class="res-price">₦8,000</span><span class="res-arr">↗</span></div>
-      </a>
-      <a href="/contact/" class="res-row rv" style="display:flex;">
-        <div class="res-left"><div class="res-ico">💬</div><div><div class="res-title">1:1 BA Advisory Session</div><div class="res-desc">60-minute live session; requirements, career, or delivery challenges</div></div></div>
-        <div class="res-right"><span class="res-badge badge-paid">Session</span><span class="res-price">₦15,000/hr</span><span class="res-arr">↗</span></div>
-      </a>
+  <section class="wrap">
+    <div class="res-group rv">
+      <div class="res-group__hd"><h2>Paid</h2><span class="label">4 items</span></div>
+      <div class="res">
+        <a href="/ba-training/" class="res-row">
+          <span class="res-row__n">P-01</span>
+          <span><span class="res-row__title">BA Bridge Cohort</span><span class="res-row__desc" style="display:block">12-week live cohort into IT business analysis · Enrolling for November 2026</span></span>
+          <span class="res-row__kind">Cohort</span>
+          <span class="res-row__price">₦80,000</span>
+        </a>
+        <a href="https://selar.co" target="_blank" rel="noopener" class="res-row">
+          <span class="res-row__n">P-02</span>
+          <span><span class="res-row__title">Apply Like You Mean It</span><span class="res-row__desc" style="display:block">The Audacity Advantage for Job Seekers · Ebook</span></span>
+          <span class="res-row__kind">Ebook</span>
+          <span class="res-row__price">₦5,000</span>
+        </a>
+        <a href="/contact/" class="res-row">
+          <span class="res-row__n">P-03</span>
+          <span><span class="res-row__title">4C Framework Starter Kit</span><span class="res-row__desc" style="display:block">Templates, facilitation guides, and workshop scripts for stakeholder alignment</span></span>
+          <span class="res-row__kind">Template pack</span>
+          <span class="res-row__price">₦8,000</span>
+        </a>
+        <a href="/contact/" class="res-row">
+          <span class="res-row__n">P-04</span>
+          <span><span class="res-row__title">1:1 BA Advisory Session</span><span class="res-row__desc" style="display:block">60-minute live session; requirements, career, or delivery challenges</span></span>
+          <span class="res-row__kind">Session</span>
+          <span class="res-row__price">₦15,000/hr</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="res-group rv">
+      <div class="res-group__hd"><h2>Free tools</h2><span class="label">2 items</span></div>
+      <div class="res">
+        <a href="/contact/" class="res-row">
+          <span class="res-row__n">T-01</span>
+          <span><span class="res-row__title">BA Workbench</span><span class="res-row__desc" style="display:block">Stakeholder Tracker, RPA Scorer, BRD Generator, RACI Converter, Compliance Tracker; all in one HTML file</span></span>
+          <span class="res-row__kind">Tool</span>
+          <span class="res-row__price">Free</span>
+        </a>
+        <a href="/contact/" class="res-row">
+          <span class="res-row__n">T-02</span>
+          <span><span class="res-row__title">RPA Business Case Template</span><span class="res-row__desc" style="display:block">Excel-based business case with ROI formulas, cost-benefit tables, and risk sections from live banking deployments</span></span>
+          <span class="res-row__kind">Template</span>
+          <span class="res-row__price">Free</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="res-group rv">
+      <div class="res-group__hd"><h2>Free guides</h2><span class="label">2 items</span></div>
+      <div class="res">
+        <a href="/contact/" class="res-row">
+          <span class="res-row__n">G-01</span>
+          <span><span class="res-row__title">Nigeria Open Banking Primer</span><span class="res-row__desc" style="display:block">CBN Operational Guidelines decoded for BAs, fintechs, and banks</span></span>
+          <span class="res-row__kind">Guide</span>
+          <span class="res-row__price">Free</span>
+        </a>
+        <a href="/contact/" class="res-row">
+          <span class="res-row__n">G-02</span>
+          <span><span class="res-row__title">BRD Checklist</span><span class="res-row__desc" style="display:block">40-point quality checklist for Business Requirements Documents; built from five years of review feedback</span></span>
+          <span class="res-row__kind">Checklist</span>
+          <span class="res-row__price">Free</span>
+        </a>
+      </div>
     </div>
   </section>
 
-  <section class="sec">
-    <div class="sec__hd"><span class="sec__title">Free Tools</span></div>
-    <div class="res-list rvg">
-      <a href="/contact/" class="res-row rv" style="display:flex;">
-        <div class="res-left"><div class="res-ico">⚙️</div><div><div class="res-title">BA Workbench</div><div class="res-desc">Stakeholder Tracker, RPA Scorer, BRD Generator, RACI Converter, Compliance Tracker; all in one HTML file</div></div></div>
-        <div class="res-right"><span class="res-badge badge-tool">Tool</span><span class="res-price">Free</span><span class="res-arr">↗</span></div>
-      </a>
-      <a href="/contact/" class="res-row rv" style="display:flex;">
-        <div class="res-left"><div class="res-ico">📊</div><div><div class="res-title">RPA Business Case Template</div><div class="res-desc">Excel-based business case with ROI formulas, cost-benefit tables, and risk sections from live banking deployments</div></div></div>
-        <div class="res-right"><span class="res-badge badge-tool">Template</span><span class="res-price">Free</span><span class="res-arr">↗</span></div>
-      </a>
+  <section class="wrap sec--last">
+    <div class="band rv">
+      <div>
+        <span class="label">Now enrolling</span>
+        <h2>The BA Bridge Cohort starts in <em>November.</em></h2>
+      </div>
+      <div class="hero__actions">
+        <a href="/ba-training/" class="btn btn-primary">See the cohort <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+        <a href="/contact/" class="btn btn-line">Ask a question</a>
+      </div>
     </div>
   </section>
 
-  <section class="sec">
-    <div class="sec__hd"><span class="sec__title">Free Guides</span></div>
-    <div class="res-list rvg">
-      <a href="/contact/" class="res-row rv" style="display:flex;">
-        <div class="res-left"><div class="res-ico">🏦</div><div><div class="res-title">Nigeria Open Banking Primer</div><div class="res-desc">CBN Operational Guidelines decoded for BAs, fintechs, and banks</div></div></div>
-        <div class="res-right"><span class="res-badge badge-free">Guide</span><span class="res-price">Free</span><span class="res-arr">↗</span></div>
-      </a>
-      <a href="/contact/" class="res-row rv" style="display:flex;">
-        <div class="res-left"><div class="res-ico">📝</div><div><div class="res-title">BRD Checklist</div><div class="res-desc">40-point quality checklist for Business Requirements Documents; built from five years of review feedback</div></div></div>
-        <div class="res-right"><span class="res-badge badge-free">Checklist</span><span class="res-price">Free</span><span class="res-arr">↗</span></div>
-      </a>
+  <footer class="wrap">
+    <div class="foot">
+      <span>&copy; 2026 Ubon Udonkang · Lagos</span>
+      <div class="foot__links">
+        <a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://github.com/ubonudonkang" target="_blank" rel="noopener">GitHub</a>
+        <a href="mailto:ubonudonkang@gmail.com">Email</a>
+      </div>
     </div>
-  </section>
-
-  <footer class="foot rv">
-    <span class="foot__copy">&copy; 2026 Ubon Udonkang</span>
-    <div class="foot__links"><a href="/contact/" class="foot__link">Get In Touch</a><a href="/projects/" class="foot__link">View Work</a></div>
   </footer>
 
-</div>
 </main>
 
-<nav class="dock"><a href="/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg><span class="dock-tip">Home</span></a><a href="/about/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg><span class="dock-tip">About</span></a><a href="/projects/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg><span class="dock-tip">Work</span></a><a href="/resources/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="dock-tip">Resources</span></a><a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M7 10v8M7 7v.01M11 18v-5a2 2 0 0 1 4 0v5M11 13h4"/></svg><span class="dock-tip">LinkedIn</span></a><a href="/contact/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><span class="dock-tip">Contact</span></a></nav>
-<div class="toast" id="toast"></div>
-<script src="/js/main.js"></script>
+<nav class="dock" aria-label="Site">
+  <a href="/" class="dock-item" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg><span class="dock-tip">Home</span></a>
+  <a href="/about/" class="dock-item" aria-label="About"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg><span class="dock-tip">About</span></a>
+  <a href="/projects/" class="dock-item" aria-label="Work"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg><span class="dock-tip">Work</span></a>
+  <a href="/ba-training/" class="dock-item" aria-label="BA Training"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5 12 5l10 4.5-10 4.5Z"/><path d="M6 11.3V16c0 1.4 2.7 3 6 3s6-1.6 6-3v-4.7"/><path d="M22 9.5V15"/></svg><span class="dock-tip">BA Training</span></a>
+  <a href="/resources/" class="dock-item" aria-label="Resources"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="dock-tip">Resources</span></a>
+  <span class="dock-sep" aria-hidden="true"></span>
+  <a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener" class="dock-item" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M7 10v8M7 7v.01M11 18v-5a2 2 0 0 1 4 0v5M11 13h4"/></svg><span class="dock-tip">LinkedIn</span></a>
+  <a href="/contact/" class="dock-item" aria-label="Contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><span class="dock-tip">Contact</span></a>
+</nav>
+
+<div class="toast" id="toast" role="status"></div>
+<script src="/js/site.js"></script>
 </body>
 </html>
