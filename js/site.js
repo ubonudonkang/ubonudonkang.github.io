@@ -69,6 +69,12 @@ document.addEventListener('keydown', e => {
   if (e.key.toLowerCase() === 'c' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) copyEmail();
 });
 document.querySelectorAll('[data-copy-email]').forEach(el => el.addEventListener('click', copyEmail));
+document.querySelectorAll('[data-copy-text]').forEach(el => el.addEventListener('click', () => {
+  const text = el.dataset.copyText;
+  navigator.clipboard.writeText(text)
+    .then(() => toast(el.dataset.copyLabel || 'Copied'))
+    .catch(() => toast(text));
+}));
 
 /* ── Dock: magnification + active state ─────────────────────── */
 (function dock() {

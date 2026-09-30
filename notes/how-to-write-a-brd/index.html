@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap"/>
-  <link rel="stylesheet" href="/css/site.css?v=4a3558e7"/>
+  <link rel="stylesheet" href="/css/site.css?v=1ed8c252"/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23111'/><text x='16' y='22.5' text-anchor='middle' font-family='Georgia,serif' font-size='16' fill='white'>U</text></svg>"/>
   <script>document.documentElement.classList.add('js')</script>
   <link rel="alternate" type="application/rss+xml" title="Notes · Ubon Udonkang" href="/notes/feed.xml"/>
@@ -28,8 +28,9 @@
   <meta name="twitter:description" content="How to write a business requirements document that gets signed off: a section-by-section structure, a worked banking example and a 20-point quality checklist."/>
   <meta name="twitter:image" content="https://ubonudonkang.com/img/og-card.png"/>
   <link rel="apple-touch-icon" href="/img/apple-touch-icon.png"/>
+  <script data-goatcounter="https://ubonudonkang.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
   <meta property="og:url" content="https://ubonudonkang.com/notes/how-to-write-a-brd/"/>
-  <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "How to Write a BRD: Structure, Example and Checklist", "description": "How to write a business requirements document that gets signed off: a section-by-section structure, a worked banking example and a 20-point quality checklist.", "url": "https://ubonudonkang.com/notes/how-to-write-a-brd/", "mainEntityOfPage": "https://ubonudonkang.com/notes/how-to-write-a-brd/", "image": "https://ubonudonkang.com/img/og-card.png", "datePublished": "2026-09-30", "dateModified": "2026-09-30", "articleSection": "Practice", "inLanguage": "en", "wordCount": 791, "author": {"@type": "Person", "@id": "https://ubonudonkang.com/#person", "name": "Ubon Udonkang", "url": "https://ubonudonkang.com/about/"}, "publisher": {"@id": "https://ubonudonkang.com/#person"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://ubonudonkang.com/"}, {"@type": "ListItem", "position": 2, "name": "Notes", "item": "https://ubonudonkang.com/notes/"}, {"@type": "ListItem", "position": 3, "name": "How to Write a BRD: Structure, Example and Checklist", "item": "https://ubonudonkang.com/notes/how-to-write-a-brd/"}]}]}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "How to Write a BRD: Structure, Example and Checklist", "description": "How to write a business requirements document that gets signed off: a section-by-section structure, a worked banking example and a 20-point quality checklist.", "url": "https://ubonudonkang.com/notes/how-to-write-a-brd/", "mainEntityOfPage": "https://ubonudonkang.com/notes/how-to-write-a-brd/", "image": "https://ubonudonkang.com/img/og-card.png", "datePublished": "2026-09-30", "dateModified": "2026-09-30", "articleSection": "Practice", "inLanguage": "en", "wordCount": 996, "author": {"@type": "Person", "@id": "https://ubonudonkang.com/#person", "name": "Ubon Udonkang", "url": "https://ubonudonkang.com/about/"}, "publisher": {"@id": "https://ubonudonkang.com/#person"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://ubonudonkang.com/"}, {"@type": "ListItem", "position": 2, "name": "Notes", "item": "https://ubonudonkang.com/notes/"}, {"@type": "ListItem", "position": 3, "name": "How to Write a BRD: Structure, Example and Checklist", "item": "https://ubonudonkang.com/notes/how-to-write-a-brd/"}]}]}</script>
   <!--/seo-->
 </head>
 <body>
@@ -47,7 +48,7 @@
   <article>
     <section class="phero wrap">
       <a href="/notes/" class="phero__back"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8H3M7 4 3 8l4 4"/></svg>Notes</a>
-      <div class="phero__label"><span class="label">Practice</span><span class="label">4 min read</span></div>
+      <div class="phero__label"><span class="label">Practice</span><span class="label">5 min read</span></div>
       <h1 class="phero__title phero__title--article">How to Write a BRD: Structure, Example and Checklist</h1>
       <p class="phero__sub">A business requirements document has one job: get the people who fund, build and use a solution to agree on what it must do, before anyone builds it. Most BRDs fail that job not because they're short, but because they're vague. Here's how to write one that gets signed off.</p>
       <div class="byline">
@@ -79,8 +80,8 @@
         <section class="cs-sec rv" id="what-a-brd-is-and-what-it-isn-t">
           <h2><span>01</span>What a BRD is, and what it isn't</h2>
           <div class="prose article-prose">
-            <p>A BRD describes <strong>what the business needs and why</strong>: the problem, the goals, the scope and the requirements a solution must meet. It is written for business stakeholders first, so it should read clearly to someone who has never seen the system.</p>
-<p>It is not a technical design, and it shouldn't say how developers should build things. That detail belongs in a functional specification or in user stories.</p>
+            <p>A BRD describes <strong>what the business needs and why</strong>: the problem, the goals, the scope, the business requirements, and the functional requirements a solution must meet to deliver them. It is written for business stakeholders first, so it should read clearly to someone who has never seen the system.</p>
+<p>It is not a technical design. Functional requirements say <em>what</em> the system must do; screen layouts, database fields and integration detail belong in a functional specification, a design document or user stories.</p>
           </div>
         </section>
         <section class="cs-sec rv" id="before-you-write-settle-three-things">
@@ -106,11 +107,12 @@
     <tr><td>5. Stakeholders</td><td>Who is affected, who decides and who needs to be kept informed</td></tr>
     <tr><td>6. Current process</td><td>The as-is process, ideally as a process map with its pain points marked</td></tr>
     <tr><td>7. Future process</td><td>The to-be process and what changes for each role</td></tr>
-    <tr><td>8. Business requirements</td><td>Numbered, prioritised requirements, each testable</td></tr>
-    <tr><td>9. Non-functional requirements</td><td>Security, audit, availability, performance, regulatory needs</td></tr>
-    <tr><td>10. Assumptions, constraints and dependencies</td><td>What you are relying on, and what could stop delivery</td></tr>
+    <tr><td>8. Business requirements</td><td>What the business must be able to do, numbered and prioritised</td></tr>
+    <tr><td>9. Functional requirements</td><td>What the system must do to meet each business requirement: numbered, prioritised, traced to a business requirement, and often backed by a use case with its trigger, preconditions, normal flow and failure conditions</td></tr>
+    <tr><td>10. Non-functional requirements</td><td>Security, audit, availability, performance, regulatory needs</td></tr>
     <tr><td>11. Reporting and notifications</td><td>Reports, alerts and who receives them</td></tr>
-    <tr><td>12. Sign-off</td><td>Names, roles, dates and signatures</td></tr>
+    <tr><td>12. Assumptions, constraints and dependencies</td><td>What you are relying on, and what could stop delivery</td></tr>
+    <tr><td>13. Sign-off</td><td>Names, roles, dates and signatures</td></tr>
   </tbody>
 </table></div>
           </div>
@@ -118,7 +120,7 @@
         <section class="cs-sec rv" id="a-worked-example-a-treasury-bill-request">
           <h2><span>04</span>A worked example: a treasury bill request</h2>
           <div class="prose article-prose">
-            <p>Imagine a bank that lets customers subscribe to treasury bills online. Here is how a few requirements might read in the BRD. Each is numbered, has a priority, and can be tested.</p>
+            <p>Imagine a bank that lets customers subscribe to treasury bills online. Here is how a few business requirements might read in the BRD. Each is numbered, has a priority, and can be tested.</p>
 <div class="table-wrap"><table>
   <thead><tr><th>ID</th><th>Requirement</th><th>Priority</th></tr></thead>
   <tbody>
@@ -129,7 +131,18 @@
     <tr><td>BR-05</td><td>The customer must receive an email at submission, approval or rejection, and settlement.</td><td>Should</td></tr>
   </tbody>
 </table></div>
-<p>Notice what's missing: screen layouts, database fields and API names. Those come later, in the functional specification.</p>
+<p>The functional requirements then say what the system must do to meet them. Each one traces back to a business requirement:</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>ID</th><th>Functional requirement</th><th>Traces to</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr><td>FR-01</td><td>When the customer selects a tenor and amount, the system shall retrieve their available balance and account status from core banking.</td><td>BR-02</td><td>High</td></tr>
+    <tr><td>FR-02</td><td>If the available balance is less than the investment amount plus charges, or the account is inactive or dormant, the system shall block submission and tell the customer why.</td><td>BR-02</td><td>High</td></tr>
+    <tr><td>FR-03</td><td>On submission, the system shall place a hold equal to the investment amount on the customer's account.</td><td>BR-03</td><td>High</td></tr>
+    <tr><td>FR-04</td><td>The system shall not allow the officer who reviewed a request to also approve it.</td><td>BR-04</td><td>High</td></tr>
+    <tr><td>FR-05</td><td>The system shall email the customer when a request is submitted, approved, rejected and settled.</td><td>BR-05</td><td>Medium</td></tr>
+  </tbody>
+</table></div>
+<p>Notice what's still missing: screen layouts, database fields and API names. Those belong in the design, not the BRD.</p>
           </div>
         </section>
         <section class="cs-sec rv" id="write-requirements-people-can-build-and-test-from">
@@ -165,14 +178,14 @@
   <li>Version, author and approvers are listed.</li>
   <li>The problem is stated in business terms, with its impact.</li>
   <li>Objectives are measurable.</li>
-  <li>In-scope items are listed.</li>
-  <li>Out-of-scope items are listed.</li>
+  <li>In-scope and out-of-scope items are both listed.</li>
   <li>All affected stakeholders are identified.</li>
   <li>The as-is process is mapped.</li>
   <li>The to-be process is mapped.</li>
   <li>Every requirement has a unique ID.</li>
   <li>Every requirement has a priority.</li>
   <li>Every requirement is testable.</li>
+  <li>Every functional requirement traces back to a business requirement.</li>
   <li>No requirement prescribes a technical solution without a reason.</li>
   <li>Exceptions and failure scenarios are covered.</li>
   <li>Non-functional requirements are included (security, audit, performance).</li>
@@ -196,7 +209,7 @@
             <div class="qa">
             <details>
               <summary>What is the difference between a BRD and an FRS?</summary>
-              <p>A BRD describes what the business needs and why, for business stakeholders. An FRS describes how the system will behave to meet those needs, in more detail, for the delivery team.</p>
+              <p>A BRD sets out what the business needs and why, including the functional requirements a solution must meet, and is written for business stakeholders. An FRS goes further into how the system will behave, in more technical detail, for the delivery team.</p>
             </details>
             <details>
               <summary>How long should a BRD be?</summary>
@@ -286,6 +299,6 @@
 </nav>
 
 <div class="toast" id="toast" role="status"></div>
-<script src="/js/site.js?v=638b42d9"></script>
+<script src="/js/site.js?v=fc8dc38a"></script>
 </body>
 </html>
