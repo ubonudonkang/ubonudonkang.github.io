@@ -1,6 +1,6 @@
 # Ubon Udonkang · Portfolio v6
 
-**Live site:** https://ubonudonkang.github.io
+**Live site:** https://ubonudonkang.com (custom domain, set in `CNAME`; `ubonudonkang.github.io` redirects here)
 
 A static site served by GitHub Pages from the root of `main`. There is no build step: edit the HTML, CSS and JS directly.
 
