@@ -1,108 +1,144 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Work · Ubon Udonkang</title>
-  <link rel="stylesheet" href="/css/style.css"/>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%230A0A0A'/><text x='16' y='22' text-anchor='middle' font-family='monospace' font-size='12' font-weight='700' fill='white'>UU</text></svg>"/>
+  <meta name="description" content="Six engagements across banking, fintech and government: requirements, RPA and digital transformation case studies."/>
+  <meta name="theme-color" content="#FFFFFF"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap"/>
+  <link rel="stylesheet" href="/css/site.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23111'/><text x='16' y='22.5' text-anchor='middle' font-family='Georgia,serif' font-size='16' fill='white'>U</text></svg>"/>
+  <script>document.documentElement.classList.add('js')</script>
 </head>
 <body>
-<header class="topbar">
-  <a class="topbar__logo" href="/">Ubon Udonkang</a>
-  <div class="topbar__right"><span data-clock>00:00:00 WAT</span></div>
+
+<header class="topbar" id="topbar">
+  <a class="topbar__name" href="/">Ubon Udonkang</a>
+  <div class="topbar__meta">
+    <span class="avail"><span class="avail__dot"></span>Available</span>
+    <span class="topbar__clock" data-clock>00:00 WAT</span>
+  </div>
 </header>
 
-<main class="page-in">
-<div class="col">
+<main>
 
-  <section class="phero">
-    <span class="lbl">Portfolio</span>
-    <h1>Work</h1>
-    <p class="phero__sub">Six engagements across banking, fintech, and government. Click any card to read the full case study.</p>
+  <section class="phero wrap">
+    <div class="phero__label"><span class="label">Portfolio</span><span class="label">Banking · Fintech · Government</span></div>
+    <h1 class="phero__title">Work</h1>
+    <p class="phero__sub">Six engagements across banking, fintech, and government. Open any card to read the full case study.</p>
   </section>
 
-  <section class="sec" style="border-top:none; padding-top:44px;">
-    <div class="dk-grid rvg">
-
-      <a href="/project-rights-issue/" class="dk-card rv">
-        <div class="dk-card__vis dk-g1"><span class="dk-card__metric">₦365B</span></div>
-        <div class="dk-card__body">
-          <div class="dk-card__co">Access Bank PLC</div>
-          <div class="dk-card__title">₦365B Rights Issue Digitisation</div>
-          <div class="dk-card__desc">End-to-end digitisation of a ₦365 billion rights issue; paper-to-digital workflow mapping, FRS authoring, and zero-error data validation at capital-markets scale.</div>
-          <div class="dk-card__tags"><span class="dk-tag">Capital Markets</span><span class="dk-tag">FRS</span><span class="dk-tag">Digitisation</span></div>
+  <section class="wrap">
+    <div class="work work--even">
+      <a href="/project-rights-issue/" class="work-card rv">
+        <div class="work-card__top"><span>Access Bank PLC</span><span>Capital markets</span></div>
+        <div class="work-card__metric">₦365B</div>
+        <div>
+          <h2 class="work-card__title">₦365B Rights Issue Digitisation</h2>
+          <p class="work-card__desc">End-to-end digitisation of a ₦365 billion rights issue; paper-to-digital workflow mapping, FRS authoring, and zero-error data validation at capital-markets scale.</p>
+          <div class="tags"><span class="tag">Capital Markets</span><span class="tag">FRS</span><span class="tag">Digitisation</span></div>
         </div>
+        <span class="work-card__arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </a>
 
-      <a href="/project-ams/" class="dk-card rv">
-        <div class="dk-card__vis dk-g2"><span class="dk-card__metric">6 Modules</span></div>
-        <div class="dk-card__body">
-          <div class="dk-card__co">Client: Classified</div>
-          <div class="dk-card__title">Accounting Management System</div>
-          <div class="dk-card__desc">Sole BA for a government agency AMS implementation; end-to-end requirements for voucher workflow automation, GL management, budget tracking, and GIFMIS integration.</div>
-          <div class="dk-card__tags"><span class="dk-tag">AMS</span><span class="dk-tag">GIFMIS</span><span class="dk-tag">GL Posting</span><span class="dk-tag">Government</span></div>
+      <a href="/project-ams/" class="work-card rv">
+        <div class="work-card__top"><span>Client: Classified</span><span>Government</span></div>
+        <div class="work-card__metric">6 modules</div>
+        <div>
+          <h2 class="work-card__title">Accounting Management System</h2>
+          <p class="work-card__desc">Sole BA for a government agency AMS implementation; end-to-end requirements for voucher workflow automation, GL management, budget tracking, and GIFMIS integration.</p>
+          <div class="tags"><span class="tag">AMS</span><span class="tag">GIFMIS</span><span class="tag">GL Posting</span><span class="tag">Government</span></div>
         </div>
+        <span class="work-card__arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </a>
 
-      <a href="/project-rpa-treasury/" class="dk-card rv">
-        <div class="dk-card__vis dk-g3"><span class="dk-card__metric">8h → 45m</span></div>
-        <div class="dk-card__body">
-          <div class="dk-card__co">Access Bank PLC</div>
-          <div class="dk-card__title">RPA Automation for Treasury Digitalization</div>
-          <div class="dk-card__desc">Designed and delivered RPA for GL reconciliation, KYC onboarding, and treasury operations; cutting reconciliation cycle time by 89% across banking operations.</div>
-          <div class="dk-card__tags"><span class="dk-tag">RPA</span><span class="dk-tag">Treasury</span><span class="dk-tag">Banking Ops</span></div>
+      <a href="/project-rpa-treasury/" class="work-card rv">
+        <div class="work-card__top"><span>Access Bank PLC</span><span>Banking ops</span></div>
+        <div class="work-card__metric">8h → 45m</div>
+        <div>
+          <h2 class="work-card__title">RPA Automation for Treasury Digitalization</h2>
+          <p class="work-card__desc">Designed and delivered RPA for GL reconciliation, KYC onboarding, and treasury operations; cutting reconciliation cycle time by 89% across banking operations.</p>
+          <div class="tags"><span class="tag">RPA</span><span class="tag">Treasury</span><span class="tag">Banking Ops</span></div>
         </div>
+        <span class="work-card__arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </a>
 
-      <a href="/project-open-banking/" class="dk-card rv">
-        <div class="dk-card__vis dk-g4"><span class="dk-card__metric">CBN-Ready</span></div>
-        <div class="dk-card__body">
-          <div class="dk-card__co">Bluechip Technologies</div>
-          <div class="dk-card__title">Open Banking Implementation</div>
-          <div class="dk-card__desc">Authored BRDs, BPMN process flows, and API documentation for Nigeria's Open Banking rollout; aligned to CBN Operational Guidelines for multiple financial institutions.</div>
-          <div class="dk-card__tags"><span class="dk-tag">Open Banking</span><span class="dk-tag">CBN</span><span class="dk-tag">BRD</span><span class="dk-tag">API Docs</span></div>
+      <a href="/project-open-banking/" class="work-card rv">
+        <div class="work-card__top"><span>Bluechip Technologies</span><span>Regulatory</span></div>
+        <div class="work-card__metric">CBN-ready</div>
+        <div>
+          <h2 class="work-card__title">Open Banking Implementation</h2>
+          <p class="work-card__desc">Authored BRDs, BPMN process flows, and API documentation for Nigeria's Open Banking rollout; aligned to CBN Operational Guidelines for multiple financial institutions.</p>
+          <div class="tags"><span class="tag">Open Banking</span><span class="tag">CBN</span><span class="tag">BRD</span><span class="tag">API Docs</span></div>
         </div>
+        <span class="work-card__arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </a>
 
-      <a href="/project-bid-management/" class="dk-card rv">
-        <div class="dk-card__vis dk-g5"><span class="dk-card__metric">72 Reqs</span></div>
-        <div class="dk-card__body">
-          <div class="dk-card__co">Bluechip Technologies</div>
-          <div class="dk-card__title">Bid Management Platform Digitisation</div>
-          <div class="dk-card__desc">72 functional requirements across 9 epics for a Power Platform, SharePoint, and Odoo procurement platform; full RTM and FRS signed off on delivery.</div>
-          <div class="dk-card__tags"><span class="dk-tag">Power Platform</span><span class="dk-tag">SharePoint</span><span class="dk-tag">RTM</span><span class="dk-tag">FRS</span></div>
+      <a href="/project-bid-management/" class="work-card rv">
+        <div class="work-card__top"><span>Bluechip Technologies</span><span>Procurement</span></div>
+        <div class="work-card__metric">72 reqs</div>
+        <div>
+          <h2 class="work-card__title">Bid Management Platform Digitisation</h2>
+          <p class="work-card__desc">72 functional requirements across 9 epics for a Power Platform, SharePoint, and Odoo procurement platform; full RTM and FRS signed off on delivery.</p>
+          <div class="tags"><span class="tag">Power Platform</span><span class="tag">SharePoint</span><span class="tag">RTM</span><span class="tag">FRS</span></div>
         </div>
+        <span class="work-card__arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </a>
 
-      <a href="/project-loan-approval/" class="dk-card rv">
-        <div class="dk-card__vis dk-g6"><span class="dk-card__metric">13+ Markets</span></div>
-        <div class="dk-card__body">
-          <div class="dk-card__co">Access Bank PLC</div>
-          <div class="dk-card__title">Loan Approval Automation for African Subsidiaries</div>
-          <div class="dk-card__desc">Standardised cross-border loan approval RPA across 13+ African subsidiaries including Congo, Rwanda, Gambia, Cameroon, and Kenya; adapting workflows to local regulation per market.</div>
-          <div class="dk-card__tags"><span class="dk-tag">RPA</span><span class="dk-tag">Cross-border</span><span class="dk-tag">Loan Ops</span><span class="dk-tag">Compliance</span></div>
+      <a href="/project-loan-approval/" class="work-card rv">
+        <div class="work-card__top"><span>Access Bank PLC</span><span>Cross-border</span></div>
+        <div class="work-card__metric">13+ markets</div>
+        <div>
+          <h2 class="work-card__title">Loan Approval Automation for African Subsidiaries</h2>
+          <p class="work-card__desc">Standardised cross-border loan approval RPA across 13+ African subsidiaries including Congo, Rwanda, Gambia, Cameroon, and Kenya; adapting workflows to local regulation per market.</p>
+          <div class="tags"><span class="tag">RPA</span><span class="tag">Cross-border</span><span class="tag">Loan Ops</span><span class="tag">Compliance</span></div>
         </div>
+        <span class="work-card__arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </a>
-
     </div>
   </section>
 
-  <footer class="foot rv">
-    <span class="foot__copy">&copy; 2026 Ubon Udonkang</span>
-    <div class="foot__links"><a href="/contact/" class="foot__link">Hire Me</a><a href="/about/" class="foot__link">About</a></div>
+  <section class="wrap sec--last">
+    <div class="band rv">
+      <div>
+        <span class="label">Next step</span>
+        <h2>Have a brief that needs <em>untangling?</em></h2>
+      </div>
+      <div class="hero__actions">
+        <a href="/contact/" class="btn btn-primary">Hire me <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+        <a href="/about/" class="btn btn-line">About me</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="wrap">
+    <div class="foot">
+      <span>&copy; 2026 Ubon Udonkang · Lagos</span>
+      <div class="foot__links">
+        <a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://github.com/ubonudonkang" target="_blank" rel="noopener">GitHub</a>
+        <a href="mailto:ubonudonkang@gmail.com">Email</a>
+      </div>
+    </div>
   </footer>
-</div>
+
 </main>
 
-<nav class="dock">
-  <a href="/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg><span class="dock-tip">Home</span></a>
-  <a href="/about/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg><span class="dock-tip">About</span></a>
-  <a href="/projects/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg><span class="dock-tip">Work</span></a>
-  <a href="/resources/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="dock-tip">Resources</span></a>
-  <a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M7 10v8M7 7v.01M11 18v-5a2 2 0 0 1 4 0v5M11 13h4"/></svg><span class="dock-tip">LinkedIn</span></a>
-  <a href="/contact/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><span class="dock-tip">Contact</span></a>
+<nav class="dock" aria-label="Site">
+  <a href="/" class="dock-item" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg><span class="dock-tip">Home</span></a>
+  <a href="/about/" class="dock-item" aria-label="About"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg><span class="dock-tip">About</span></a>
+  <a href="/projects/" class="dock-item" aria-label="Work"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg><span class="dock-tip">Work</span></a>
+  <a href="/ba-training/" class="dock-item" aria-label="BA Training"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5 12 5l10 4.5-10 4.5Z"/><path d="M6 11.3V16c0 1.4 2.7 3 6 3s6-1.6 6-3v-4.7"/><path d="M22 9.5V15"/></svg><span class="dock-tip">BA Training</span></a>
+  <a href="/resources/" class="dock-item" aria-label="Resources"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="dock-tip">Resources</span></a>
+  <span class="dock-sep" aria-hidden="true"></span>
+  <a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener" class="dock-item" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M7 10v8M7 7v.01M11 18v-5a2 2 0 0 1 4 0v5M11 13h4"/></svg><span class="dock-tip">LinkedIn</span></a>
+  <a href="/contact/" class="dock-item" aria-label="Contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><span class="dock-tip">Contact</span></a>
 </nav>
-<div class="toast" id="toast"></div>
-<script src="/js/main.js"></script>
+
+<div class="toast" id="toast" role="status"></div>
+<script src="/js/site.js"></script>
 </body>
 </html>

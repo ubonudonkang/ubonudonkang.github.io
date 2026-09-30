@@ -1,62 +1,158 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Loan Approval Automation · Ubon Udonkang</title>
-  <link rel="stylesheet" href="/css/style.css"/>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%230A0A0A'/><text x='16' y='22' text-anchor='middle' font-family='monospace' font-size='12' font-weight='700' fill='white'>UU</text></svg>"/>
+  <meta name="description" content="Loan Approval Automation for African Subsidiaries: a case study by Ubon Udonkang, Senior Business Analyst."/>
+  <meta name="theme-color" content="#FFFFFF"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap"/>
+  <link rel="stylesheet" href="/css/site.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23111'/><text x='16' y='22.5' text-anchor='middle' font-family='Georgia,serif' font-size='16' fill='white'>U</text></svg>"/>
+  <script>document.documentElement.classList.add('js')</script>
 </head>
 <body>
-<header class="topbar"><a class="topbar__logo" href="/">Ubon Udonkang</a><div class="topbar__right"><span data-clock>00:00:00 WAT</span></div></header>
-<main class="page-in">
-<div class="col">
-  <section class="proj-hero">
-    <a href="/projects/" style="font-family:var(--fm);font-size:.65rem;color:var(--dim);display:inline-flex;align-items:center;gap:5px;margin-bottom:16px;">← Back to Work</a>
-    <span class="lbl">Access Bank PLC · Cross-border / Lending · 2020–2022</span>
-    <div class="proj-hero__vis dk-g6" style="margin-top:18px;">
-      <div><div class="proj-hero__co">ACCESS BANK PLC</div><div class="proj-hero__title">Loan Approval Automation for African Subsidiaries</div><div class="proj-hero__metric">13+ Markets</div></div>
-    </div>
-    <div class="proj-meta-row rv">
-      <div class="proj-meta-item"><div class="proj-meta-lbl">Role</div><div class="proj-meta-val">Lead Business Analyst</div></div>
-      <div class="proj-meta-item"><div class="proj-meta-lbl">Client</div><div class="proj-meta-val">Access Bank PLC (Group)</div></div>
-      <div class="proj-meta-item"><div class="proj-meta-lbl">Markets</div><div class="proj-meta-val">Congo, Rwanda, Gambia, Cameroon, Kenya +</div></div>
-      <div class="proj-meta-item"><div class="proj-meta-lbl">Platform</div><div class="proj-meta-val">ProcessMaker, UiPath</div></div>
+
+<header class="topbar" id="topbar">
+  <a class="topbar__name" href="/">Ubon Udonkang</a>
+  <div class="topbar__meta">
+    <span class="avail"><span class="avail__dot"></span>Available</span>
+    <span class="topbar__clock" data-clock>00:00 WAT</span>
+  </div>
+</header>
+
+<main>
+
+  <section class="phero wrap">
+    <a href="/projects/" class="phero__back"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8H3M7 4 3 8l4 4"/></svg>All work</a>
+    <div class="phero__label"><span class="label">Access Bank PLC</span><span class="label">Cross-border / Lending</span><span class="label">2020–2022</span></div>
+    <h1 class="phero__title">Loan Approval Automation for African Subsidiaries</h1>
+  </section>
+
+  <section class="wrap">
+    <div class="cs-result rv">
+      <div>
+        <span class="cs-result__cap">ACCESS BANK PLC · Result</span>
+        <div class="cs-result__metric">13+ Markets</div>
+      </div>
+      <dl class="cs-meta">
+          <div><dt>Role</dt><dd>Lead Business Analyst</dd></div>
+          <div><dt>Client</dt><dd>Access Bank PLC (Group)</dd></div>
+          <div><dt>Markets</dt><dd>Congo, Rwanda, Gambia, Cameroon, Kenya +</dd></div>
+          <div><dt>Platform</dt><dd>ProcessMaker, UiPath</dd></div>
+      </dl>
     </div>
   </section>
-  <div class="proj-content rv">
-    <div class="proj-sec"><h3>Overview</h3><p>Access Bank Group operates across 13+ African countries through subsidiary banks. Each subsidiary had its own loan approval process; some manual, some partially automated, but none consistent with the Group standard. This created compliance exposure at Group level, inconsistent customer experience, and delays in FX reconciliation when interbank transfers were involved in multi-country loan structures. I was engaged to lead the requirements work for cross-border loan approval RPA; standardising the workflow while accommodating each market's regulatory requirements.</p></div>
-    <div class="proj-sec"><h3>Challenge</h3><p>The complexity was not technical; it was regulatory and organisational. Each African country has its own banking regulator, its own KYC requirements, its own credit bureau landscape, and its own documentation standards for loan applications. A bot that worked for Nigeria would not work for Rwanda without adaptation. The challenge was to design a "core plus local variant" architecture where the automation framework was standardised but each market's regulatory specifics were handled through configurable rules.</p><p>Markets covered included Congo (DRC), Rwanda, Gambia, Cameroon, and Kenya; each with distinct regulatory frameworks, currency considerations, and local language requirements.</p></div>
-    <div class="proj-sec"><h3>My Approach</h3>
-      <ul>
-        <li>Conducted requirements workshops with subsidiary operations teams in each market (remote and on-site where possible)</li>
-        <li>Mapped the Group-standard loan approval workflow and identified the 8 stages where local regulatory rules diverged</li>
-        <li>Designed a "core plus local variant" RPA architecture; documenting the standard bot specification and a per-market configuration guide</li>
-        <li>Authored local regulatory compliance appendices for each market: Congo (BCC requirements), Rwanda (NBR standards), Gambia (CBG framework), Cameroon (COBAC rules), Kenya (CBK regulations)</li>
-        <li>Coordinated Group Compliance, subsidiary operations, and Group IT alignment on the final specification</li>
-        <li>Led UAT sessions with each subsidiary team before market-specific deployment</li>
-        <li>Produced post-deployment handover documentation and training materials for subsidiary BA teams</li>
-      </ul>
+
+  <section class="wrap sec">
+    <div class="cs">
+      <nav class="cs-toc" aria-label="On this page">
+        <span class="label">Contents</span>
+        <ol>
+          <li><a href="#overview"><span>01</span>Overview</a></li>
+          <li><a href="#challenge"><span>02</span>Challenge</a></li>
+          <li><a href="#my-approach"><span>03</span>My Approach</a></li>
+          <li><a href="#market-regulatory-highlights"><span>04</span>Market Regulatory Highlights</a></li>
+          <li><a href="#tools"><span>05</span>Tools &amp; stack</a></li>
+        </ol>
+      </nav>
+      <div>
+        <section class="cs-sec rv" id="overview">
+          <h2><span>01</span>Overview</h2>
+          <div class="prose">
+            <p>Access Bank Group operates across 13+ African countries through subsidiary banks. Each subsidiary had its own loan approval process; some manual, some partially automated, but none consistent with the Group standard. This created compliance exposure at Group level, inconsistent customer experience, and delays in FX reconciliation when interbank transfers were involved in multi-country loan structures. I was engaged to lead the requirements work for cross-border loan approval RPA; standardising the workflow while accommodating each market's regulatory requirements.</p>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="challenge">
+          <h2><span>02</span>Challenge</h2>
+          <div class="prose">
+            <p>The complexity was not technical; it was regulatory and organisational. Each African country has its own banking regulator, its own KYC requirements, its own credit bureau landscape, and its own documentation standards for loan applications. A bot that worked for Nigeria would not work for Rwanda without adaptation. The challenge was to design a "core plus local variant" architecture where the automation framework was standardised but each market's regulatory specifics were handled through configurable rules.</p><p>Markets covered included Congo (DRC), Rwanda, Gambia, Cameroon, and Kenya; each with distinct regulatory frameworks, currency considerations, and local language requirements.</p>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="my-approach">
+          <h2><span>03</span>My Approach</h2>
+          <div class="prose">
+            <ul>
+              <li>Conducted requirements workshops with subsidiary operations teams in each market (remote and on-site where possible)</li>
+              <li>Mapped the Group-standard loan approval workflow and identified the 8 stages where local regulatory rules diverged</li>
+              <li>Designed a "core plus local variant" RPA architecture; documenting the standard bot specification and a per-market configuration guide</li>
+              <li>Authored local regulatory compliance appendices for each market: Congo (BCC requirements), Rwanda (NBR standards), Gambia (CBG framework), Cameroon (COBAC rules), Kenya (CBK regulations)</li>
+              <li>Coordinated Group Compliance, subsidiary operations, and Group IT alignment on the final specification</li>
+              <li>Led UAT sessions with each subsidiary team before market-specific deployment</li>
+              <li>Produced post-deployment handover documentation and training materials for subsidiary BA teams</li>
+            </ul>
+          </div>
+        </section>
+        <aside class="outcome rv">
+          <span class="label">Outcome</span>
+          <p class="outcome__text">Loan approval RPA deployed across 13+ African markets · Consistent Group-standard processing · Reduced FX reconciliation errors · Per-market regulatory compliance maintained · Subsidiary teams trained and handed over</p>
+          <span class="stamp" aria-hidden="true">DELIVERED<small>SIGNED OFF</small></span>
+        </aside>
+        <section class="cs-sec rv" id="market-regulatory-highlights">
+          <h2><span>04</span>Market Regulatory Highlights</h2>
+          <div class="prose">
+            <ul>
+              <li><strong>Congo (DRC):</strong> BCC-compliant KYC documentation, French-language output requirements</li>
+              <li><strong>Rwanda:</strong> NBR credit bureau integration, RWF currency handling</li>
+              <li><strong>Gambia:</strong> CBG simplified KYC tier system for retail loans</li>
+              <li><strong>Cameroon:</strong> COBAC dual-currency (XAF/USD) loan structuring rules; 60% faster KYC achieved</li>
+              <li><strong>Kenya:</strong> CBK consumer credit regulation, CRB integration requirement</li>
+            </ul>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="tools">
+          <h2><span>05</span>Tools &amp; stack</h2>
+          <div class="tags"><span class="tag">ProcessMaker</span><span class="tag">UiPath</span><span class="tag">BPMN 2.0</span><span class="tag">Cross-border Compliance</span><span class="tag">RPA Bot Specification</span><span class="tag">Multi-market UAT</span><span class="tag">Stakeholder Management</span></div>
+        </section>
+
+        <nav class="cs-nav rv" aria-label="More case studies">
+          <a href="/project-bid-management/"><span class="cs-nav__dir">← Previous</span><span class="cs-nav__title">Bid Management Platform</span></a>
+          <a href="/projects/"><span class="cs-nav__dir">↑ All Projects</span><span class="cs-nav__title">View full portfolio</span></a>
+        </nav>
+      </div>
     </div>
-    <div class="proj-impact-box"><div class="proj-impact-box__label">Outcome</div><div class="proj-impact-box__text">Loan approval RPA deployed across 13+ African markets · Consistent Group-standard processing · Reduced FX reconciliation errors · Per-market regulatory compliance maintained · Subsidiary teams trained and handed over</div></div>
-    <div class="proj-sec"><h3>Market Regulatory Highlights</h3>
-      <ul>
-        <li><strong style="color:var(--ink);">Congo (DRC):</strong> BCC-compliant KYC documentation, French-language output requirements</li>
-        <li><strong style="color:var(--ink);">Rwanda:</strong> NBR credit bureau integration, RWF currency handling</li>
-        <li><strong style="color:var(--ink);">Gambia:</strong> CBG simplified KYC tier system for retail loans</li>
-        <li><strong style="color:var(--ink);">Cameroon:</strong> COBAC dual-currency (XAF/USD) loan structuring rules; 60% faster KYC achieved</li>
-        <li><strong style="color:var(--ink);">Kenya:</strong> CBK consumer credit regulation, CRB integration requirement</li>
-      </ul>
+  </section>
+
+  <section class="wrap sec--last">
+    <div class="band rv">
+      <div>
+        <span class="label">Next step</span>
+        <h2>Need this kind of <em>clarity</em> on your project?</h2>
+      </div>
+      <div class="hero__actions">
+        <a href="/contact/" class="btn btn-primary">Start a conversation <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+        <a href="/projects/" class="btn btn-line">All work</a>
+      </div>
     </div>
-    <div class="proj-sec"><h3>Tools &amp; Stack</h3><div class="proj-tools"><span class="proj-tool">ProcessMaker</span><span class="proj-tool">UiPath</span><span class="proj-tool">BPMN 2.0</span><span class="proj-tool">Cross-border Compliance</span><span class="proj-tool">RPA Bot Specification</span><span class="proj-tool">Multi-market UAT</span><span class="proj-tool">Stakeholder Management</span></div></div>
-    <div class="proj-nav">
-      <a href="/project-bid-management/" class="proj-nav-link"><div class="proj-nav-link__dir">← Previous</div><div class="proj-nav-link__title">Bid Management Platform</div></a>
-      <a href="/projects/" class="proj-nav-link proj-nav-link--next"><div class="proj-nav-link__dir">↑ All Projects</div><div class="proj-nav-link__title">View full portfolio</div></a>
+  </section>
+
+  <footer class="wrap">
+    <div class="foot">
+      <span>&copy; 2026 Ubon Udonkang · Lagos</span>
+      <div class="foot__links">
+        <a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://github.com/ubonudonkang" target="_blank" rel="noopener">GitHub</a>
+        <a href="mailto:ubonudonkang@gmail.com">Email</a>
+      </div>
     </div>
-  </div>
-  <footer class="foot rv"><span class="foot__copy">&copy; 2026 Ubon Udonkang</span><div class="foot__links"><a href="/projects/" class="foot__link">All Work</a><a href="/contact/" class="foot__link">Hire Me</a></div></footer>
-</div>
+  </footer>
+
 </main>
-<nav class="dock"><a href="/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg><span class="dock-tip">Home</span></a><a href="/about/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg><span class="dock-tip">About</span></a><a href="/projects/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg><span class="dock-tip">Work</span></a><a href="/resources/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="dock-tip">Resources</span></a><a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M7 10v8M7 7v.01M11 18v-5a2 2 0 0 1 4 0v5M11 13h4"/></svg><span class="dock-tip">LinkedIn</span></a><a href="/contact/" class="dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><span class="dock-tip">Contact</span></a></nav>
-<div class="toast" id="toast"></div><script src="/js/main.js"></script>
+
+<nav class="dock" aria-label="Site">
+  <a href="/" class="dock-item" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg><span class="dock-tip">Home</span></a>
+  <a href="/about/" class="dock-item" aria-label="About"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg><span class="dock-tip">About</span></a>
+  <a href="/projects/" class="dock-item" aria-label="Work"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg><span class="dock-tip">Work</span></a>
+  <a href="/ba-training/" class="dock-item" aria-label="BA Training"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5 12 5l10 4.5-10 4.5Z"/><path d="M6 11.3V16c0 1.4 2.7 3 6 3s6-1.6 6-3v-4.7"/><path d="M22 9.5V15"/></svg><span class="dock-tip">BA Training</span></a>
+  <a href="/resources/" class="dock-item" aria-label="Resources"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="dock-tip">Resources</span></a>
+  <span class="dock-sep" aria-hidden="true"></span>
+  <a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener" class="dock-item" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M7 10v8M7 7v.01M11 18v-5a2 2 0 0 1 4 0v5M11 13h4"/></svg><span class="dock-tip">LinkedIn</span></a>
+  <a href="/contact/" class="dock-item" aria-label="Contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><span class="dock-tip">Contact</span></a>
+</nav>
+
+<div class="toast" id="toast" role="status"></div>
+<script src="/js/site.js"></script>
 </body>
 </html>

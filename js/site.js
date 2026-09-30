@@ -68,7 +68,7 @@ document.addEventListener('keydown', e => {
   if (t && (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || t.isContentEditable)) return;
   if (e.key.toLowerCase() === 'c' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) copyEmail();
 });
-document.querySelectorAll('[data-copy]').forEach(el => el.addEventListener('click', copyEmail));
+document.querySelectorAll('[data-copy-email]').forEach(el => el.addEventListener('click', copyEmail));
 
 /* ── Dock: magnification + active state ─────────────────────── */
 (function dock() {
@@ -78,7 +78,8 @@ document.querySelectorAll('[data-copy]').forEach(el => el.addEventListener('clic
 
   // active state: match the first path segment
   const seg = p => '/' + (p.replace(/^\/+|\/+$/g, '').split('/')[0] || '');
-  const here = seg(location.pathname.replace(/index\.html$/, ''));
+  let here = seg(location.pathname.replace(/index\.html$/, ''));
+  if (here.startsWith('/project-')) here = '/projects'; // case studies live under Work
   items.forEach(item => {
     const href = item.getAttribute('href') || '';
     if (href.startsWith('/') && seg(href) === here) {
@@ -285,6 +286,58 @@ document.querySelectorAll('[data-copy]').forEach(el => el.addEventListener('clic
       sx.velocity = sy.velocity = 0;
       el.style.transform = '';
       el.style.zIndex = '';
+    });
+  });
+})();
+
+/* ── Case study: current section in the contents list ────────── */
+(function caseToc() {
+  const links = [...document.querySelectorAll('.cs-toc a')];
+  if (!links.length) return;
+  const byId = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      links.forEach(a => a.classList.remove('is-current'));
+      byId.get(e.target.id)?.classList.add('is-current');
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  byId.forEach((_, id) => { const el = document.getElementById(id); if (el) io.observe(el); });
+})();
+
+/* ── PDF viewer (project artefacts) ──────────────────────────── */
+(function pdfViewer() {
+  const modal = document.getElementById('pdfModal');
+  if (!modal) return;
+  const frame = document.getElementById('pdfFrame');
+  const title = document.getElementById('pdfModalTitle');
+  const closeBtn = document.getElementById('pdfClose');
+  let opener = null;
+
+  function open(path, name, from) {
+    opener = from;
+    title.textContent = name;
+    frame.src = path + '#toolbar=0&navpanes=0&scrollbar=1&view=FitH';
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    closeBtn.focus();
+  }
+  function close() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+    setTimeout(() => { frame.src = ''; }, 220);
+    opener?.focus();
+  }
+  closeBtn.addEventListener('click', close);
+  document.addEventListener('keydown', e => {
+    if (!modal.classList.contains('open')) return;
+    if (e.key === 'Escape') { close(); return; }
+    if ((e.ctrlKey || e.metaKey) && ['s', 'p'].includes(e.key.toLowerCase())) e.preventDefault();
+  });
+  document.querySelectorAll('[data-pdf] .artifact-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('[data-pdf]');
+      open(row.dataset.pdf, row.dataset.title, btn);
     });
   });
 })();
