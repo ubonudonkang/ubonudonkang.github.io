@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>How to Choose Processes for RPA: A Scoring Method</title>
+  <meta name="description" content="Most RPA projects go wrong at process selection. Score candidates on frequency, manual effort, error rate and systems touched, then prioritise with confidence."/>
+  <meta name="theme-color" content="#FFFFFF"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap"/>
+  <link rel="stylesheet" href="/css/site.css?v=4a3558e7"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23111'/><text x='16' y='22.5' text-anchor='middle' font-family='Georgia,serif' font-size='16' fill='white'>U</text></svg>"/>
+  <script>document.documentElement.classList.add('js')</script>
+  <link rel="alternate" type="application/rss+xml" title="Notes · Ubon Udonkang" href="/notes/feed.xml"/>
+  <!--seo-->
+  <link rel="canonical" href="https://ubonudonkang.com/notes/how-to-choose-processes-for-rpa/"/>
+  <meta property="og:type" content="article"/>
+  <meta property="og:site_name" content="Ubon Udonkang"/>
+  <meta property="og:title" content="How to Choose Processes for RPA: A Scoring Method"/>
+  <meta property="og:description" content="Most RPA projects go wrong at process selection. Score candidates on frequency, manual effort, error rate and systems touched, then prioritise with confidence."/>
+  <meta property="og:image" content="https://ubonudonkang.com/img/og-card.png"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:image:alt" content="Ubon Udonkang, Senior Business Analyst, Lagos"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="How to Choose Processes for RPA: A Scoring Method"/>
+  <meta name="twitter:description" content="Most RPA projects go wrong at process selection. Score candidates on frequency, manual effort, error rate and systems touched, then prioritise with confidence."/>
+  <meta name="twitter:image" content="https://ubonudonkang.com/img/og-card.png"/>
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png"/>
+  <meta property="og:url" content="https://ubonudonkang.com/notes/how-to-choose-processes-for-rpa/"/>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "How to Choose Processes for RPA: A Scoring Method That Works", "description": "Most RPA projects go wrong at process selection. Score candidates on frequency, manual effort, error rate and systems touched, then prioritise with confidence.", "url": "https://ubonudonkang.com/notes/how-to-choose-processes-for-rpa/", "mainEntityOfPage": "https://ubonudonkang.com/notes/how-to-choose-processes-for-rpa/", "image": "https://ubonudonkang.com/img/og-card.png", "datePublished": "2026-09-30", "dateModified": "2026-09-30", "articleSection": "Practice", "inLanguage": "en", "wordCount": 633, "author": {"@type": "Person", "@id": "https://ubonudonkang.com/#person", "name": "Ubon Udonkang", "url": "https://ubonudonkang.com/about/"}, "publisher": {"@id": "https://ubonudonkang.com/#person"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://ubonudonkang.com/"}, {"@type": "ListItem", "position": 2, "name": "Notes", "item": "https://ubonudonkang.com/notes/"}, {"@type": "ListItem", "position": 3, "name": "How to Choose Processes for RPA: A Scoring Method That Works", "item": "https://ubonudonkang.com/notes/how-to-choose-processes-for-rpa/"}]}]}</script>
+  <!--/seo-->
+</head>
+<body>
+
+<header class="topbar" id="topbar">
+  <a class="topbar__name" href="/">Ubon Udonkang</a>
+  <div class="topbar__meta">
+    <span class="avail"><span class="avail__dot"></span>Available</span>
+    <span class="topbar__clock" data-clock>00:00 WAT</span>
+  </div>
+</header>
+
+<main>
+
+  <article>
+    <section class="phero wrap">
+      <a href="/notes/" class="phero__back"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8H3M7 4 3 8l4 4"/></svg>Notes</a>
+      <div class="phero__label"><span class="label">Practice</span><span class="label">3 min read</span></div>
+      <h1 class="phero__title phero__title--article">How to Choose Processes for RPA: A Scoring Method That Works</h1>
+      <p class="phero__sub">The most expensive RPA mistake happens before anyone writes a bot: automating the wrong process. A bot that saves ten minutes a month still needs building, testing and maintaining. Here's the scoring method I use to decide what to automate first.</p>
+      <div class="byline">
+        <img src="/img/ubon-udonkang.jpg" alt="" width="862" height="1080" loading="lazy" decoding="async"/>
+        <div>
+          <a href="/about/" class="byline__name">Ubon Udonkang</a>
+          <span class="byline__meta">Senior Business Analyst · <time datetime="2026-09-30">30 September 2026</time></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap sec" style="padding-top:clamp(24px,4vw,48px)">
+      <div class="cs">
+        <nav class="cs-toc" aria-label="On this page">
+          <span class="label">Contents</span>
+          <ol>
+          <li><a href="#why-process-selection-matters-most"><span>01</span>Why process selection matters most</a></li>
+          <li><a href="#the-four-factors-to-score"><span>02</span>The four factors to score</a></li>
+          <li><a href="#turn-it-into-a-score"><span>03</span>Turn it into a score</a></li>
+          <li><a href="#a-worked-example"><span>04</span>A worked example</a></li>
+          <li><a href="#check-the-qualitative-gates"><span>05</span>Check the qualitative gates</a></li>
+          <li><a href="#specify-the-bot-properly"><span>06</span>Specify the bot properly</a></li>
+          <li><a href="#when-not-to-automate"><span>07</span>When not to automate</a></li>
+          <li><a href="#questions"><span>08</span>Common questions</a></li>
+          </ol>
+        </nav>
+        <div>
+        <section class="cs-sec rv" id="why-process-selection-matters-most">
+          <h2><span>01</span>Why process selection matters most</h2>
+          <div class="prose article-prose">
+            <p>Robotic process automation works best on high-volume, rules-based work that people do the same way every time. It works badly on processes that change often, depend on judgement or pull data from screens that move around. Picking well means the first bot pays for itself quickly and earns the trust you need for the next one.</p>
+<p>On the <a href="/project-rpa-treasury/">treasury automation project at Access Bank</a>, end-of-day GL reconciliation took over eight hours of analyst time every day. After automation it took 45 minutes. That kind of result starts with choosing the right process.</p>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="the-four-factors-to-score">
+          <h2><span>02</span>The four factors to score</h2>
+          <div class="prose article-prose">
+            <div class="table-wrap"><table>
+  <thead><tr><th>Factor</th><th>Question</th><th>Why it matters</th></tr></thead>
+  <tbody>
+    <tr><td>Frequency</td><td>How many times a month does this step run?</td><td>Frequent work multiplies every minute saved</td></tr>
+    <tr><td>Manual effort</td><td>How many minutes does it take a person each time?</td><td>Long, repetitive steps free the most time</td></tr>
+    <tr><td>Error rate</td><td>What percentage of runs contain an error?</td><td>Errors cost rework, customer impact and audit findings</td></tr>
+    <tr><td>Systems touched</td><td>How many applications does the step use?</td><td>More systems means more build and maintenance effort</td></tr>
+  </tbody>
+</table></div>
+<p>The first three measure <strong>value</strong>. The fourth measures <strong>complexity</strong>. You want high value and manageable complexity.</p>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="turn-it-into-a-score">
+          <h2><span>03</span>Turn it into a score</h2>
+          <div class="prose article-prose">
+            <p>This is the scoring model inside the <a href="/resources/ba-workbench/">BA Workbench</a>'s Process &amp; RPA Scorer:</p>
+<ul>
+  <li><strong>Frequency</strong> is worth up to 40 points, reaching the maximum at 40 or more runs a month.</li>
+  <li><strong>Manual effort</strong> is worth up to 35 points, reaching the maximum at 90 or more minutes per run.</li>
+  <li><strong>Error rate</strong> is worth up to 25 points, in proportion to the percentage of runs with errors.</li>
+</ul>
+<p>That gives a <strong>value score out of 100</strong>. Complexity is rated separately: one system is low, two or three is medium, and four or more is high.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Value score</th><th>Complexity</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr><td>70 or more</td><td>Low or medium</td><td>High priority: automate first</td></tr>
+    <tr><td>70 or more</td><td>High</td><td>Strategic: automate in phases</td></tr>
+    <tr><td>40 to 69</td><td>Any</td><td>Medium priority</td></tr>
+    <tr><td>Below 40</td><td>Any</td><td>Low priority</td></tr>
+  </tbody>
+</table></div>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="a-worked-example">
+          <h2><span>04</span>A worked example</h2>
+          <div class="prose article-prose">
+            <p>Here are three illustrative process steps from a finance operations team, scored with the model above:</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Step</th><th>Runs a month</th><th>Minutes a run</th><th>Error rate</th><th>Systems</th><th>Value</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr><td>Daily reconciliation report</td><td>22</td><td>120</td><td>15%</td><td>2</td><td>61</td><td>Medium</td></tr>
+    <tr><td>Customer statement requests</td><td>400</td><td>10</td><td>5%</td><td>1</td><td>45</td><td>Medium</td></tr>
+    <tr><td>Payment file validation</td><td>60</td><td>45</td><td>40%</td><td>3</td><td>68</td><td>Medium, close to high</td></tr>
+  </tbody>
+</table></div>
+<p>Also look at the hours: the reconciliation report uses 44 hours of staff time a month, statement requests 67 hours and payment validation 45 hours. Scores rank the candidates; hours make the business case. Always show both.</p>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="check-the-qualitative-gates">
+          <h2><span>05</span>Check the qualitative gates</h2>
+          <div class="prose article-prose">
+            <p>A high score isn't enough. Before committing, confirm that the process:</p>
+<ul>
+  <li><strong>Follows clear rules.</strong> If people make judgement calls, capture those rules first or keep a human in the loop.</li>
+  <li><strong>Uses structured, digital inputs.</strong> Scanned documents and free-text emails need extra tooling.</li>
+  <li><strong>Is stable.</strong> If the process or the screens are about to change, wait.</li>
+  <li><strong>Has manageable exceptions.</strong> Define what the bot does when it meets something unexpected, and who picks it up.</li>
+  <li><strong>Has an owner.</strong> Someone in the business must own the bot's output after go-live.</li>
+</ul>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="specify-the-bot-properly">
+          <h2><span>06</span>Specify the bot properly</h2>
+          <div class="prose article-prose">
+            <p>Once a process is chosen, the bot specification should cover five things: what triggers it, what inputs it needs, the processing rules step by step, how each exception is handled and escalated, and what it outputs and to whom. On the treasury project, that meant mapping each process in BPMN first, then writing a specification per bot and running UAT with Finance, IT and Audit before go-live.</p>
+          </div>
+        </section>
+        <section class="cs-sec rv" id="when-not-to-automate">
+          <h2><span>07</span>When not to automate</h2>
+          <div class="prose article-prose">
+            <ul>
+  <li>The process is broken. Automating it just makes the mistakes faster, so fix the process first.</li>
+  <li>A system change is coming that removes the manual work anyway.</li>
+  <li>Volumes are low and the work is varied. People are cheaper and more flexible there.</li>
+</ul>
+          </div>
+        </section>
+          <section class="cs-sec rv" id="questions">
+            <h2><span>08</span>Common questions</h2>
+            <div class="qa">
+            <details>
+              <summary>What makes a process good for RPA?</summary>
+              <p>High volume, repetitive, rules-based work with structured digital inputs and a stable process. The more often it runs and the longer it takes by hand, the bigger the payoff.</p>
+            </details>
+            <details>
+              <summary>How do you calculate the value of automating a process?</summary>
+              <p>Multiply runs per month by minutes per run to get the hours spent, then add the cost of errors. The Process & RPA Scorer in the free BA Workbench does the scoring for you.</p>
+            </details>
+            <details>
+              <summary>Should you automate a process with many exceptions?</summary>
+              <p>Only if the exceptions are well defined and there is a clear hand-off to a person. Otherwise, fix or simplify the process first.</p>
+            </details>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </article>
+
+  <section class="wrap">
+    <div class="band rv">
+      <div>
+        <span class="label">Put it into practice</span>
+        <h2>Try it in the free <em>BA Workbench.</em></h2>
+      </div>
+      <div class="hero__actions">
+        <a href="/resources/ba-workbench/" class="btn btn-primary">Open the Workbench <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+        <a href="/ba-training/" class="btn btn-line">Learn it in the cohort</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap sec sec--last" style="margin-top:0">
+    <div class="sec__hd rv">
+      <div>
+        <span class="label">Keep reading</span>
+        <h2 class="h-sec">More <em>notes</em></h2>
+      </div>
+      <a href="/notes/" class="sec__link">All notes →</a>
+    </div>
+    <div class="note-grid">
+      <a href="/notes/how-to-write-a-brd/" class="note-card rv">
+        <span class="note-card__meta"><span class="label">Practice</span><span class="label">4 min read</span></span>
+        <span class="note-card__title">How to Write a BRD: Structure, Example and Checklist</span>
+        <span class="note-card__desc">How to write a business requirements document that gets signed off: a section-by-section structure, a worked banking example and a 20-point quality checklist.</span>
+        <span class="note-card__more">Read the note <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </a>
+      <a href="/notes/what-does-a-business-analyst-do/" class="note-card rv">
+        <span class="note-card__meta"><span class="label">Career</span><span class="label">4 min read</span></span>
+        <span class="note-card__title">What Does a Business Analyst Actually Do? A Week on a Banking Project</span>
+        <span class="note-card__desc">What an IT business analyst really does day to day: workshops, process maps, requirements, developer questions, UAT and sign-off on a banking project.</span>
+        <span class="note-card__more">Read the note <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </a>
+      <a href="/notes/how-to-become-a-business-analyst-in-nigeria/" class="note-card rv">
+        <span class="note-card__meta"><span class="label">Career</span><span class="label">5 min read</span></span>
+        <span class="note-card__title">How to Become a Business Analyst in Nigeria (No Tech Background Needed)</span>
+        <span class="note-card__desc">A practising BA's step-by-step path into IT business analysis in Nigeria: the skills, tools, portfolio and certifications that get you hired.</span>
+        <span class="note-card__more">Read the note <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </a>
+    </div>
+  </section>
+
+  <footer class="wrap">
+    <div class="foot">
+      <span>&copy; 2026 Ubon Udonkang · Lagos</span>
+      <div class="foot__links">
+        <a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://github.com/ubonudonkang" target="_blank" rel="noopener">GitHub</a>
+        <a href="mailto:ubonudonkang@gmail.com">Email</a>
+      </div>
+    </div>
+  </footer>
+
+</main>
+
+<nav class="dock" aria-label="Site">
+  <span class="dock-bg" aria-hidden="true"></span>
+  <a href="/" class="dock-item app-home" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="duo" d="M4 10.4 12 4l8 6.4v8.1a1.5 1.5 0 0 1-1.5 1.5H15v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5H5.5A1.5 1.5 0 0 1 4 18.5z"/></svg><span class="dock-tip">Home</span></a>
+  <a href="/about/" class="dock-item app-about" aria-label="About"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect class="duo" x="3" y="5.5" width="18" height="13" rx="2.5"/><circle cx="8.75" cy="10.75" r="1.9"/><path d="M5.9 15.5c.5-1.4 1.6-2.2 2.85-2.2s2.35.8 2.85 2.2M14 10h3.5M14 13.5h3.5"/></svg><span class="dock-tip">About</span></a>
+  <a href="/projects/" class="dock-item app-work" aria-label="Work"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="duo" d="M3.5 7A1.5 1.5 0 0 1 5 5.5h4.4l2.1 2.2H19a1.5 1.5 0 0 1 1.5 1.5v8.3A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z"/><path d="M3.5 10.5h17"/></svg><span class="dock-tip">Work</span></a>
+  <a href="/ba-training/" class="dock-item app-training" aria-label="BA Training"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="duo" d="M12 4.75 2.75 9.25 12 13.75l9.25-4.5z"/><path d="M6.5 11.4v4.35c0 1.35 2.45 2.75 5.5 2.75s5.5-1.4 5.5-2.75V11.4M21.25 9.25v5"/></svg><span class="dock-tip">BA Training</span></a>
+  <a href="/resources/" class="dock-item app-resources" aria-label="Resources"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="duo" d="M12 7.2C10.4 5.9 8.3 5.25 5.75 5.25H3.5v12.5h2.25c2.55 0 4.65.65 6.25 1.95 1.6-1.3 3.7-1.95 6.25-1.95h2.25V5.25h-2.25c-2.55 0-4.65.65-6.25 1.95z"/><path d="M12 7.2v12.5"/></svg><span class="dock-tip">Resources</span></a>
+  <span class="dock-sep" aria-hidden="true"></span>
+  <a href="https://linkedin.com/in/ubonudonkang" target="_blank" rel="noopener" class="dock-item app-linkedin" aria-label="LinkedIn (opens in a new tab)"><svg class="brand" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45z"/></svg><span class="dock-tip">LinkedIn</span></a>
+  <a href="/contact/" class="dock-item app-contact" aria-label="Contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect class="duo" x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m3.75 7.5 8.25 5.75 8.25-5.75"/></svg><span class="dock-tip">Contact</span></a>
+</nav>
+
+<div class="toast" id="toast" role="status"></div>
+<script src="/js/site.js?v=638b42d9"></script>
+</body>
+</html>

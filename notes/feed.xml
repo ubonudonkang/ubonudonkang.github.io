@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Notes · Ubon Udonkang</title>
+    <link>https://ubonudonkang.com/notes/</link>
+    <atom:link href="https://ubonudonkang.com/notes/feed.xml" rel="self" type="application/rss+xml"/>
+    <description>Practical business analysis guides from a practising BA: breaking into the career, writing requirements people can build from, and choosing what to automate.</description>
+    <language>en</language>
+    <lastBuildDate>Wed, 30 Sep 2026 09:00:00 +0000</lastBuildDate>
+    <item>
+      <title>How to Become a Business Analyst in Nigeria (No Tech Background Needed)</title>
+      <link>https://ubonudonkang.com/notes/how-to-become-a-business-analyst-in-nigeria/</link>
+      <guid isPermaLink="true">https://ubonudonkang.com/notes/how-to-become-a-business-analyst-in-nigeria/</guid>
+      <pubDate>Wed, 30 Sep 2026 09:00:00 +0000</pubDate>
+      <category>Career</category>
+      <description>A practising BA&#x27;s step-by-step path into IT business analysis in Nigeria: the skills, tools, portfolio and certifications that get you hired.</description>
+    </item>
+    <item>
+      <title>How to Write a BRD: Structure, Example and Checklist</title>
+      <link>https://ubonudonkang.com/notes/how-to-write-a-brd/</link>
+      <guid isPermaLink="true">https://ubonudonkang.com/notes/how-to-write-a-brd/</guid>
+      <pubDate>Wed, 30 Sep 2026 09:00:00 +0000</pubDate>
+      <category>Practice</category>
+      <description>How to write a business requirements document that gets signed off: a section-by-section structure, a worked banking example and a 20-point quality checklist.</description>
+    </item>
+    <item>
+      <title>How to Choose Processes for RPA: A Scoring Method That Works</title>
+      <link>https://ubonudonkang.com/notes/how-to-choose-processes-for-rpa/</link>
+      <guid isPermaLink="true">https://ubonudonkang.com/notes/how-to-choose-processes-for-rpa/</guid>
+      <pubDate>Wed, 30 Sep 2026 09:00:00 +0000</pubDate>
+      <category>Practice</category>
+      <description>Most RPA projects go wrong at process selection. Score candidates on frequency, manual effort, error rate and systems touched, then prioritise with confidence.</description>
+    </item>
+    <item>
+      <title>ECBA vs CCBA vs CBAP: Which IIBA Certification Should You Get?</title>
+      <link>https://ubonudonkang.com/notes/ecba-vs-ccba-vs-cbap/</link>
+      <guid isPermaLink="true">https://ubonudonkang.com/notes/ecba-vs-ccba-vs-cbap/</guid>
+      <pubDate>Wed, 30 Sep 2026 09:00:00 +0000</pubDate>
+      <category>Career</category>
+      <description>ECBA, CCBA or CBAP? Eligibility, exam format and 2026 fees for each IIBA certification, and which one fits each stage of a business analyst career.</description>
+    </item>
+    <item>
+      <title>What Does a Business Analyst Actually Do? A Week on a Banking Project</title>
+      <link>https://ubonudonkang.com/notes/what-does-a-business-analyst-do/</link>
+      <guid isPermaLink="true">https://ubonudonkang.com/notes/what-does-a-business-analyst-do/</guid>
+      <pubDate>Wed, 30 Sep 2026 09:00:00 +0000</pubDate>
+      <category>Career</category>
+      <description>What an IT business analyst really does day to day: workshops, process maps, requirements, developer questions, UAT and sign-off on a banking project.</description>
+    </item>
+  </channel>
+</rss>
