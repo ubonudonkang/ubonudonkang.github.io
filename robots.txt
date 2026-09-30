@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+# confidential project documents: viewable from case studies, not for search
+Disallow: /docs/
+
+Sitemap: https://ubonudonkang.github.io/sitemap.xml

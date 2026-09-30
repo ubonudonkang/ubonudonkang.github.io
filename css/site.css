@@ -43,6 +43,7 @@ body {
   padding-bottom: 120px; /* room for the dock */
 }
 img, svg { display: block; max-width: 100%; }
+img { height: auto; } /* keeps photos in proportion when width is constrained */
 a { color: inherit; text-decoration: none; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 ::selection { background: var(--accent); color: #fff; }
