@@ -63,13 +63,13 @@
           <h2><span>01</span>Overview</h2>
           <div class="prose">
             <p>Access Bank's treasury needed one system to run its fixed income business from the first request to the day a security matures. I was a Business Analyst on the team that built its Treasury Management System.</p>
-            <p>The system covers three areas: fixed income, with treasury bills bought in the primary and secondary markets; onboarding of corporate clients; and collateral management for securities pledged against loans.</p>
+            <p>The system covers three areas: fixed income, with treasury bills bought in the primary and secondary markets; corporate client onboarding, where clients submit their documents and information before the bank takes them on for business; and collateral management for securities pledged against loans.</p>
           </div>
         </section>
         <section class="cs-sec rv" id="challenge">
           <h2><span>02</span>Challenge</h2>
           <div class="prose">
-            <p>Treasury bill investments passed through several systems and manual steps. Requests arrived through different channels. Customer funds had to be checked and held. Bids could only go to the central bank auction on set days and within a set window. Every successful or failed bid then had to be settled, posted and communicated to the customer.</p>
+            <p>Treasury bill investments passed through several systems and manual steps. Requests arrived through different channels. Customer funds had to be checked and held. Bids could only go to the central bank auction on set days and within a set window. Every successful or failed bid then had to be settled, posted and communicated to the customer. Corporate clients, meanwhile, sent their onboarding documents by email, which made them hard to track, check and keep together.</p>
             <p>Each hand-off was a chance for delay or error, and a regulated treasury business needs tight controls: separate makers and checkers, a full audit trail, and postings that always balance.</p>
           </div>
         </section>
@@ -84,14 +84,14 @@
               <li>Designed maker-checker approval queues, with comments, rejection reasons and customer notifications at every step</li>
               <li>Defined the postings: debits for the investment and charges, credits at liquidation and maturity, security certificates emailed automatically, and an escalation whenever postings don't balance</li>
               <li>Specified collateral management, placing and releasing holds on treasury bills pledged against loans so they can't be liquidated or paid out while pledged</li>
-              <li>Captured the requirements for onboarding corporate clients</li>
+              <li>Defined the corporate client onboarding process, so clients submit their documentation and information in the system for the bank to review, replacing email submissions</li>
               <li>Wrote the functional requirements, use cases, reporting and non-functional requirements, with a manual fallback for every step that depends on an integration</li>
             </ul>
           </div>
         </section>
         <aside class="outcome rv">
           <span class="label">Outcome</span>
-          <p class="outcome__text">One system for treasury bills from request to maturity · Funds held automatically on submission · Auction windows opened and closed automatically · Maker-checker approvals with a full audit trail · Collateral protected while pledged</p>
+          <p class="outcome__text">One system for treasury bills from request to maturity · Funds held automatically on submission · Auction windows opened and closed automatically · Maker-checker approvals with a full audit trail · Collateral protected while pledged · Corporate onboarding moved off email</p>
           <span class="stamp" aria-hidden="true">DELIVERED<small>SIGNED OFF</small></span>
         </aside>
         <section class="cs-sec rv" id="what-the-system-covers">
@@ -102,7 +102,7 @@
               <li><strong>Secondary market:</strong> purchases from the securities on offer, with availability reducing as they sell</li>
               <li><strong>Liquidation:</strong> full and part liquidation at an advised rate, with returns recalculated for the customer</li>
               <li><strong>Maturity:</strong> scheduled crediting of maturing bills, skipping any held as collateral</li>
-              <li><strong>Corporate onboarding:</strong> bringing corporate clients onto the bank's treasury products</li>
+              <li><strong>Corporate client onboarding:</strong> clients submit their documents and information in one place for the bank to review before onboarding, with no email submissions</li>
               <li><strong>Collateral management:</strong> holding and releasing treasury bills pledged against loans</li>
               <li><strong>Reporting:</strong> settlement reports, customer and workflow notifications, and posting exceptions</li>
             </ul>
