@@ -61,7 +61,7 @@
   --gutter: clamp(16px, 4vw, 48px);
 }
 
-/* Dark theme: follows the system unless the visitor picks one with the toggle */
+/* Dark theme: light is the default; dark applies only when the visitor picks it with the toggle */
 :root[data-theme="dark"] {
   --paper: #0E0E10;
   --paper-2: #17171A;
@@ -86,33 +86,6 @@
   --err-line: rgba(253, 162, 155, 0.3);
   --select-arrow: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23F2F0EB' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
   color-scheme: dark;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #0E0E10;
-    --paper-2: #17171A;
-    --surface: #141417;
-    --ink: #F2F0EB;
-    --ink-2: #BBB8B1;
-    --ink-3: #8B8882;
-    --line: #26262B;
-    --line-2: #3A3A41;
-    --accent: #8FA2FF;
-    --accent-ink: #B3C0FF;
-    --accent-fill: #3D5AF1;
-    --accent-fill-hover: #5470FF;
-    --night: #19191D;
-    --night-edge: #2C2C32;
-    --on-ink: #0E0E10;
-    --topbar-bg: rgba(14, 14, 16, 0.72);
-    --topbar-fade: rgba(14, 14, 16, 0.7);
-    --ok: #5FD18A;
-    --err: #FDA29B;
-    --err-bg: rgba(180, 35, 24, 0.14);
-    --err-line: rgba(253, 162, 155, 0.3);
-    --select-arrow: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23F2F0EB' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
-    color-scheme: dark;
-  }
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -204,10 +177,6 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .theme-toggle .i-sun { display: none; }
 :root[data-theme="dark"] .theme-toggle .i-sun { display: block; }
 :root[data-theme="dark"] .theme-toggle .i-moon { display: none; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .theme-toggle .i-sun { display: block; }
-  :root:not([data-theme="light"]) .theme-toggle .i-moon { display: none; }
-}
 @media (hover: hover) and (pointer: fine) { .theme-toggle:hover { color: var(--ink); border-color: var(--ink); } }
 
 /* ── Hero ─────────────────────────────────────────────────── */
