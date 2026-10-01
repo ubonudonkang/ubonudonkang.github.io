@@ -38,7 +38,6 @@
   .reassure { font-size: 0.88rem; color: var(--ink-2); margin: 20px 0 0; }
   .hero-seats { margin: 22px 0 0; }
   .hero-seats + .reassure { margin-top: 12px; }
-  .price-seats { align-self: flex-start; margin-top: 14px; }
   .reassure .hl-strike { text-decoration: line-through; color: var(--ink-3); margin-left: 4px; }
   .reassure em { font-style: normal; color: var(--accent); }
 
@@ -109,13 +108,17 @@
 
   /* ---------- Price card ---------- */
   .price-card { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); background: var(--surface); border: 1px solid var(--ink); border-radius: 24px; overflow: hidden; max-width: 940px; }
-  .price-main { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; padding: clamp(24px, 4vw, 40px); border-right: 1px solid var(--line); }
+  .price-main { display: flex; flex-direction: column; align-items: flex-start; gap: 22px; padding: clamp(24px, 4vw, 40px); border-right: 1px solid var(--line); }
   .price-tag { display: flex; flex-direction: column; }
   .price-was { font: 500 1rem/1 var(--mono); color: var(--ink-3); text-decoration: line-through; margin-bottom: 8px; }
   .price-amount { font: 400 clamp(3.25rem, 6vw, 4.5rem)/0.9 var(--serif); letter-spacing: -0.03em; }
-  .price-sub { margin-top: 10px; font: 500 0.7rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
-  .price-footnote { margin: 8px 0 0; font-size: 0.82rem; color: var(--accent); }
-  .price-blurb { margin: 0; font-size: 0.95rem; color: var(--ink-2); }
+  .price-sub { margin-top: 10px; font-size: 0.92rem; color: var(--ink-3); }
+  /* key dates as two quiet rows, so the price stays the loudest thing in the card */
+  .price-dates { align-self: stretch; margin: 0; border-top: 1px solid var(--line); }
+  .price-dates div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+  .price-dates dt { font: 500 0.68rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+  .price-dates dd { margin: 0; font-size: 0.92rem; font-weight: 500; text-align: right; }
+  .price-blurb { margin: -8px 0 0; font-size: 0.82rem; line-height: 1.5; color: var(--ink-3); max-width: 36ch; }
   .price-list { list-style: none; margin: 0; padding: clamp(20px, 3.5vw, 36px); background: var(--paper-2); }
   .price-list li { position: relative; padding: 10px 0 10px 28px; font-size: 0.95rem; border-bottom: 1px solid var(--line); }
   .price-list li:last-child { border-bottom: 0; }
@@ -473,15 +476,18 @@
       <h2>One price, everything included.</h2>
       <div class="price-card reveal">
         <div class="price-main">
+          <span class="pill pill--ok">10 Seats Available</span>
           <div class="price-tag">
             <span class="price-was">₦100,000</span>
             <span class="price-amount">₦80,000</span>
             <span class="price-sub">for the full 12 weeks</span>
-            <span class="pill pill--ok price-seats">10 Seats Available</span>
-            <p class="price-footnote">Starts 2 November 2026.<br>Enrolment closes 25 October 2026.</p>
           </div>
-          <p class="price-blurb">Payment is by bank transfer, in full, at enrolment. Your place is confirmed once the transfer is verified, usually within 24 hours.</p>
+          <dl class="price-dates">
+            <div><dt>Starts</dt><dd>2 November 2026</dd></div>
+            <div><dt>Enrolment closes</dt><dd>25 October 2026</dd></div>
+          </dl>
           <a class="btn btn-primary" href="#join">Enrol for November</a>
+          <p class="price-blurb">Payment is by bank transfer, in full, at enrolment. Your place is confirmed once the transfer is verified, usually within 24 hours.</p>
         </div>
         <ul class="price-list">
           <li>Two live sessions a week for 12 weeks</li>
