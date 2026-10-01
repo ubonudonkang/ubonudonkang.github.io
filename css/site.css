@@ -259,7 +259,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 /* ── Case file (signature) ───────────────────────────────── */
 .casefile {
   position: relative; display: flow-root; /* keeps the sheet's top margin inside the folder */
-  min-height: 720px; padding-bottom: 72px; /* grows with the bio sheet */
+  min-height: 720px; padding-bottom: 52px; /* 720px on desktop; grows only if the sheet needs more */
   margin-top: 8px;
   touch-action: pan-y;
 }
@@ -284,19 +284,19 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 /* the main sheet with the bio */
 .sheet {
-  position: relative; margin: 90px 5% 0 auto; width: min(460px, 44%); z-index: 2;
-  background: #fff; padding: 36px 34px 30px;
+  position: relative; margin: 60px 5% 0 auto; width: min(520px, 47%); z-index: 2;
+  background: #fff; padding: 24px 26px 18px;
   border-radius: 3px;
   box-shadow: 0 1px 0 var(--line), 0 24px 48px -24px rgba(0,0,0,0.35);
 }
-.sheet__head { display: flex; justify-content: space-between; font: 500 0.68rem/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); padding-bottom: 14px; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
-.sheet h3 { font: 400 2.1rem/1.05 var(--serif); letter-spacing: -0.02em; margin: 0 0 16px; }
-.sheet p { margin: 0 0 14px; color: var(--ink-2); font-size: 0.95rem; line-height: 1.6; }
-.sheet dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 20px 0 0; padding-top: 18px; border-top: 1px dashed var(--line-2); font-size: 0.85rem; }
-.sheet dt { font: 500 0.68rem/1.9 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.sheet__head { display: flex; justify-content: space-between; font: 500 0.68rem/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+.sheet h3 { font: 400 1.7rem/1.05 var(--serif); letter-spacing: -0.02em; margin: 0 0 8px; }
+.sheet p { margin: 0 0 8px; color: var(--ink-2); font-size: 0.86rem; line-height: 1.5; }
+.sheet dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 10px 0 0; padding-top: 10px; border-top: 1px dashed var(--line-2); font-size: 0.78rem; }
+.sheet dt { font: 500 0.68rem/1.75 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
 .sheet dd { margin: 0; }
-.sheet__sign { margin-top: 22px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
-.sheet__sig { font: italic 400 2rem/1 var(--serif); color: var(--accent); transform: rotate(-4deg); transform-origin: left bottom; }
+.sheet__sign { margin-top: 10px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.sheet__sig { font: italic 400 1.6rem/1 var(--serif); color: var(--accent); transform: rotate(-4deg); transform-origin: left bottom; }
 .sheet__sig small { display: block; font: 500 0.62rem/1 var(--mono); color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase; transform: rotate(4deg); margin-top: 8px; font-style: normal; }
 .sheet__link { font-size: 0.85rem; border-bottom: 1px solid var(--line-2); padding-bottom: 2px; }
 
@@ -337,7 +337,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .doc-id__bar { margin-top: 12px; height: 26px; background: repeating-linear-gradient(90deg, #111 0 2px, transparent 2px 4px, #111 4px 5px, transparent 5px 8px, #111 8px 11px, transparent 11px 12px); opacity: 0.85; }
 
 /* BRD cover */
-.doc-brd { left: 26%; top: 260px; width: 250px; padding: 22px 20px 24px; --r: 4deg; }
+.doc-brd { left: 18%; top: 260px; width: 250px; padding: 22px 20px 24px; --r: 4deg; }
 .doc-brd__ref { font: 500 0.6rem/1 var(--mono); letter-spacing: 0.06em; color: var(--ink-3); margin-bottom: 26px; }
 .doc-brd__title { font: 400 1.5rem/1.05 var(--serif); margin-bottom: 8px; }
 .doc-brd__sub { font-size: 0.72rem; color: var(--ink-2); margin-bottom: 26px; }
@@ -360,14 +360,14 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .doc-bpmn svg { width: 100%; height: auto; }
 
 /* RTM excerpt */
-.doc-rtm { left: 12%; top: 77%; width: 300px; padding: 12px 14px 14px; --r: 2.5deg; }
+.doc-rtm { left: 12%; bottom: 74px; /* stays clear of the caption whatever the folder height */ width: 300px; padding: 12px 14px 14px; --r: 2.5deg; }
 .doc-rtm table { width: 100%; border-collapse: collapse; font: 500 0.62rem/1.3 var(--mono); }
 .doc-rtm th { text-align: left; color: var(--ink-3); font-weight: 500; letter-spacing: 0.04em; padding: 0 6px 6px 0; border-bottom: 1px solid var(--ink); }
 .doc-rtm td { padding: 6px 6px 6px 0; border-bottom: 1px solid var(--line); }
 .doc-rtm .ok { color: #1FA15C; }
 
 /* sticky note */
-.doc-note { left: 36%; top: 96px; width: 170px; padding: 18px 16px 20px; background: var(--sticky); border-radius: 2px; --r: 6deg; box-shadow: 0 18px 30px -18px rgba(90,70,0,0.5); }
+.doc-note { left: 28%; top: 96px; width: 170px; padding: 18px 16px 20px; background: var(--sticky); border-radius: 2px; --r: 6deg; box-shadow: 0 18px 30px -18px rgba(90,70,0,0.5); }
 .doc-note__big { font: 400 2.2rem/1 var(--serif); letter-spacing: -0.02em; margin-bottom: 6px; }
 .doc-note__small { font-size: 0.72rem; line-height: 1.35; color: rgba(0,0,0,0.7); }
 
