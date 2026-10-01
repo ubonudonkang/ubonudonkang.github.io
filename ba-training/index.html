@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BA Bridge Cohort · IT Business Analysis Course, Nigeria</title>
-<meta name="description" content="A 12-week live online course for career changers moving into IT business analysis. Build a real portfolio and get interview-ready. Starts November 2026.">
+<meta name="description" content="A 12-week live online course for career changers moving into IT business analysis. Build a real portfolio and get interview-ready. Starts 2 November 2026.">
 <script>document.documentElement.classList.add('js')</script>
 <meta name="theme-color" content="#FFFFFF">
 <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/site.css?v=8946805c">
+<link rel="stylesheet" href="/css/site.css?v=1570450d">
 <style>
   /* BA Bridge page: page-specific styles on top of /css/site.css (v6) */
 
@@ -31,7 +31,10 @@
   h1 { font: 400 clamp(2.9rem, 6.4vw, 5.5rem)/0.98 var(--serif); letter-spacing: -0.03em; margin: 0 0 26px; }
   .hl { font-style: italic; color: var(--accent); }
   .lede { font-size: clamp(1.1rem, 1.6vw, 1.25rem); line-height: 1.5; color: var(--ink-2); max-width: 36em; margin: 0 0 32px; }
-  .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; }
+  .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+  .hero-more { margin: 18px 0 0; font-size: 0.95rem; }
+  /* phones: the two buttons don't fit side by side, so stack them at full width */
+  @media (max-width: 480px) { .hero-actions .btn { flex: 1 1 100%; justify-content: center; } }
   .reassure { font-size: 0.88rem; color: var(--ink-2); margin: 20px 0 0; }
   .reassure .hl-strike { text-decoration: line-through; color: var(--ink-3); margin-left: 4px; }
   .reassure em { font-style: normal; color: var(--accent); }
@@ -117,6 +120,7 @@
 
   /* ---------- Instructor ---------- */
   .bio { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 32px; align-items: start; background: var(--paper-2); border: 1px solid var(--line); border-radius: 24px; padding: clamp(24px, 4vw, 40px); }
+  .monogram--photo { object-fit: cover; object-position: 50% 18%; }
   .monogram { width: 104px; height: 104px; border-radius: 50%; background: var(--ink); color: var(--on-ink); display: flex; align-items: center; justify-content: center; font: 400 2.5rem/1 var(--serif); }
   .bio h3 { font-size: 2.25rem; letter-spacing: -0.015em; margin-bottom: 6px; }
   .bio .role { font: 500 0.72rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 18px; }
@@ -270,15 +274,15 @@
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="Ubon Udonkang"/>
   <meta property="og:title" content="BA Bridge Cohort · IT Business Analysis Course, Nigeria"/>
-  <meta property="og:description" content="A 12-week live online course for career changers moving into IT business analysis. Build a real portfolio and get interview-ready. Starts November 2026."/>
+  <meta property="og:description" content="A 12-week live online course for career changers moving into IT business analysis. Build a real portfolio and get interview-ready. Starts 2 November 2026."/>
   <meta property="og:image" content="https://ubonudonkang.com/img/og-card.jpg"/>
   <meta property="og:image:type" content="image/jpeg"/>
   <meta property="og:image:width" content="1200"/>
   <meta property="og:image:height" content="630"/>
-  <meta property="og:image:alt" content="Ubon Udonkang, Senior Business Analyst, Lagos"/>
+  <meta property="og:image:alt" content="Ubon Udonkang, Business Analyst, Lagos"/>
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="BA Bridge Cohort · IT Business Analysis Course, Nigeria"/>
-  <meta name="twitter:description" content="A 12-week live online course for career changers moving into IT business analysis. Build a real portfolio and get interview-ready. Starts November 2026."/>
+  <meta name="twitter:description" content="A 12-week live online course for career changers moving into IT business analysis. Build a real portfolio and get interview-ready. Starts 2 November 2026."/>
   <meta name="twitter:image" content="https://ubonudonkang.com/img/og-card.jpg"/>
   <link rel="icon" href="/favicon.ico" sizes="48x48"/>
   <link rel="icon" type="image/png" sizes="192x192" href="/img/icon-192.png"/>
@@ -286,7 +290,7 @@
   <link rel="manifest" href="/site.webmanifest"/>
   <script data-goatcounter="https://ubonudonkang.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
   <meta property="og:url" content="https://ubonudonkang.com/ba-training/"/>
-  <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Course", "name": "BA Bridge Cohort: IT Business Analysis for Career Changers", "description": "A 12-week live online cohort for career changers moving into IT business analysis, built around one capstone project: stakeholder mapping, a BRD, BPMN process maps, user stories, a UAT plan and traceability matrix, plus CV and interview preparation.", "url": "https://ubonudonkang.com/ba-training/", "inLanguage": "en", "image": "https://ubonudonkang.com/img/og-card.jpg", "provider": {"@type": "Person", "@id": "https://ubonudonkang.com/#person", "name": "Ubon Udonkang", "url": "https://ubonudonkang.com/"}, "coursePrerequisites": "No IT background required.", "teaches": ["Requirements elicitation", "Business requirements documents (BRD)", "BPMN process modelling", "User stories and acceptance criteria", "UAT planning and traceability"], "offers": [{"@type": "Offer", "category": "Paid", "price": 80000, "priceCurrency": "NGN", "availability": "https://schema.org/InStock", "url": "https://ubonudonkang.com/ba-training/#join"}], "hasCourseInstance": [{"@type": "CourseInstance", "courseMode": "Online", "courseWorkload": "PT60H", "courseSchedule": {"@type": "Schedule", "duration": "PT5H", "repeatFrequency": "Weekly", "repeatCount": 12, "startDate": "2026-11"}, "instructor": [{"@type": "Person", "@id": "https://ubonudonkang.com/#person", "name": "Ubon Udonkang"}]}]}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://ubonudonkang.com/"}, {"@type": "ListItem", "position": 2, "name": "BA Bridge Cohort", "item": "https://ubonudonkang.com/ba-training/"}]}]}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Course", "name": "BA Bridge Cohort: IT Business Analysis for Career Changers", "description": "A 12-week live online cohort for career changers moving into IT business analysis, built around one capstone project: stakeholder mapping, a BRD, BPMN process maps, user stories, a UAT plan and traceability matrix, plus CV and interview preparation.", "url": "https://ubonudonkang.com/ba-training/", "inLanguage": "en", "image": "https://ubonudonkang.com/img/og-card.jpg", "provider": {"@type": "Person", "@id": "https://ubonudonkang.com/#person", "name": "Ubon Udonkang", "url": "https://ubonudonkang.com/"}, "coursePrerequisites": "No IT background required.", "teaches": ["Requirements elicitation", "Business requirements documents (BRD)", "BPMN process modelling", "User stories and acceptance criteria", "UAT planning and traceability"], "offers": [{"@type": "Offer", "category": "Paid", "price": 80000, "priceCurrency": "NGN", "availability": "https://schema.org/InStock", "url": "https://ubonudonkang.com/ba-training/#join"}], "hasCourseInstance": [{"@type": "CourseInstance", "courseMode": "Online", "courseWorkload": "PT60H", "courseSchedule": {"@type": "Schedule", "duration": "PT5H", "repeatFrequency": "Weekly", "repeatCount": 12, "startDate": "2026-11-02"}, "instructor": [{"@type": "Person", "@id": "https://ubonudonkang.com/#person", "name": "Ubon Udonkang"}]}]}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://ubonudonkang.com/"}, {"@type": "ListItem", "position": 2, "name": "BA Bridge Cohort", "item": "https://ubonudonkang.com/ba-training/"}]}]}</script>
   <!--/seo-->
 </head>
 <body>
@@ -308,12 +312,13 @@
       <div>
         <div class="pilot">Enrolment open, November 2026 cohort</div>
         <h1>Move into IT business analysis with <span class="hl">a portfolio</span>, not just a certificate.</h1>
-        <p class="lede">A 12-week live cohort for career changers. Taught by a practising IT Business Analyst and built around one real project you'll take into interviews.</p>
+        <p class="lede">A 12-week live cohort for career changers. Taught by a practising Business Analyst and built around one real project you'll take into interviews.</p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="#join">Enrol for November</a>
-          <a class="quiet-link" href="#weeks">See the 12 weeks</a>
+          <a class="btn btn-line" href="/contact/">Work With Me</a>
         </div>
-        <p class="reassure">N80,000 for the full 12 weeks* <span class="hl-strike">N100,000</span>. Cohort starts November 2026. <em>*First 5 students only.</em></p>
+        <p class="hero-more"><a class="quiet-link" href="#weeks">See the 12 weeks</a></p>
+        <p class="reassure">₦80,000 for the full 12 weeks* <span class="hl-strike">₦100,000</span>. Starts 2 November 2026. Enrolment closes 25 October 2026. <em>*First 5 students only.</em> 10 seats available.</p>
       </div>
 
       <article class="story" aria-label="The program, written as a user story">
@@ -328,7 +333,7 @@
         </dl>
         <div class="story-foot">
           <span class="chip">Estimate: 12 weeks</span>
-          <span class="chip chip-open">Starts: November 2026</span>
+          <span class="chip chip-open">Starts: 2 November 2026</span>
         </div>
       </article>
     </div>
@@ -465,10 +470,11 @@
       <div class="price-card reveal">
         <div class="price-main">
           <div class="price-tag">
-            <span class="price-was">N100,000</span>
-            <span class="price-amount">N80,000</span>
+            <span class="price-was">₦100,000</span>
+            <span class="price-amount">₦80,000</span>
             <span class="price-sub">for the full 12 weeks</span>
-            <p class="price-footnote">*For the first 5 students to enrol</p>
+            <p class="price-footnote">*For the first 5 students to enrol. 10 seats available.</p>
+            <p class="price-footnote">Starts 2 November 2026. Enrolment closes 25 October 2026.</p>
           </div>
           <p class="price-blurb">Payment is by bank transfer, in full, at enrolment. Your place is confirmed once the transfer is verified, usually within 24 hours.</p>
           <a class="btn btn-primary" href="#join">Enrol for November</a>
@@ -482,6 +488,7 @@
           <li>CV and LinkedIn rewrite</li>
           <li>Access to Interview Question bank, email templates and Mock interviews with feedback</li>
           <li>ECBA certification roadmap</li>
+          <li>Certificate of completion</li>
         </ul>
       </div>
     </div>
@@ -493,11 +500,10 @@
       <p class="eyebrow">Your instructor</p>
       <h2>Taught by someone doing the job.</h2>
       <div class="bio reveal">
-        <!-- To use a photo instead, replace the div below with: <img class="monogram" src="your-photo.jpg" alt="Ubon Udonkang" style="object-fit:cover;"> -->
-        <div class="monogram" aria-hidden="true">UU</div>
+        <img class="monogram monogram--photo" src="/img/ubon-udonkang.jpg" alt="Ubon Udonkang" width="862" height="1080" loading="lazy" decoding="async">
         <div>
           <h3>Ubon Udonkang</h3>
-          <p class="role">IT Business Analyst</p>
+          <p class="role">Business Analyst</p>
           <p>Ubon works in telecoms architecture and engineering, with earlier delivery across banking operations, fintech, RPA automation, and Open Banking regulatory work. Everything in this program comes from real projects, not textbook examples.</p>
           <div class="creds">
             <span class="chip">PSM I certified</span>
@@ -527,7 +533,7 @@
         </details>
         <details>
           <summary>Will this get me certified?</summary>
-          <p>The program covers the BABOK foundations and ends with a clear ECBA roadmap. Certification exams are taken separately through IIBA.</p>
+          <p>The program covers the BABOK foundations and ends with a clear ECBA roadmap. When you finish the training, you'll receive a BA Bridge Cohort certificate of completion. Professional certification exams, such as the ECBA, are taken separately through IIBA.</p>
         </details>
         <details>
           <summary>Is a job guaranteed?</summary>
@@ -535,7 +541,7 @@
         </details>
         <details>
           <summary>When does it start?</summary>
-          <p>The first cohort begins in November 2026. Exact dates and the session timetable are sent to enrolled students by email and WhatsApp once the cohort is full.</p>
+          <p>The first cohort starts on 2 November 2026, and enrolment closes on 25 October 2026. The session timetable is sent to enrolled students by email and WhatsApp once the cohort is full.</p>
         </details>
         <details>
           <summary>How do I pay?</summary>
@@ -547,7 +553,7 @@
         </details>
         <details>
           <summary>What is the refund policy?</summary>
-          <p>If you withdraw before the cohort begins, you can request a refund less a 10% administrative fee, or transfer your place once to the next cohort at no cost. Once training has commenced, fees are non-refundable and non-transferable. If BA Bridge postpones or cancels the cohort, you may choose a full refund with no deduction or a place in the next cohort. Refund requests must be sent in writing to <a class="quiet-link" href="mailto:ubonanalyst@gmail.com">ubonanalyst@gmail.com</a> and are processed within 14 working days.</p>
+          <p>If you withdraw before the cohort begins, you can request a refund less a 10% administrative fee, or transfer your place once to the next cohort at no cost. Once training has commenced, fees are non-refundable and non-transferable. If BA Bridge postpones or cancels the cohort, you may choose a full refund with no deduction or a place in the next cohort. Refund requests must be sent in writing and are processed within 14 working days. Cohort enquiries: <a class="quiet-link" href="mailto:ubonanalyst@gmail.com">ubonanalyst@gmail.com</a>.</p>
         </details>
       </div>
     </div>
@@ -630,15 +636,7 @@
           </fieldset>
 
           <fieldset>
-            <legend>Format and availability</legend>
-            <label class="f-field"><span class="f-label">Which format would suit you best? <em>*</em></span>
-              <select name="format" required>
-                <option value="">Choose one</option>
-                <option>Live online cohort</option>
-                <option>Self-paced with recordings and templates</option>
-                <option>Mix of live sessions and self-paced</option>
-              </select>
-            </label>
+            <legend>Availability</legend>
             <div class="f-field">
               <span class="f-label">When can you attend live sessions? <em>*</em></span>
               <div class="f-checks">
@@ -685,7 +683,7 @@
           <h3>Your place is reserved.</h3>
           <p>We are checking for your transfer now. Once it is verified, usually within 24 hours, you will get a confirmation by email and WhatsApp with your cohort dates and joining details.</p>
           <p class="f-done-ref">Your reference: <strong id="done-ref"></strong></p>
-          <p>If anything is unclear, email <a href="mailto:ubonanalyst@gmail.com">ubonanalyst@gmail.com</a> quoting that reference.</p>
+          <p>If anything is unclear, email us quoting that reference. Cohort enquiries: <a href="mailto:ubonanalyst@gmail.com">ubonanalyst@gmail.com</a>.</p>
         </div>
       </div>
     </div>
@@ -705,7 +703,7 @@
     <div class="pay-body">
       <div class="pay-amount">
         <span class="pay-amount-label">Amount</span>
-        <span class="pay-amount-value">N80,000</span>
+        <span class="pay-amount-value">₦80,000</span>
       </div>
 
       <dl class="pay-details">
@@ -747,7 +745,7 @@
 <footer class="foot">
   <div class="wrap">
     <span>&copy; 2026 Ubon Udonkang</span>
-    <span>Questions? <a href="mailto:ubonanalyst@gmail.com">ubonanalyst@gmail.com</a></span>
+    <span>Cohort enquiries: <a href="mailto:ubonanalyst@gmail.com">ubonanalyst@gmail.com</a></span>
   </div>
 </footer>
 
@@ -883,7 +881,7 @@
       function fail(){
         submitBtn.disabled = false;
         submitBtn.textContent = "Continue to payment";
-        showError("That did not go through. Please try again, or email ubonanalyst@gmail.com.");
+        showError("That did not go through. Please try again. Cohort enquiries: ubonanalyst@gmail.com.");
       }
 
       post(payload)
@@ -953,7 +951,7 @@
       post(body).then(closePayment).catch(function(){
         payBtn.disabled = false;
         payBtn.textContent = "I have made the transfer";
-        payStatus.textContent = "That did not save. Please try again, or email ubonanalyst@gmail.com with your reference.";
+        payStatus.textContent = "That did not save. Please try again, or send your reference to Cohort enquiries: ubonanalyst@gmail.com.";
       });
     });
 
