@@ -26,7 +26,7 @@
   --paper-2: #F6F4EF;      /* warm card surface */
   --ink: #111111;
   --ink-2: #4B4B4B;
-  --ink-3: #8A8782;
+  --ink-3: #6F6B65;
   --line: #E7E4DD;
   --line-2: #D6D2C8;
   --accent: #1F3BD6;       /* signature ink blue */
@@ -229,8 +229,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 /* one-time reveal on load: the print slides up out of a mask */
 .hero__photo img { animation: photoIn 1s var(--ease-in-out) 150ms both; }
 @keyframes photoIn {
-  from { clip-path: inset(100% 0 0 0); transform: scale(1.04); }
-  to { clip-path: inset(0 0 0 0); transform: none; }
+  from { transform: scale(1.04); }
+  to { transform: none; }
 }
 
 /* stats */
@@ -254,7 +254,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 @media (hover: hover) and (pointer: fine) { .sec__link:hover { color: var(--ink); border-color: var(--ink); } }
 
 /* the folder and its papers stay "paper" in dark mode, so pin light ink colours inside */
-.casefile { --ink: #111111; --ink-2: #4B4B4B; --ink-3: #8A8782; --line: #E7E4DD; --line-2: #D6D2C8; --accent: #1F3BD6; --surface: #FFFFFF; color: var(--ink); }
+.casefile { --ink: #111111; --ink-2: #4B4B4B; --ink-3: #6F6B65; --line: #E7E4DD; --line-2: #D6D2C8; --accent: #1F3BD6; --surface: #FFFFFF; color: var(--ink); }
 
 /* ── Case file (signature) ───────────────────────────────── */
 .casefile {
