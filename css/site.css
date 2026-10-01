@@ -258,8 +258,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 /* ── Case file (signature) ───────────────────────────────── */
 .casefile {
-  position: relative;
-  height: 720px;
+  position: relative; display: flow-root; /* keeps the sheet's top margin inside the folder */
+  min-height: 720px; padding-bottom: 72px; /* grows with the bio sheet */
   margin-top: 8px;
   touch-action: pan-y;
 }
@@ -284,7 +284,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 /* the main sheet with the bio */
 .sheet {
-  position: absolute; right: 5%; top: 90px; width: min(460px, 44%); z-index: 2;
+  position: relative; margin: 90px 5% 0 auto; width: min(460px, 44%); z-index: 2;
   background: #fff; padding: 36px 34px 30px;
   border-radius: 3px;
   box-shadow: 0 1px 0 var(--line), 0 24px 48px -24px rgba(0,0,0,0.35);
@@ -319,6 +319,11 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   font: 500 0.68rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: rgba(60,40,5,0.55);
 }
 
+.doc__caption {
+  position: absolute; left: 50%; bottom: 38px; transform: translateX(-50%); z-index: 1;
+  font: 500 0.6rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: rgba(60,40,5,0.42);
+}
+
 /* ID card */
 .doc-id { left: 4%; top: 78px; width: 280px; padding: 16px; border-radius: 10px; --r: -5deg; background: #FBFAF7; }
 .doc-id__top { display: flex; justify-content: space-between; font: 600 0.6rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 14px; }
@@ -349,12 +354,13 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .stamp small { display: block; font-size: 0.5rem; letter-spacing: 0.1em; margin-top: 3px; font-weight: 600; }
 
 /* BPMN fragment */
-.doc-bpmn { left: 3%; top: 430px; width: 320px; padding: 14px 16px 16px; --r: -2deg; }
+/* BPMN and RTM sit in the lower half, in % so they follow the folder as it grows with the sheet */
+.doc-bpmn { left: 3%; top: 58%; width: 320px; padding: 14px 16px 16px; --r: -2deg; }
 .doc-bpmn__cap { font: 500 0.6rem/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 10px; display: flex; justify-content: space-between; }
 .doc-bpmn svg { width: 100%; height: auto; }
 
 /* RTM excerpt */
-.doc-rtm { left: 28%; top: 548px; width: 300px; padding: 12px 14px 14px; --r: 2.5deg; }
+.doc-rtm { left: 12%; top: 77%; width: 300px; padding: 12px 14px 14px; --r: 2.5deg; }
 .doc-rtm table { width: 100%; border-collapse: collapse; font: 500 0.62rem/1.3 var(--mono); }
 .doc-rtm th { text-align: left; color: var(--ink-3); font-weight: 500; letter-spacing: 0.04em; padding: 0 6px 6px 0; border-bottom: 1px solid var(--ink); }
 .doc-rtm td { padding: 6px 6px 6px 0; border-bottom: 1px solid var(--line); }
@@ -375,6 +381,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   .folder { inset: 40px 0 0 0; }
   .sheet, .doc { position: relative; left: auto; right: auto; top: auto; width: auto; margin: 0 auto 18px; max-width: 460px; cursor: default; transform: rotate(var(--r)); }
   .doc-bpmn, .doc-rtm, .doc__hint { display: none; }
+  .doc__caption { position: static; display: block; transform: none; text-align: center; }
   .doc-id { max-width: 300px; }
   .doc-note { max-width: 220px; }
   .doc-brd { max-width: 300px; }
@@ -609,6 +616,21 @@ kbd { font: 500 0.75rem/1 var(--mono); padding: 4px 7px; border: 1px solid var(-
 /* ── 4C framework ────────────────────────────────────────── */
 .fw { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .fw-card { padding: clamp(24px, 3vw, 36px); background: var(--paper-2); border: 1px solid var(--line); border-radius: 20px; }
+/* ── About: how I work + first questions ─────────────────── */
+.ways { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; align-items: start; padding-top: clamp(8px, 2vw, 16px); }
+.ways__card { padding: clamp(24px, 3vw, 36px); background: var(--paper-2); border: 1px solid var(--line); border-radius: 20px; }
+.ways__rules { list-style: none; margin: 18px 0 0; padding: 0; border-top: 1px solid var(--ink); }
+.ways__rules li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--line); font: 400 clamp(1.3rem, 2.2vw, 1.6rem)/1.2 var(--serif); letter-spacing: -0.01em; }
+.ways__rules li:last-child { border-bottom: 0; padding-bottom: 0; }
+.ways__rules span { font: 500 0.72rem/2 var(--mono); letter-spacing: 0.06em; color: var(--accent); }
+/* a sticky note: paper yellow with dark ink in both themes, like the one in the case file */
+.ways__note { padding: 26px 26px 28px; margin-top: 12px; background: var(--sticky); color: #111111; border-radius: 3px; transform: rotate(1.5deg); box-shadow: 0 18px 30px -18px rgba(90,70,0,0.5); }
+.ways__note-label { display: block; margin-bottom: 18px; font: 500 0.68rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: rgba(0,0,0,0.55); }
+.ways__checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.ways__checks li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 12px; align-items: start; font: italic 400 clamp(1.25rem, 2vw, 1.45rem)/1.2 var(--serif); }
+.ways__checks li::before { content: ""; width: 14px; height: 14px; margin-top: 0.22em; border: 1.5px solid rgba(0,0,0,0.55); border-radius: 3px; }
+@media (max-width: 720px) { .ways { grid-template-columns: 1fr; } .ways__note { margin-top: 0; transform: rotate(0.8deg); } }
+
 .fw-card__c { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 28px; }
 .fw-card__n { font: 400 3.5rem/0.8 var(--serif); color: var(--accent); letter-spacing: -0.03em; }
 .fw-card h2, .fw-card h3 { font: 400 1.9rem/1.05 var(--serif); letter-spacing: -0.015em; margin: 0 0 12px; }
