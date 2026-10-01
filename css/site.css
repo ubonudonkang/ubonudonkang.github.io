@@ -165,6 +165,10 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .avail { display: inline-flex; align-items: center; gap: 8px; }
 .avail__dot { width: 7px; height: 7px; border-radius: 50%; background: #1FA15C; box-shadow: 0 0 0 3px rgba(31,161,92,0.15); }
 @media (max-width: 560px) { .topbar__clock { display: none; } }
+.avail__text { white-space: nowrap; }
+/* the full status only fits on wide screens: tablets show "Available for consulting", phones "Available" */
+@media (max-width: 860px) { .avail__more { display: none; } }
+@media (max-width: 480px) { .avail__mid { display: none; } }
 
 /* ── Theme toggle ──────────────────────────────────────── */
 .theme-toggle {
@@ -395,6 +399,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .svc-card__num { font: 400 clamp(2.2rem, 4vw, 3.5rem)/1 var(--serif); color: var(--ink-3); letter-spacing: -0.02em; }
 .svc-card__title { font: 400 clamp(2rem, 4.5vw, 3.5rem)/1 var(--serif); letter-spacing: -0.02em; margin: 16px 0 18px; max-width: 14ch; }
 .svc-card__desc { color: var(--ink-2); max-width: 52ch; margin: 0 0 24px; }
+.svc-card__links { display: flex; flex-wrap: wrap; gap: 12px 24px; margin: -8px 0 24px; }
 .tags { display: flex; flex-wrap: wrap; gap: 8px; }
 .tag { font: 500 0.72rem/1 var(--mono); letter-spacing: 0.04em; padding: 8px 12px; border: 1px solid var(--line-2); border-radius: 999px; color: var(--ink-2); background: var(--surface); }
 @media (max-width: 640px) {
