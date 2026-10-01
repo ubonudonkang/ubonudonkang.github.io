@@ -56,6 +56,7 @@ docs/ams/                      AMS case study documents opened in the PDF viewer
 ## Design notes
 
 - White editorial layout: Instrument Serif headings, Inter body text, JetBrains Mono labels.
-- One accent colour, signature blue `#1F3BD6`. Stamp red is used only on the "Approved" and "Delivered" stamps.
+- **Light and dark themes.** All colours are tokens on `:root` in `css/site.css`. Dark values follow the visitor's system setting, or the top-bar toggle, which is remembered in the browser. Use the tokens (`--ink`, `--paper`, `--surface`, `--on-ink`, `--accent-fill`...) rather than hard-coded colours. The case file on the home page deliberately stays "paper" in both themes.
+- One accent colour, signature blue `#1F3BD6` (lightened to `#8FA2FF` for text in dark mode). Stamp red is used only on the "Approved" and "Delivered" stamps.
 - The dock is the main navigation on every page. Its magnification only runs with a mouse.
 - Respects reduced motion, reduced transparency and higher-contrast settings.

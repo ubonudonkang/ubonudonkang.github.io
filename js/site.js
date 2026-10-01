@@ -38,6 +38,38 @@ function stepSpring(s, dt) {
   setInterval(tick, 15000);
 })();
 
+/* ── Light / dark theme ─────────────────────────────────────────
+   Follows the system until the visitor chooses; the choice is remembered.
+   The <head> applies a saved choice before first paint. */
+(function theme() {
+  const root = document.documentElement;
+  const buttons = document.querySelectorAll('[data-theme-toggle]');
+  const system = matchMedia('(prefers-color-scheme: dark)');
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const current = () => root.dataset.theme || (system.matches ? 'dark' : 'light');
+  function sync() {
+    const dark = current() === 'dark';
+    buttons.forEach(b => {
+      b.setAttribute('aria-pressed', String(dark));
+      b.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+    });
+    if (meta) meta.setAttribute('content', dark ? '#0E0E10' : '#FFFFFF');
+  }
+  function set(next) {
+    root.dataset.theme = next;
+    try { localStorage.setItem('theme', next); } catch (e) { /* private mode: still switches for this page */ }
+    sync();
+  }
+  buttons.forEach(b => b.addEventListener('click', () => {
+    const next = current() === 'dark' ? 'light' : 'dark';
+    // a soft cross-fade where supported; instant for reduced motion
+    if (document.startViewTransition && !reduceMotion.matches) document.startViewTransition(() => set(next));
+    else set(next);
+  }));
+  system.addEventListener('change', sync);
+  sync();
+})();
+
 /* ── Top bar edge fade ───────────────────────────────────────── */
 (function topbar() {
   const bar = document.getElementById('topbar');
