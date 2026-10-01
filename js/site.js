@@ -39,14 +39,13 @@ function stepSpring(s, dt) {
 })();
 
 /* ── Light / dark theme ─────────────────────────────────────────
-   Follows the system until the visitor chooses; the choice is remembered.
+   Light by default, whatever the system setting; a visitor's choice is remembered.
    The <head> applies a saved choice before first paint. */
 (function theme() {
   const root = document.documentElement;
   const buttons = document.querySelectorAll('[data-theme-toggle]');
-  const system = matchMedia('(prefers-color-scheme: dark)');
   const meta = document.querySelector('meta[name="theme-color"]');
-  const current = () => root.dataset.theme || (system.matches ? 'dark' : 'light');
+  const current = () => root.dataset.theme === 'dark' ? 'dark' : 'light';
   function sync() {
     const dark = current() === 'dark';
     buttons.forEach(b => {
@@ -66,7 +65,6 @@ function stepSpring(s, dt) {
     if (document.startViewTransition && !reduceMotion.matches) document.startViewTransition(() => set(next));
     else set(next);
   }));
-  system.addEventListener('change', sync);
   sync();
 })();
 
