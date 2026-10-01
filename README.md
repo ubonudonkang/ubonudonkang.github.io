@@ -34,6 +34,10 @@ ba-training/index.html         BA Bridge Cohort: page-specific styles, enrolment
 css/site.css                   Design system shared by every page
 js/site.js                     Dock, WAT clock, email copy (press C), scroll reveals, testimonials, draggable case file, PDF viewer
 img/ubon-udonkang.jpg          Portrait used on the home and About pages
+favicon.ico                    Favicon (16, 32, 48 px); browsers and Google request /favicon.ico
+img/icon-192.png, icon-512.png Larger icons, listed in site.webmanifest
+img/apple-touch-icon.png       iPhone/iPad home-screen icon (180 px)
+site.webmanifest               Web app manifest (name, icons, colours)
 docs/ams/                      AMS case study documents opened in the PDF viewer
 ```
 
