@@ -433,6 +433,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .work-card__title { font: 500 1.15rem/1.3 var(--sans); letter-spacing: -0.01em; margin: 0 0 10px; }
 .work-card__desc { font-size: 0.9rem; color: rgba(244,242,238,0.62); margin: 0 0 20px; line-height: 1.55; }
 .work-card .tag { background: transparent; border-color: rgba(255,255,255,0.16); color: rgba(244,242,238,0.75); }
+/* keep the tag row clear of the arrow button pinned bottom-right (40px button + gap) */
+.work-card .tags { padding-right: 56px; }
 .work-card__arrow {
   position: absolute; right: clamp(24px, 3vw, 36px); bottom: clamp(24px, 3vw, 36px);
   width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
@@ -446,7 +448,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 @media (max-width: 900px) {
   .work-card, .work-card:nth-child(n+3) { grid-column: span 6; min-height: 0; }
   .work-card__metric, .work-card:nth-child(n+3) .work-card__metric { font-size: clamp(3rem, 14vw, 4.5rem); }
-  .work-card__desc { padding-right: 52px; }
+
 }
 
 .work-card, .band, .cs-result { box-shadow: inset 0 0 0 1px var(--night-edge); }
