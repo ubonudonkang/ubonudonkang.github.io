@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#FFFFFF">
 <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/site.css?v=3a87b417">
+<link rel="stylesheet" href="/css/site.css?v=8946805c">
 <style>
   /* BA Bridge page: page-specific styles on top of /css/site.css (v6) */
 
@@ -160,11 +160,12 @@
   #waitlist-form input:focus, #waitlist-form select:focus, #waitlist-form textarea:focus { outline: none; border-color: #9DB0FF; box-shadow: 0 0 0 3px rgba(157,176,255,0.3); }
   #waitlist-form .invalid { border-color: #F97066; }
   .f-checks { display: flex; flex-wrap: wrap; gap: 8px; }
-  .f-check { display: flex; align-items: flex-start; gap: 10px; padding: 11px 14px; font-size: 0.92rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16); border-radius: 12px; cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease; }
+  .f-check { display: flex; align-items: flex-start; gap: 10px; padding: 11px 14px; font-size: 0.92rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16); border-radius: 12px; cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease, transform 160ms var(--ease-out); }
   @media (hover: hover) and (pointer: fine) { .f-check:hover { border-color: rgba(255,255,255,0.4); } }
   .f-check input { accent-color: #9DB0FF; width: 17px; height: 17px; margin: 1px 0 0; flex-shrink: 0; }
   .f-check.checked { border-color: #9DB0FF; background: rgba(157,176,255,0.14); }
   .f-check.maxed { opacity: 0.45; }
+  .f-check:active { transform: scale(0.97); }
   .f-consent { margin-top: 18px; align-items: flex-start; }
   .f-consent em { color: #9DB0FF; font-style: normal; }
   .f-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
@@ -188,6 +189,14 @@
   .pay-modal { display: flex; flex-direction: column; width: 100%; max-width: 520px; max-height: min(88vh, 720px); margin: auto; overflow: hidden; background: var(--surface); border-radius: 24px; box-shadow: 0 40px 80px -24px rgba(0,0,0,0.45); animation: payIn 240ms var(--ease-out) both; }
   @keyframes payFade { from { opacity: 0; } }
   @keyframes payIn { from { opacity: 0; transform: scale(0.97) translateY(8px); } }
+  /* leaving retraces the way in */
+  @keyframes payOut { to { opacity: 0; transform: scale(0.97) translateY(8px); } }
+  @keyframes payFadeOut { to { opacity: 0; } }
+  .pay-overlay.is-closing { animation: payFadeOut 180ms var(--ease-out) both; }
+  .pay-overlay.is-closing .pay-modal { animation: payOut 180ms var(--ease-out) both; }
+  /* the reserved-place message arrives once the modal has gone */
+  @keyframes doneIn { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
+  .f-done:not([hidden]) { animation: doneIn 400ms var(--ease-out) 80ms both; }
   .pay-head { flex: 0 0 auto; padding: 26px 28px 18px; border-bottom: 1px solid var(--line); }
   .pay-step { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 0 0 10px; }
   .pay-head h3 { font-size: 2.2rem; letter-spacing: -0.02em; margin: 0 0 8px; }
@@ -226,6 +235,9 @@
   @media (prefers-reduced-motion: reduce) {
     .js .reveal { transform: none; transition: opacity 300ms ease; }
     .pay-modal { animation: payFade 200ms ease both; }
+    .pay-overlay.is-closing .pay-modal { animation: payFadeOut 200ms ease both; }
+    .f-done:not([hidden]) { animation: payFade 200ms ease both; }
+    .f-check:active { transform: none; }
     .faq summary::after { transition: none; }
   }
 
@@ -886,12 +898,26 @@
     var lastFocus = null;
 
     function closePayment(){
-      overlay.hidden = true;
-      document.body.style.overflow = "";
-      form.hidden = true;
-      doneEl.hidden = false;
-      doneEl.scrollIntoView({ behavior:"smooth", block:"center" });
-      if(lastFocus){ lastFocus.focus(); }
+      var finished = false;
+      function finish(){
+        if(finished){ return; }
+        finished = true;
+        overlay.hidden = true;
+        overlay.classList.remove("is-closing");
+        document.body.style.overflow = "";
+        form.hidden = true;
+        doneEl.hidden = false;
+        doneEl.scrollIntoView({ behavior:"smooth", block:"center" });
+        if(lastFocus){ lastFocus.focus(); }
+      }
+      // play the exit, then hide; the timer covers browsers that skip animationend
+      overlay.addEventListener("animationend", function onEnd(e){
+        if(e.target !== overlay){ return; }
+        overlay.removeEventListener("animationend", onEnd);
+        finish();
+      });
+      overlay.classList.add("is-closing");
+      setTimeout(finish, 260);
     }
 
     document.querySelectorAll(".pay-copy").forEach(function(btn){
@@ -976,6 +1002,6 @@
 </nav>
 
 <div class="toast" id="toast" role="status"></div>
-<script src="/js/site.js?v=c3d7ef7d"></script>
+<script src="/js/site.js?v=dd0318ac"></script>
 </body>
 </html>

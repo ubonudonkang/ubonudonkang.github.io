@@ -255,6 +255,10 @@ document.querySelectorAll('[data-copy-text]').forEach(el => el.addEventListener(
 
   const rubber = (over, dim, c = 0.55) => (over * dim * c) / (dim + c * Math.abs(over));
   const project = (v, d = 0.996) => (v / 1000) * d / (1 - d);
+  // first view only: the papers start a little low and settle on the same springs
+  // a drag uses, staggered, as the folder fades in
+  const settles = [];
+  const settleOnReveal = wide.matches && !reduceMotion.matches && 'IntersectionObserver' in window;
 
   docs.forEach(el => {
     const rot = getComputedStyle(el).getPropertyValue('--r').trim() || '0deg';
@@ -282,8 +286,16 @@ document.querySelectorAll('[data-copy-text]').forEach(el => el.addEventListener(
     }
     const kick = () => { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } };
 
+    let touched = false;
+    if (settleOnReveal) {
+      sy.value = sy.target = 18;
+      render();
+      settles.push(() => { if (touched || !wide.matches) return; sy.target = 0; kick(); });
+    }
+
     el.addEventListener('pointerdown', e => {
       if (!wide.matches || drag || (e.pointerType === 'mouse' && e.button !== 0)) return; // ignore extra fingers
+      touched = true;
       el.setPointerCapture(e.pointerId);
       el.classList.add('is-grabbed');
       el.style.zIndex = ++z;
@@ -342,6 +354,16 @@ document.querySelectorAll('[data-copy-text]').forEach(el => el.addEventListener(
       el.style.zIndex = '';
     });
   });
+
+  if (settles.length) {
+    // same trigger as the folder's own reveal, so both move together
+    const io = new IntersectionObserver(entries => {
+      if (!entries.some(e => e.isIntersecting)) return;
+      io.disconnect();
+      settles.forEach((settle, i) => setTimeout(settle, 200 + i * 70));
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+    io.observe(root);
+  }
 })();
 
 /* ── Case study: current section in the contents list ────────── */
