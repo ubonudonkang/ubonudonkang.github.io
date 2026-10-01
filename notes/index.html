@@ -6,10 +6,9 @@
   <title>Notes: Business Analysis Guides · Ubon Udonkang</title>
   <meta name="description" content="Practical business analysis guides from a practising BA: breaking into the career, writing requirements people can build from, and choosing what to automate."/>
   <meta name="theme-color" content="#FFFFFF"/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap"/>
-  <link rel="stylesheet" href="/css/site.css?v=c439b2e7"/>
+  <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin/>
+  <link rel="preload" href="/fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin/>
+  <link rel="stylesheet" href="/css/site.css?v=01a60716"/>
   <script>document.documentElement.classList.add('js')</script>
   <link rel="alternate" type="application/rss+xml" title="Notes · Ubon Udonkang" href="/notes/feed.xml"/>
   <!--seo-->
@@ -19,21 +18,22 @@
   <meta property="og:site_name" content="Ubon Udonkang"/>
   <meta property="og:title" content="Notes: Business Analysis Guides · Ubon Udonkang"/>
   <meta property="og:description" content="Practical business analysis guides from a practising BA: breaking into the career, writing requirements people can build from, and choosing what to automate."/>
-  <meta property="og:image" content="https://ubonudonkang.com/img/og-card.png"/>
+  <meta property="og:image" content="https://ubonudonkang.com/img/og-card.jpg"/>
+  <meta property="og:image:type" content="image/jpeg"/>
   <meta property="og:image:width" content="1200"/>
   <meta property="og:image:height" content="630"/>
   <meta property="og:image:alt" content="Ubon Udonkang, Senior Business Analyst, Lagos"/>
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="Notes: Business Analysis Guides · Ubon Udonkang"/>
   <meta name="twitter:description" content="Practical business analysis guides from a practising BA: breaking into the career, writing requirements people can build from, and choosing what to automate."/>
-  <meta name="twitter:image" content="https://ubonudonkang.com/img/og-card.png"/>
+  <meta name="twitter:image" content="https://ubonudonkang.com/img/og-card.jpg"/>
   <link rel="icon" href="/favicon.ico" sizes="48x48"/>
   <link rel="icon" type="image/png" sizes="192x192" href="/img/icon-192.png"/>
   <link rel="apple-touch-icon" href="/img/apple-touch-icon.png"/>
   <link rel="manifest" href="/site.webmanifest"/>
   <script data-goatcounter="https://ubonudonkang.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
   <meta property="og:url" content="https://ubonudonkang.com/notes/"/>
-  <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Blog", "name": "Notes · Ubon Udonkang", "url": "https://ubonudonkang.com/notes/", "description": "Practical business analysis guides from a practising BA: breaking into the career, writing requirements people can build from, and choosing what to automate.", "author": {"@id": "https://ubonudonkang.com/#person"}, "blogPost": [{"@type": "BlogPosting", "headline": "How to Become a Business Analyst in Nigeria (No Tech Background Needed)", "url": "https://ubonudonkang.com/notes/how-to-become-a-business-analyst-in-nigeria/"}, {"@type": "BlogPosting", "headline": "How to Write a BRD: Structure, Example and Checklist", "url": "https://ubonudonkang.com/notes/how-to-write-a-brd/"}, {"@type": "BlogPosting", "headline": "How to Choose Processes for RPA: A Scoring Method That Works", "url": "https://ubonudonkang.com/notes/how-to-choose-processes-for-rpa/"}, {"@type": "BlogPosting", "headline": "ECBA vs CCBA vs CBAP: Which IIBA Certification Should You Get?", "url": "https://ubonudonkang.com/notes/ecba-vs-ccba-vs-cbap/"}, {"@type": "BlogPosting", "headline": "What Does a Business Analyst Actually Do? A Week on a Banking Project", "url": "https://ubonudonkang.com/notes/what-does-a-business-analyst-do/"}]}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://ubonudonkang.com/"}, {"@type": "ListItem", "position": 2, "name": "Notes", "item": "https://ubonudonkang.com/notes/"}]}]}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Blog", "name": "Notes · Ubon Udonkang", "url": "https://ubonudonkang.com/notes/", "description": "Practical business analysis guides from a practising BA: breaking into the career, writing requirements people can build from, and choosing what to automate.", "author": {"@id": "https://ubonudonkang.com/#person"}, "blogPost": [{"@type": "BlogPosting", "headline": "How to Become a Business Analyst in Nigeria (No Tech Background Needed)", "url": "https://ubonudonkang.com/notes/how-to-become-a-business-analyst-in-nigeria/"}, {"@type": "BlogPosting", "headline": "How to Write a BRD: Structure, Example and Checklist", "url": "https://ubonudonkang.com/notes/how-to-write-a-brd/"}, {"@type": "BlogPosting", "headline": "How to Choose Processes for RPA: A Scoring Method That Works", "url": "https://ubonudonkang.com/notes/how-to-choose-processes-for-rpa/"}, {"@type": "BlogPosting", "headline": "ECBA vs CCBA vs CBAP: Which IIBA Certification Should You Get?", "url": "https://ubonudonkang.com/notes/ecba-vs-ccba-vs-cbap/"}, {"@type": "BlogPosting", "headline": "What Does a Business Analyst Actually Do? A Week on a Banking Project", "url": "https://ubonudonkang.com/notes/what-does-a-business-analyst-do/"}, {"@type": "BlogPosting", "headline": "BRD vs FRS vs User Stories: When to Use Each", "url": "https://ubonudonkang.com/notes/brd-vs-frs-vs-user-stories/"}, {"@type": "BlogPosting", "headline": "Business Analyst Interview Questions, Answered by a Practising BA", "url": "https://ubonudonkang.com/notes/business-analyst-interview-questions/"}, {"@type": "BlogPosting", "headline": "User Stories and Acceptance Criteria: Fintech Examples", "url": "https://ubonudonkang.com/notes/user-stories-and-acceptance-criteria/"}]}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://ubonudonkang.com/"}, {"@type": "ListItem", "position": 2, "name": "Notes", "item": "https://ubonudonkang.com/notes/"}]}]}</script>
   <!--/seo-->
 </head>
 <body>
@@ -50,7 +50,7 @@
 <main>
 
   <section class="phero wrap">
-    <div class="phero__label"><span class="label">Notes</span><span class="label">5 guides</span></div>
+    <div class="phero__label"><span class="label">Notes</span><span class="label">8 guides</span></div>
     <h1 class="phero__title">Notes on business <em>analysis</em></h1>
     <p class="phero__sub">Practical guides from a practising BA: breaking into the career, writing requirements people can build from, and choosing what to automate.</p>
   </section>
@@ -85,6 +85,24 @@
         <span class="note-card__meta"><span class="label">Career</span><span class="label">4 min read</span></span>
         <span class="note-card__title">What Does a Business Analyst Actually Do? A Week on a Banking Project</span>
         <span class="note-card__desc">What an IT business analyst really does day to day: workshops, process maps, requirements, developer questions, UAT and sign-off on a banking project.</span>
+        <span class="note-card__more">Read the note <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </a>
+      <a href="/notes/brd-vs-frs-vs-user-stories/" class="note-card rv">
+        <span class="note-card__meta"><span class="label">Practice</span><span class="label">5 min read</span></span>
+        <span class="note-card__title">BRD vs FRS vs User Stories: When to Use Each</span>
+        <span class="note-card__desc">The difference between a BRD, an FRS (or FRD) and user stories: what each answers, who it is for, when to use which, and how to trace them together.</span>
+        <span class="note-card__more">Read the note <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </a>
+      <a href="/notes/business-analyst-interview-questions/" class="note-card rv">
+        <span class="note-card__meta"><span class="label">Career</span><span class="label">6 min read</span></span>
+        <span class="note-card__title">Business Analyst Interview Questions, Answered by a Practising BA</span>
+        <span class="note-card__desc">Common business analyst interview questions on the role, BRDs, user stories, UAT and stakeholder scenarios, with what interviewers check and how to answer.</span>
+        <span class="note-card__more">Read the note <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </a>
+      <a href="/notes/user-stories-and-acceptance-criteria/" class="note-card rv">
+        <span class="note-card__meta"><span class="label">Practice</span><span class="label">5 min read</span></span>
+        <span class="note-card__title">User Stories and Acceptance Criteria: Fintech Examples</span>
+        <span class="note-card__desc">How to write user stories and Given/When/Then acceptance criteria that developers can build and testers can check, with worked banking and fintech examples.</span>
         <span class="note-card__more">Read the note <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </a>
     </div>

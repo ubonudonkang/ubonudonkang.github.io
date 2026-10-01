@@ -31,7 +31,8 @@ project-loan-approval/         Case study: loan approval automation across Afric
 resources/index.html           Paid and free resources
 contact/index.html             Contact details and enquiry form (Formspree)
 ba-training/index.html         BA Bridge Cohort: page-specific styles, enrolment form and payment modal
-css/site.css                   Design system shared by every page
+css/site.css                   Design system shared by every page (starts with the @font-face rules)
+fonts/                         Self-hosted Inter, Instrument Serif and JetBrains Mono (latin + latin-ext woff2)
 js/site.js                     Dock, WAT clock, email copy (press C), scroll reveals, testimonials, draggable case file, PDF viewer
 img/ubon-udonkang.jpg          Portrait used on the home and About pages
 favicon.ico                    Favicon (16, 32, 48 px); browsers and Google request /favicon.ico
@@ -54,7 +55,7 @@ docs/ams/                      AMS case study documents opened in the PDF viewer
 - **Structured data:** a Person and WebSite on the home page, ProfilePage on About, Course on BA Training, and breadcrumbs on the other pages. Check with Google's Rich Results Test after changes.
 - **`sitemap.xml`** lists every public page. Add new pages to it and submit it in Google Search Console. **`robots.txt`** points to the sitemap and keeps `/docs/` out of search.
 - **`404.html`** is the page GitHub Pages shows for missing URLs.
-- **Share image:** `img/og-card.png` (1200×630). **Home-screen icon:** `img/apple-touch-icon.png`.
+- **Share image:** `img/og-card.jpg` (1200×630, about 80 KB). **Home-screen icon:** `img/apple-touch-icon.png`.
 - **Cache busting:** pages load `/css/site.css?v=…` and `/js/site.js?v=…`. **Whenever you change `css/site.css` or `js/site.js`, change the `v=` value on every page.** Otherwise browsers can pair new pages with an old cached stylesheet for up to 10 minutes, which shows up as black dock icons or a squeezed photo.
 
 ## Design notes
