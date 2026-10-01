@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#FFFFFF">
 <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/site.css?v=56d8e7aa">
+<link rel="stylesheet" href="/css/site.css?v=ab94f971">
 <style>
   /* BA Bridge page: page-specific styles on top of /css/site.css (v6) */
 
@@ -36,6 +36,9 @@
   /* phones: the two buttons don't fit side by side, so stack them at full width */
   @media (max-width: 480px) { .hero-actions .btn { flex: 1 1 100%; justify-content: center; } }
   .reassure { font-size: 0.88rem; color: var(--ink-2); margin: 20px 0 0; }
+  .hero-seats { margin: 22px 0 0; }
+  .hero-seats + .reassure { margin-top: 12px; }
+  .price-seats { align-self: flex-start; margin-top: 14px; }
   .reassure .hl-strike { text-decoration: line-through; color: var(--ink-3); margin-left: 4px; }
   .reassure em { font-style: normal; color: var(--accent); }
 
@@ -318,7 +321,8 @@
           <a class="btn btn-line" href="/contact/">Work With Me</a>
         </div>
         <p class="hero-more"><a class="quiet-link" href="#weeks">See the 12 weeks</a></p>
-        <p class="reassure">₦80,000 for the full 12 weeks* <span class="hl-strike">₦100,000</span>. Starts 2 November 2026. Enrolment closes 25 October 2026. <em>*First 5 students only.</em> 10 seats available.</p>
+        <p class="hero-seats"><span class="pill pill--ok">10 Seats Available</span></p>
+        <p class="reassure">₦80,000 for the full 12 weeks <span class="hl-strike">₦100,000</span>. Starts 2 November 2026.<br>Enrolment closes 25 October 2026.</p>
       </div>
 
       <article class="story" aria-label="The program, written as a user story">
@@ -473,8 +477,8 @@
             <span class="price-was">₦100,000</span>
             <span class="price-amount">₦80,000</span>
             <span class="price-sub">for the full 12 weeks</span>
-            <p class="price-footnote">*For the first 5 students to enrol. 10 seats available.</p>
-            <p class="price-footnote">Starts 2 November 2026. Enrolment closes 25 October 2026.</p>
+            <span class="pill pill--ok price-seats">10 Seats Available</span>
+            <p class="price-footnote">Starts 2 November 2026.<br>Enrolment closes 25 October 2026.</p>
           </div>
           <p class="price-blurb">Payment is by bank transfer, in full, at enrolment. Your place is confirmed once the transfer is verified, usually within 24 hours.</p>
           <a class="btn btn-primary" href="#join">Enrol for November</a>

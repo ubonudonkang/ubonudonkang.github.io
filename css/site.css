@@ -463,10 +463,10 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .cohort h2 { font: 400 clamp(2.5rem, 5.5vw, 4.25rem)/1 var(--serif); letter-spacing: -0.025em; margin: 0 0 20px; }
 .cohort h2 em { color: var(--accent); }
 .cohort p { color: var(--ink-2); margin: 0 0 28px; max-width: 46ch; }
-.cohort__price { display: flex; align-items: baseline; gap: 12px; margin-bottom: 24px; }
+.cohort__price { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-bottom: 24px; }
 .cohort__price strong { font: 400 2.5rem/1 var(--serif); letter-spacing: -0.02em; }
 .cohort__price s { color: var(--ink-3); }
-.cohort__price span { font-size: 0.8rem; color: var(--ink-2); }
+.cohort__price .pill { margin-left: 4px; }
 .story {
   background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
   padding: 26px 26px 20px;
