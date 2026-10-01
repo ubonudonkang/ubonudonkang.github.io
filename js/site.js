@@ -74,7 +74,7 @@ function stepSpring(s, dt) {
   if (!bar) return;
   const update = () => bar.classList.toggle('is-scrolled', scrollY > 8);
   addEventListener('scroll', update, { passive: true });
-  update();
+  requestAnimationFrame(update);
 })();
 
 /* ── Toast + email copy ──────────────────────────────────────── */
