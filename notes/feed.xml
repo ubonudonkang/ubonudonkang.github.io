@@ -6,7 +6,7 @@
     <atom:link href="https://ubonudonkang.com/notes/feed.xml" rel="self" type="application/rss+xml"/>
     <description>Practical business analysis guides from a practising BA: breaking into the career, writing requirements people can build from, and choosing what to automate.</description>
     <language>en</language>
-    <lastBuildDate>Wed, 30 Sep 2026 09:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 01 Oct 2026 09:00:00 +0000</lastBuildDate>
     <item>
       <title>How to Become a Business Analyst in Nigeria (No Tech Background Needed)</title>
       <link>https://ubonudonkang.com/notes/how-to-become-a-business-analyst-in-nigeria/</link>
@@ -46,6 +46,30 @@
       <pubDate>Wed, 30 Sep 2026 09:00:00 +0000</pubDate>
       <category>Career</category>
       <description>What an IT business analyst really does day to day: workshops, process maps, requirements, developer questions, UAT and sign-off on a banking project.</description>
+    </item>
+    <item>
+      <title>BRD vs FRS vs User Stories: When to Use Each</title>
+      <link>https://ubonudonkang.com/notes/brd-vs-frs-vs-user-stories/</link>
+      <guid isPermaLink="true">https://ubonudonkang.com/notes/brd-vs-frs-vs-user-stories/</guid>
+      <pubDate>Thu, 01 Oct 2026 09:00:00 +0000</pubDate>
+      <category>Practice</category>
+      <description>The difference between a BRD, an FRS (or FRD) and user stories: what each answers, who it is for, when to use which, and how to trace them together.</description>
+    </item>
+    <item>
+      <title>Business Analyst Interview Questions, Answered by a Practising BA</title>
+      <link>https://ubonudonkang.com/notes/business-analyst-interview-questions/</link>
+      <guid isPermaLink="true">https://ubonudonkang.com/notes/business-analyst-interview-questions/</guid>
+      <pubDate>Thu, 01 Oct 2026 09:00:00 +0000</pubDate>
+      <category>Career</category>
+      <description>Common business analyst interview questions on the role, BRDs, user stories, UAT and stakeholder scenarios, with what interviewers check and how to answer.</description>
+    </item>
+    <item>
+      <title>User Stories and Acceptance Criteria: Fintech Examples</title>
+      <link>https://ubonudonkang.com/notes/user-stories-and-acceptance-criteria/</link>
+      <guid isPermaLink="true">https://ubonudonkang.com/notes/user-stories-and-acceptance-criteria/</guid>
+      <pubDate>Thu, 01 Oct 2026 09:00:00 +0000</pubDate>
+      <category>Practice</category>
+      <description>How to write user stories and Given/When/Then acceptance criteria that developers can build and testers can check, with worked banking and fintech examples.</description>
     </item>
   </channel>
 </rss>
