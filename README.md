@@ -56,7 +56,8 @@ docs/ams/                      AMS case study documents opened in the PDF viewer
 - **`sitemap.xml`** lists every public page. Add new pages to it and submit it in Google Search Console. **`robots.txt`** points to the sitemap and keeps `/docs/` out of search.
 - **`404.html`** is the page GitHub Pages shows for missing URLs.
 - **Share image:** `img/og-card.jpg` (1200×630, about 80 KB). **Home-screen icon:** `img/apple-touch-icon.png`.
-- **Cache busting:** pages load `/css/site.css?v=…` and `/js/site.js?v=…`. **Whenever you change `css/site.css` or `js/site.js`, change the `v=` value on every page.** Otherwise browsers can pair new pages with an old cached stylesheet for up to 10 minutes, which shows up as black dock icons or a squeezed photo.
+- **Stylesheet:** `css/site.css` is the file to edit, but pages don't link to it: the build step (`seo.py`) copies it, lightly minified, into a `<style data-inline="site.css">` block in every page. GitHub Pages only lets browsers cache files for 10 minutes, so a separate stylesheet saved little and held up the first paint. After changing `css/site.css`, re-run the build so every page picks it up.
+- **Cache busting:** pages load `/js/site.js?v=…`; the build sets `v=` from the file's contents, so browsers never pair a new page with an old cached script.
 
 ## Design notes
 
