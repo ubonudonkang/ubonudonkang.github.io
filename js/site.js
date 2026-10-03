@@ -476,7 +476,15 @@ window.squadPay = function ({ label = 'payment', amount, email, name, ref, metad
       metadata,
       pass_charge: false,
       onLoad: () => {},
-      onSuccess: (res) => { if (paid) return; paid = true; window.uuTrack(`${label}-checkout-success`); if (onSuccess) onSuccess(res); },
+      onSuccess: (res) => {
+        if (paid) return;
+        paid = true;
+        // Close before the page reveals and focuses its existing next step.
+        // Squad calls onClose here; paid keeps it from reporting a cancellation.
+        try { checkout.close(); } catch (e) { /* still complete the success flow if the widget cannot close */ }
+        window.uuTrack(`${label}-checkout-success`);
+        if (onSuccess) onSuccess(res);
+      },
       onClose: () => { if (!paid) { window.uuTrack(`${label}-checkout-closed`); if (onClose) onClose(); } },
     });
     checkout.setup();
