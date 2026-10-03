@@ -15,7 +15,7 @@ const existingHeaders = [
 function makeHarness(headers = existingHeaders) {
   const rows = [headers.slice()];
   const emails = [];
-  let columns = 26;
+  let columns = Math.max(26, headers.length);
   const sheet = {
     getLastRow: () => rows.length,
     getLastColumn: () => rows[0].length,
@@ -118,6 +118,11 @@ assert.match(h.context.doPost({ parameter: { action: 'confirm', intent: 'confirm
 const mismatched = makeHarness([...existingHeaders.slice(0, 17), 'Wrong status heading', ...existingHeaders.slice(18)]);
 assert.equal(JSON.parse(mismatched.context.doPost({ parameter: signup }).text).result, 'error');
 assert.equal(mismatched.rows.length, 1);
+const readyHeaders = existingHeaders.concat(['Selar sale reference', 'Confirmation token', 'Confirmed at', 'Confirmed by']);
+const ready = makeHarness(readyHeaders);
+assert.equal(JSON.parse(ready.context.doPost({ parameter: { ...signup, reference: 'BAB-READY-123' } }).text).result, 'ok');
+assert.deepEqual(ready.rows[0], readyHeaders);
+assert.equal(ready.columns, 30);
 const occupied = makeHarness();
 const occupiedRow = new Array(27).fill('');
 occupiedRow[26] = 'Existing unlabelled value';
