@@ -279,7 +279,7 @@
   <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <div class="pilot">Enrolment open, November 2026 cohort</div>
+        <div class="pilot">Online business analysis course · Enrolment open, November 2026 cohort</div>
         <h1>Move into IT business analysis with <span class="hl">a portfolio</span>, not just a certificate.</h1>
         <p class="lede">A 12-week live cohort for career changers. Taught by a practising Business Analyst and built around one real project you'll take into interviews.</p>
         <div class="hero-actions">
@@ -422,7 +422,7 @@
         </div>
         <div class="run reveal">
           <dt>Peer pods</dt>
-          <dd>Small review groups inside a cohort of 15 to 25, so you learn from how others approach the same problem.</dd>
+          <dd>Small review groups inside a cohort of 10 to 15, so you learn from how others approach the same problem.</dd>
         </div>
         <div class="run reveal">
           <dt>Format</dt>
@@ -800,6 +800,7 @@
         .then(function(){
           submitBtn.hidden = true;
           document.getElementById("done-ref").textContent = ref;
+          if (window.uuTrack) window.uuTrack("cohort-enrolment-started");
           startPayment();
         })
         .catch(function(){
@@ -820,6 +821,7 @@
       statusEl.classList.add("ok");
       statusEl.textContent = "Opening secure checkout...";
       window.squadPay({
+        label: "cohort",
         amount: 80000,
         email: buyer.email,
         name: buyer.name,
@@ -900,6 +902,6 @@
 </nav>
 
 <div class="toast" id="toast" role="status"></div>
-<script src="/js/site.js?v=b2d9b6dd"></script>
+<script src="/js/site.js?v=919b9139"></script>
 </body>
 </html>
