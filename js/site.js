@@ -458,7 +458,11 @@ function loadSquad() {
   return squadLoading;
 }
 // amount in naira; Squad wants kobo
-window.squadPay = function ({ amount, email, name, ref, metadata = {}, onSuccess, onClose }) {
+// Browser checkout events are not server-verified payment or booking records.
+window.uuTrack = function (name) {
+  try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: name, title: name, event: true }); } catch (e) { /* analytics must never break a payment */ }
+};
+window.squadPay = function ({ label = 'payment', amount, email, name, ref, metadata = {}, onSuccess, onClose }) {
   if (!SQUAD_PUBLIC_KEY) return Promise.reject(new Error('Online payment is not switched on yet.'));
   return loadSquad().then(() => {
     let paid = false;
@@ -472,11 +476,12 @@ window.squadPay = function ({ amount, email, name, ref, metadata = {}, onSuccess
       metadata,
       pass_charge: false,
       onLoad: () => {},
-      onSuccess: (res) => { paid = true; if (onSuccess) onSuccess(res); },
-      onClose: () => { if (!paid && onClose) onClose(); },
+      onSuccess: (res) => { if (paid) return; paid = true; window.uuTrack(`${label}-checkout-success`); if (onSuccess) onSuccess(res); },
+      onClose: () => { if (!paid) { window.uuTrack(`${label}-checkout-closed`); if (onClose) onClose(); } },
     });
     checkout.setup();
     checkout.open();
+    window.uuTrack(`${label}-checkout-opened`);
   });
 };
 
@@ -515,6 +520,7 @@ window.squadPay = function ({ amount, email, name, ref, metadata = {}, onSuccess
     button.disabled = true;
     status.textContent = 'Opening secure checkout...';
     window.squadPay({
+      label: 'session',
       amount: 15000, email, name, ref,
       metadata: { product: '1:1 Career Clarity Session' },
       onSuccess: () => {
@@ -528,4 +534,23 @@ window.squadPay = function ({ amount, email, name, ref, metadata = {}, onSuccess
       status.textContent = `${err.message} Please try again shortly.`;
     });
   });
+})();
+
+/* ── Contact: count a sent enquiry by type (consulting, contract, role…) ─ */
+(function enquiryEvent() {
+  const done = document.querySelector('[data-fs-success]');
+  const type = document.getElementById('ty');
+  const form = document.getElementById('contact-form');
+  if (!done || !type || !form) return;
+  let counted = false;
+  let submittedType = 'unspecified';
+  form.addEventListener('submit', () => {
+    submittedType = type.value || 'unspecified';
+    counted = false;
+  }, true);
+  new MutationObserver(() => {
+    if (counted || done.hidden || getComputedStyle(done).display === 'none') return;
+    counted = true;
+    window.uuTrack(`contact-enquiry-${submittedType}`);
+  }).observe(done, { attributes: true, attributeFilter: ['style', 'hidden', 'class'] });
 })();

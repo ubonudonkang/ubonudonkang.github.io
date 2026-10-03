@@ -39,14 +39,14 @@ favicon.ico                    Favicon (16, 32, 48 px); browsers and Google requ
 img/icon-192.png, icon-512.png Larger icons, listed in site.webmanifest
 img/apple-touch-icon.png       iPhone/iPad home-screen icon (180 px)
 site.webmanifest               Web app manifest (name, icons, colours)
-docs/ams/                      AMS case study documents opened in the PDF viewer
+docs/ams/                      Do not publish confidential client documents here
 ```
 
 ## Common edits
 
 - **Contact form:** posts to Formspree form `xdaqwayj` (see `contact/index.html`).
 - **Portrait:** replace `img/ubon-udonkang.jpg` with another photo of the same name. A 4:5 portrait works best.
-- **AMS documents:** add a PDF to `docs/ams/`, then give its row in `project-ams/index.html` a `data-pdf` path and a `View` button, like the Data Dictionary row.
+- **AMS documents:** confidential originals must stay out of the public repository. The Data Dictionary is available by request only, subject to permission and redaction. Removing a file from the current site does not remove old copies from Git history or caches.
 - **Testimonials:** short quotes live in the home page carousel. The full recommendations are on the About page.
 
 ## Payments (Squad by GTCO)
@@ -75,3 +75,7 @@ docs/ams/                      AMS case study documents opened in the PDF viewer
 - One accent colour, signature blue `#1F3BD6` (lightened to `#8FA2FF` for text in dark mode). Stamp red is used only on the "Approved" and "Delivered" stamps.
 - The dock is the main navigation on every page. Its magnification only runs with a mouse.
 - Respects reduced motion, reduced transparency and higher-contrast settings.
+
+## Review conversion tracking
+
+GoatCounter records cohort-enrolment-started, cohort/session-checkout-opened, cohort/session-checkout-success, and cohort/session-checkout-closed. Checkout success is a browser callback, not server-verified revenue or a confirmed booking. Reconcile paid enrolments with the Apps Script/Squad records and bookings with Cal.com. Contact success events retain the engagement type selected when the form was submitted. Page visits use GoatCounter's existing pageview tracking.
