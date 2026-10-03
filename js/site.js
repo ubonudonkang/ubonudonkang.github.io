@@ -436,64 +436,29 @@ document.querySelectorAll('[data-copy-text]').forEach(el => el.addEventListener(
   form.querySelector('#fn')?.focus({ preventScroll: true });
 })();
 
-/* ── Squad (GTCO) checkout ────────────────────────────────────────
-   The public key is meant to sit in page code: sandbox_pk_... while testing,
-   pk_... in production. The secret key never goes here; it lives in the Apps
-   Script that verifies cohort payments. squad.min.js loads on first use, so
-   pages don't pay for it until someone checks out. */
-const SQUAD_PUBLIC_KEY = 'pk_cb5d383f172d4fb319f3babcdc0128ba842ca584';
-let squadLoading = null;
-function loadSquad() {
-  if (window.squad) return Promise.resolve();
-  if (!squadLoading) {
-    squadLoading = new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://checkout.squadco.com/widget/squad.min.js';
-      s.async = true;
-      s.onload = () => (window.squad ? resolve() : reject(new Error('Secure checkout did not load.')));
-      s.onerror = () => { squadLoading = null; reject(new Error('Secure checkout did not load.')); };
-      document.head.appendChild(s);
-    });
-  }
-  return squadLoading;
-}
-// amount in naira; Squad wants kobo
-// Browser checkout events are not server-verified payment or booking records.
+/* ── Hosted Selar checkout helpers ─────────────────────────────── */
 window.uuTrack = function (name) {
-  try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: name, title: name, event: true }); } catch (e) { /* analytics must never break a payment */ }
-};
-window.squadPay = function ({ label = 'payment', amount, email, name, ref, metadata = {}, onSuccess, onClose }) {
-  if (!SQUAD_PUBLIC_KEY) return Promise.reject(new Error('Online payment is not switched on yet.'));
-  return loadSquad().then(() => {
-    let paid = false;
-    const checkout = new window.squad({
-      key: SQUAD_PUBLIC_KEY,
-      email,
-      amount: Math.round(amount * 100),
-      currency_code: 'NGN',
-      transaction_ref: ref,
-      customer_name: name,
-      metadata,
-      pass_charge: false,
-      onLoad: () => {},
-      onSuccess: (res) => {
-        if (paid) return;
-        paid = true;
-        // Close before the page reveals and focuses its existing next step.
-        // Squad calls onClose here; paid keeps it from reporting a cancellation.
-        try { checkout.close(); } catch (e) { /* still complete the success flow if the widget cannot close */ }
-        window.uuTrack(`${label}-checkout-success`);
-        if (onSuccess) onSuccess(res);
-      },
-      onClose: () => { if (!paid) { window.uuTrack(`${label}-checkout-closed`); if (onClose) onClose(); } },
-    });
-    checkout.setup();
-    checkout.open();
-    window.uuTrack(`${label}-checkout-opened`);
-  });
+  try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: name, title: name, event: true }); } catch (e) { /* analytics must never break checkout */ }
 };
 
-/* ── 1:1 session: pay first, then the Cal.com button unlocks ───── */
+function selarCheckoutUrl(productUrl, customer) {
+  const url = new URL(productUrl);
+  url.searchParams.set('add_to_cart', '1');
+  url.searchParams.set('email', customer.email);
+  url.searchParams.set('fullname', customer.name);
+  if (customer.whatsapp) url.searchParams.set('mobile', customer.whatsapp);
+  return url.toString();
+}
+
+function clearProcessedPaymentParam() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has('payment')) return;
+  url.searchParams.delete('payment');
+  const query = url.searchParams.toString();
+  window.history.replaceState({}, '', url.pathname + (query ? `?${query}` : '') + url.hash);
+}
+
+/* ── 1:1 session: Selar return unlocks the Cal.com booking step ── */
 (function sessionPayment() {
   const form = document.getElementById('session-pay');
   if (!form) return;
@@ -502,20 +467,49 @@ window.squadPay = function ({ label = 'payment', amount, email, name, ref, metad
   const book = document.getElementById('session-book');
   const note = document.getElementById('session-book-note');
   const CAL = 'https://cal.com/ubonudonkang/1-on-1-career-clarity-session';
+  const SELAR_SESSION_URL = 'https://selar.com/a50i7pv9b6';
+  const PENDING_KEY = 'uu-session-selar-pending';
+  const PAID_KEY = 'uu-session-selar-returned';
 
+  function validPaymentState(value) {
+    return value && typeof value.name === 'string' && value.name &&
+      typeof value.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.email) &&
+      value.product === 'career-clarity-selar';
+  }
+  function readState(key) {
+    try { const value = JSON.parse(sessionStorage.getItem(key) || 'null'); return validPaymentState(value) ? value : null; } catch (e) { return null; }
+  }
   function unlock(p, focus) {
-    const q = new URLSearchParams({ name: p.name, email: p.email, notes: `Squad payment ref ${p.ref}` });
+    const q = new URLSearchParams({ name: p.name, email: p.email, notes: `Selar return for ${p.reference}` });
     book.href = `${CAL}?${q}`;
     book.classList.remove('is-locked');
     book.removeAttribute('aria-disabled');
     book.removeAttribute('tabindex');
-    note.textContent = `Payment received (ref ${p.ref}). Pick a time that suits you.`;
-    status.textContent = 'Payment received. Thank you.';
+    note.textContent = 'Payment return received. Pick a time that suits you.';
+    status.textContent = 'Payment return received. You can now choose a time.';
     button.disabled = true;
     if (focus) book.focus();
   }
-  // a refresh after paying keeps the booking step open (this browser only)
-  try { const saved = JSON.parse(sessionStorage.getItem('uu-session-paid') || 'null'); if (saved) unlock(saved, false); } catch (e) { /* storage blocked */ }
+  function processReturn() {
+    const isSelarReturn = new URLSearchParams(window.location.search).get('payment') === 'selar';
+    if (!isSelarReturn) return;
+    const pending = readState(PENDING_KEY);
+    clearProcessedPaymentParam();
+    if (!pending) {
+      status.textContent = 'We could not restore your booking details. Please contact us if you completed payment.';
+      return;
+    }
+    try {
+      sessionStorage.setItem(PAID_KEY, JSON.stringify(pending));
+      sessionStorage.removeItem(PENDING_KEY);
+    } catch (e) { /* a return can still unlock this visit */ }
+    unlock(pending, true);
+    window.uuTrack('session-selar-returned');
+  }
+
+  processReturn();
+  const saved = readState(PAID_KEY);
+  if (saved) unlock(saved, false);
 
   book.addEventListener('click', (e) => { if (book.classList.contains('is-locked')) e.preventDefault(); });
 
@@ -524,23 +518,12 @@ window.squadPay = function ({ label = 'payment', amount, email, name, ref, metad
     const name = form.name.value.trim(), email = form.email.value.trim();
     if (!name) { status.textContent = 'Please enter your full name.'; form.name.focus(); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { status.textContent = 'That email address does not look right.'; form.email.focus(); return; }
-    const ref = `UU1-${Date.now().toString(36).toUpperCase()}`;
+    const payment = { name, email, reference: `UU1-${Date.now().toString(36).toUpperCase()}`, product: 'career-clarity-selar' };
+    try { sessionStorage.setItem(PENDING_KEY, JSON.stringify(payment)); } catch (err) { /* Selar can still open if storage is unavailable */ }
     button.disabled = true;
-    status.textContent = 'Opening secure checkout...';
-    window.squadPay({
-      label: 'session',
-      amount: 15000, email, name, ref,
-      metadata: { product: '1:1 Career Clarity Session' },
-      onSuccess: () => {
-        const p = { name, email, ref };
-        try { sessionStorage.setItem('uu-session-paid', JSON.stringify(p)); } catch (err) { /* storage blocked */ }
-        unlock(p, true);
-      },
-      onClose: () => { button.disabled = false; status.textContent = "Payment wasn't completed. You can try again."; },
-    }).then(() => { status.textContent = ''; }).catch((err) => {
-      button.disabled = false;
-      status.textContent = `${err.message} Please try again shortly.`;
-    });
+    status.textContent = 'Taking you to secure payment...';
+    window.uuTrack('session-selar-checkout-opened');
+    window.location.assign(selarCheckoutUrl(SELAR_SESSION_URL, payment));
   });
 })();
 

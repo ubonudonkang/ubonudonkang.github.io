@@ -450,7 +450,7 @@
             <div><dt>Enrolment closes</dt><dd>25 October 2026</dd></div>
           </dl>
           <a class="btn btn-primary" href="#join">Enrol for November</a>
-          <p class="price-blurb">Pay securely online by card, bank transfer or USSD through Squad by GTCO. Your place is confirmed as soon as payment goes through.</p>
+          <p class="price-blurb">Pay securely through Selar. We confirm your place after we reconcile the completed payment with your enrolment.</p>
         </div>
         <ul class="price-list">
           <li>Two live sessions a week for 12 weeks</li>
@@ -518,7 +518,7 @@
         </details>
         <details>
           <summary>How do I pay?</summary>
-          <p>Online, through Squad by GTCO. After you complete the enrolment form, a secure checkout opens where you can pay by card, bank transfer or USSD.</p>
+          <p>Online, through Selar. After you complete the enrolment form, you will be taken to a secure checkout with the payment options Selar provides.</p>
         </details>
         <details>
           <summary>When is my place confirmed?</summary>
@@ -654,8 +654,8 @@
         </form>
 
         <div class="f-done" id="form-done" tabindex="-1" hidden>
-          <h3>Payment received. Your place is confirmed.</h3>
-          <p>Thank you. You'll get a confirmation by email and WhatsApp with your joining details and the session timetable before the cohort starts on 2 November 2026.</p>
+          <h3>Payment return received. We are confirming your place.</h3>
+          <p>Thank you. We will reconcile your Selar payment with this enrolment, then send your confirmation by email and WhatsApp with the joining details and session timetable before the cohort starts on 2 November 2026.</p>
           <p class="f-done-ref">Your reference: <strong id="done-ref"></strong></p>
           <p>If anything is unclear, email us quoting that reference. Cohort enquiries: <a href="mailto:ubonanalyst@gmail.com">ubonanalyst@gmail.com</a>.</p>
         </div>
@@ -782,22 +782,21 @@
         }
       });
 
-      /* Our reference for this enrolment. Each checkout attempt adds -1, -2, ...
-         because Squad needs a fresh transaction reference every time. */
-      ref = "BAB-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
-      buyer = { name: (grouped.name || "").trim(), email: (grouped.email || "").trim(), whatsapp: grouped.whatsapp || "" };
+      /* The application is saved before checkout so it can be reconciled with a Selar sale. */
+      var ref = "BAB-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
+      var buyer = { name: (grouped.name || "").trim(), email: (grouped.email || "").trim(), whatsapp: grouped.whatsapp || "" };
       grouped.reference = ref;
       grouped.amount = "80000";
       grouped.payment_status = "Awaiting payment";
       grouped.action = "signup";
 
       Object.keys(grouped).forEach(function(k){ payload.append(k, grouped[k]); });
-
       submitBtn.disabled = true;
       submitBtn.textContent = "Saving...";
 
       post(payload)
         .then(function(){
+          rememberPending({ reference: ref, name: buyer.name, email: buyer.email, whatsapp: buyer.whatsapp, product: "ba-bridge-selar" });
           submitBtn.hidden = true;
           document.getElementById("done-ref").textContent = ref;
           if (window.uuTrack) window.uuTrack("cohort-enrolment-started");
@@ -810,55 +809,94 @@
         });
     });
 
-    /* ---------- Payment: Squad (GTCO) checkout ---------- */
+    /* ---------- Payment: hosted Selar checkout ---------- */
     var retryBtn = document.getElementById("pay-retry");
-    var ref = "", buyer = null, attempt = 0;
+    var SELAR_COHORT_URL = "https://selar.com/1187725024";
+    var PENDING_KEY = "uu-cohort-selar-pending";
+    var RETURNED_KEY = "uu-cohort-selar-returned";
 
-    function startPayment(){
-      attempt += 1;
-      var squadRef = ref + "-" + attempt;
-      retryBtn.hidden = true;
-      statusEl.classList.add("ok");
-      statusEl.textContent = "Opening secure checkout...";
-      window.squadPay({
-        label: "cohort",
-        amount: 80000,
-        email: buyer.email,
-        name: buyer.name,
-        ref: squadRef,
-        metadata: { product: "BA Bridge Cohort", reference: ref, whatsapp: buyer.whatsapp },
-        onSuccess: function(){ paid(squadRef); },
-        onClose: function(){
-          statusEl.classList.remove("ok");
-          statusEl.textContent = "Payment wasn't completed. Your details are saved, so you can pay now.";
-          retryBtn.hidden = false;
-          retryBtn.focus();
-        }
-      }).then(function(){
-        statusEl.textContent = "";
-      }).catch(function(err){
-        statusEl.classList.remove("ok");
-        statusEl.textContent = (err && err.message ? err.message + " " : "") + "Please try again, or contact Cohort enquiries: ubonanalyst@gmail.com.";
-        retryBtn.hidden = false;
-      });
+    function validPending(value){
+      return value && value.product === "ba-bridge-selar" && typeof value.reference === "string" &&
+        /^BAB-/.test(value.reference) && typeof value.name === "string" && value.name &&
+        typeof value.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.email);
     }
-    retryBtn.addEventListener("click", startPayment);
-
-    /* Squad reports success in the browser; the endpoint then checks the payment
-       with Squad directly before it marks the row Paid. */
-    function paid(squadRef){
-      var body = new URLSearchParams();
-      body.append("action", "payment");
-      body.append("reference", ref);
-      body.append("squad_ref", squadRef);
-      post(body).catch(function(){ /* the payment is in the Squad dashboard either way */ });
+    function readPending(){
+      try { var value = JSON.parse(sessionStorage.getItem(PENDING_KEY) || "null"); return validPending(value) ? value : null; }
+      catch(e) { return null; }
+    }
+    function readReturned(){
+      try { var value = JSON.parse(sessionStorage.getItem(RETURNED_KEY) || "null"); return validPending(value) ? value : null; }
+      catch(e) { return null; }
+    }
+    function rememberPending(value){
+      try { sessionStorage.setItem(PENDING_KEY, JSON.stringify(value)); } catch(e) { /* checkout remains available */ }
+    }
+    function removePaymentParam(){
+      var url = new URL(window.location.href);
+      if(!url.searchParams.has("payment")) return;
+      url.searchParams.delete("payment");
+      var query = url.searchParams.toString();
+      window.history.replaceState({}, "", url.pathname + (query ? "?" + query : "") + url.hash);
+    }
+    function selarUrl(customer){
+      var url = new URL(SELAR_COHORT_URL);
+      url.searchParams.set("add_to_cart", "1");
+      url.searchParams.set("email", customer.email);
+      url.searchParams.set("fullname", customer.name);
+      if(customer.whatsapp) url.searchParams.set("mobile", customer.whatsapp);
+      return url.toString();
+    }
+    function showReturnedPayment(customer){
+      document.getElementById("done-ref").textContent = customer.reference;
       statusEl.textContent = "";
       form.hidden = true;
+      retryBtn.hidden = true;
       doneEl.hidden = false;
       doneEl.scrollIntoView({ behavior:"smooth", block:"center" });
       doneEl.focus({ preventScroll:true });
     }
+    function startPayment(){
+      var pending = readPending();
+      if(!pending){
+        statusEl.classList.remove("ok");
+        statusEl.textContent = "We could not restore your saved enrolment. Please submit the form again.";
+        return;
+      }
+      retryBtn.hidden = true;
+      statusEl.classList.add("ok");
+      statusEl.textContent = "Taking you to secure payment...";
+      if (window.uuTrack) window.uuTrack("cohort-selar-checkout-opened");
+      window.location.assign(selarUrl(pending));
+    }
+    retryBtn.addEventListener("click", startPayment);
 
+    (function restoreFlow(){
+      var returned = new URLSearchParams(window.location.search).get("payment") === "selar";
+      var pending = readPending();
+      if(returned){
+        removePaymentParam();
+        if(!pending){
+          statusEl.textContent = "We could not restore this payment return. Please contact us if you completed payment.";
+          return;
+        }
+        try { sessionStorage.setItem(RETURNED_KEY, JSON.stringify(pending)); } catch(e) {}
+        showReturnedPayment(pending);
+        if (window.uuTrack) window.uuTrack("cohort-selar-returned");
+        return;
+      }
+      var returnedState = readReturned();
+      if(returnedState){
+        showReturnedPayment(returnedState);
+        return;
+      }
+      if(pending){
+        submitBtn.hidden = true;
+        document.getElementById("done-ref").textContent = pending.reference;
+        statusEl.classList.add("ok");
+        statusEl.textContent = "Your enrolment is saved. Continue to secure payment when you are ready.";
+        retryBtn.hidden = false;
+      }
+    })();
     /* Posts to the endpoint, falling back to a blind send if the browser
        will not let us read the response. */
     function post(body){
@@ -902,6 +940,6 @@
 </nav>
 
 <div class="toast" id="toast" role="status"></div>
-<script src="/js/site.js?v=c5642044"></script>
+<script src="/js/site.js?v=selar-20261003"></script>
 </body>
 </html>
