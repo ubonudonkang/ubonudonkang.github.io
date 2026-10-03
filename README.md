@@ -49,14 +49,14 @@ docs/ams/                      Do not publish confidential client documents here
 - **AMS documents:** confidential originals must stay out of the public repository. The Data Dictionary is available by request only, subject to permission and redaction. Removing a file from the current site does not remove old copies from Git history or caches.
 - **Testimonials:** short quotes live in the home page carousel. The full recommendations are on the About page.
 
-## Payments (Squad by GTCO)
+## Payments (Selar)
 
-- **Where it runs:** the BA Bridge Cohort enrolment (`ba-training/`, ₦80,000) and the 1:1 session (`resources/1-on-1-session/`, ₦15,000) open Squad's inline checkout. There is no bank-transfer option.
-- **Public key:** set `SQUAD_PUBLIC_KEY` near the bottom of `js/site.js`. Use `sandbox_pk_…` while testing and `pk_…` in production. Public keys are safe in page code. While it is empty, both pages show "Online payment is not switched on yet".
-- **Secret key:** never in this repo. It lives only in the cohort's Google Apps Script (Project Settings → Script properties → `SQUAD_SECRET_KEY`), which checks each cohort payment with Squad's verify API before marking the row Paid.
-- **Cohort flow:** the form saves the enrolment to the Apps Script endpoint (`ENDPOINT_URL` in `ba-training/index.html`) as "Awaiting payment", opens checkout with the reference `BAB-…-1` (`-2`, `-3` for retries), then posts `action=payment` so the script can verify it.
-- **1:1 flow:** pay first; the Cal.com button then unlocks with the visitor's name, email and Squad reference filled in. The Squad dashboard is the record of these payments.
-- **Checkout script:** `https://checkout.squadco.com/widget/squad.min.js` loads only when someone starts paying. If you enforce a Content Security Policy, allow it in `script-src` and `frame-src`.
+- **Products:** BA Bridge Cohort (₦80,000) uses `https://selar.com/1187725024`; the 1:1 Career Clarity Session (₦15,000) uses `https://selar.com/a50i7pv9b6`.
+- **Hosted checkout:** both flows send the visitor to Selar with their name and email prefilled using Selar's direct-checkout parameters. No payment key, secret, or widget script is stored in this repository.
+- **Cohort flow:** the form saves the enrolment to the Apps Script endpoint (`ENDPOINT_URL` in `ba-training/index.html`) as **Awaiting payment**, preserves its `BAB-…` reference in browser session storage, then opens the Selar product. On the configured `?payment=selar` return, the website displays the confirmation card only when that matching browser session exists. The return URL is removed without a reload.
+- **1:1 flow:** the form saves the visitor's name and email in browser session storage before opening Selar. A matching `?payment=selar` return unlocks Cal.com and preserves the prefilled booking details across a refresh. A return URL alone never unlocks booking.
+- **Verification limitation:** a browser return, query parameter, or session-storage record is not server-verified proof of payment. The website does not mark a Google Sheet row paid from browser code. Reconcile each completed Selar sale with the retained BA reference.
+- **Manual confirmation:** `scripts/ba_bridge_enrolment.gs` adds a per-enrolment review link to the owner email. Opening the link shows a review page; a second explicit **Confirm payment** action changes the row to `Paid — manually confirmed`. Deploy a new version of that Apps Script web app before relying on it. Do not put Selar credentials or signing values in this repository.
 
 ## SEO and caching
 
@@ -78,4 +78,4 @@ docs/ams/                      Do not publish confidential client documents here
 
 ## Review conversion tracking
 
-GoatCounter records cohort-enrolment-started, cohort/session-checkout-opened, cohort/session-checkout-success, and cohort/session-checkout-closed. Checkout success is a browser callback, not server-verified revenue or a confirmed booking. Reconcile paid enrolments with the Apps Script/Squad records and bookings with Cal.com. Contact success events retain the engagement type selected when the form was submitted. Page visits use GoatCounter's existing pageview tracking.
+GoatCounter records cohort-enrolment-started, cohort/session-selar-checkout-opened, and cohort/session-selar-returned. A Selar return is not server-verified revenue or a confirmed booking. Reconcile paid enrolments with Selar and the Apps Script records; Cal.com remains the booking record. Contact success events retain the engagement type selected when the form was submitted. Page visits use GoatCounter's existing pageview tracking.
