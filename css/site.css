@@ -711,15 +711,12 @@ kbd { font: 500 0.75rem/1 var(--mono); padding: 4px 7px; border: 1px solid var(-
 .paybox__amount { display: flex; align-items: baseline; justify-content: space-between; padding: 16px 20px; background: var(--night); color: #fff; }
 .paybox__amount .label { color: rgba(255,255,255,0.55); }
 .paybox__amount strong { font: 400 2rem/1 var(--serif); font-weight: 400; }
-.paybox__rows { margin: 0; padding: 4px 20px; }
-.paybox__rows div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-.paybox__rows div:last-child { border-bottom: 0; }
-.paybox__rows dt { font: 500 0.68rem/1 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-3); }
-.paybox__rows dd { margin: 0; display: flex; align-items: center; gap: 10px; font-weight: 500; text-align: right; }
-.paybox__mono { font-family: var(--mono); letter-spacing: 0.03em; }
-.paybox__copy { height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line-2); font: 500 0.66rem/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; transition: border-color 150ms ease, transform 160ms var(--ease-out); }
-.paybox__copy:active { transform: scale(0.95); }
-@media (hover: hover) and (pointer: fine) { .paybox__copy:hover { border-color: var(--ink); } }
+/* 1:1 checkout: name and email for Squad, then the booking button unlocks */
+.paybox__fields { padding: 18px 20px 20px; }
+.paybox__fields .field { margin-bottom: 14px; }
+.paybox__status { margin: 12px 0 0; font-size: 0.88rem; color: var(--ink-2); min-height: 1.2em; }
+.btn.is-locked { opacity: 0.45; cursor: not-allowed; }
+.book-steps__note { margin: 12px 0 0; font-size: 0.85rem; color: var(--ink-3); }
 
 /* ── 4C step sequence ────────────────────────────────────── */
 .fc-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--ink); }
