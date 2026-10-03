@@ -113,6 +113,7 @@ function columnHasData_(sheet, column) {
 
 function createSignup_(sheet, data) {
   if (!data.reference || !data.name || !data.email) throw new Error('Missing required enrolment details.');
+  if (!/^BAB-[A-Z0-9]+-[A-Z0-9]{3}$/.test(String(data.reference))) throw new Error('Invalid enrolment reference.');
   if (findByReference_(sheet, data.reference)) {
     // A browser CORS retry can send the same request twice.
     return json_({ result: 'ok', reference: data.reference });
@@ -122,14 +123,20 @@ function createSignup_(sheet, data) {
   var row = FIELDS.map(function(field) {
     var key = field[0];
     if (key === 'timestamp') return now;
+    if (key === 'amount') return 80000;
     if (key === 'payment_status') return 'Awaiting payment';
     if (key === 'verified') return 'No';
     if (key === 'confirm_token') return token;
-    return data[key] || '';
+    return safeCellText_(data[key]);
   });
   sheet.appendRow(row);
   try { sendReviewEmail_(data, token); } catch (ignore) { /* saved enrolment remains in the sheet */ }
   return json_({ result: 'ok', reference: data.reference });
+}
+
+function safeCellText_(value) {
+  var text = String(value == null ? '' : value);
+  return /^[=+\-@]/.test(text) ? "'" + text : text;
 }
 
 function reviewPage_(sheet, data) {
@@ -165,7 +172,7 @@ function confirmPayment_(sheet, data) {
   }
   sheet.getRange(found.row, COL.payment_status).setValue('Paid — manually confirmed');
   sheet.getRange(found.row, COL.verified).setValue('Yes');
-  sheet.getRange(found.row, COL.selar_sale_reference).setValue(String(data.selar_sale_reference || '').trim());
+  sheet.getRange(found.row, COL.selar_sale_reference).setValue(safeCellText_(String(data.selar_sale_reference || '').trim()));
   if (amountPaid) sheet.getRange(found.row, COL.amount_paid).setValue(Number(amountPaid));
   sheet.getRange(found.row, COL.confirmed_at).setValue(stamp_());
   sheet.getRange(found.row, COL.confirmed_by).setValue(NOTIFY_EMAIL);

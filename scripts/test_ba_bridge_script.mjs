@@ -74,12 +74,14 @@ assert.deepEqual(h.rows[0].slice(26), ['Selar sale reference', 'Confirmation tok
 const row = h.rows[1];
 assert.equal(row[1], signup.reference);
 assert.equal(row[2], signup.name);
+assert.equal(row[4], "'+2341000000000");
 assert.equal(row[5], signup.location);
 assert.equal(row[7], signup.experience);
 assert.equal(row[9], signup.wants);
 assert.equal(row[10], ''); // No site field for biggest blocker.
 assert.equal(row[11], ''); // No site field for preferred format.
 assert.equal(row[13], ''); // No site field for can start.
+assert.equal(row[16], 80000);
 assert.equal(row[17], 'Awaiting payment');
 assert.equal(row[21], 'No');
 assert.equal(row[22], ''); // Historical transaction column is untouched.
@@ -123,6 +125,11 @@ const ready = makeHarness(readyHeaders);
 assert.equal(JSON.parse(ready.context.doPost({ parameter: { ...signup, reference: 'BAB-READY-123' } }).text).result, 'ok');
 assert.deepEqual(ready.rows[0], readyHeaders);
 assert.equal(ready.columns, 30);
+const unsafe = makeHarness();
+assert.equal(JSON.parse(unsafe.context.doPost({ parameter: { ...signup, reference: 'BAB-SAFE-123', name: '=2+2' } }).text).result, 'ok');
+assert.equal(unsafe.rows[1][2], "'=2+2");
+assert.equal(JSON.parse(unsafe.context.doPost({ parameter: { ...signup, reference: '=2+2' } }).text).result, 'error');
+assert.equal(unsafe.rows.length, 2);
 const occupied = makeHarness();
 const occupiedRow = new Array(27).fill('');
 occupiedRow[26] = 'Existing unlabelled value';
