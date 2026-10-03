@@ -435,3 +435,97 @@ document.querySelectorAll('[data-copy-text]').forEach(el => el.addEventListener(
   (form.closest('.form-card') || form).scrollIntoView({ block: 'start' });
   form.querySelector('#fn')?.focus({ preventScroll: true });
 })();
+
+/* ── Squad (GTCO) checkout ────────────────────────────────────────
+   The public key is meant to sit in page code: sandbox_pk_... while testing,
+   pk_... in production. The secret key never goes here; it lives in the Apps
+   Script that verifies cohort payments. squad.min.js loads on first use, so
+   pages don't pay for it until someone checks out. */
+const SQUAD_PUBLIC_KEY = 'pk_cb5d383f172d4fb319f3babcdc0128ba842ca584';
+let squadLoading = null;
+function loadSquad() {
+  if (window.squad) return Promise.resolve();
+  if (!squadLoading) {
+    squadLoading = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://checkout.squadco.com/widget/squad.min.js';
+      s.async = true;
+      s.onload = () => (window.squad ? resolve() : reject(new Error('Secure checkout did not load.')));
+      s.onerror = () => { squadLoading = null; reject(new Error('Secure checkout did not load.')); };
+      document.head.appendChild(s);
+    });
+  }
+  return squadLoading;
+}
+// amount in naira; Squad wants kobo
+window.squadPay = function ({ amount, email, name, ref, metadata = {}, onSuccess, onClose }) {
+  if (!SQUAD_PUBLIC_KEY) return Promise.reject(new Error('Online payment is not switched on yet.'));
+  return loadSquad().then(() => {
+    let paid = false;
+    const checkout = new window.squad({
+      key: SQUAD_PUBLIC_KEY,
+      email,
+      amount: Math.round(amount * 100),
+      currency_code: 'NGN',
+      transaction_ref: ref,
+      customer_name: name,
+      metadata,
+      pass_charge: false,
+      onLoad: () => {},
+      onSuccess: (res) => { paid = true; if (onSuccess) onSuccess(res); },
+      onClose: () => { if (!paid && onClose) onClose(); },
+    });
+    checkout.setup();
+    checkout.open();
+  });
+};
+
+/* ── 1:1 session: pay first, then the Cal.com button unlocks ───── */
+(function sessionPayment() {
+  const form = document.getElementById('session-pay');
+  if (!form) return;
+  const status = form.querySelector('[data-pay-status]');
+  const button = form.querySelector('button[type="submit"]');
+  const book = document.getElementById('session-book');
+  const note = document.getElementById('session-book-note');
+  const CAL = 'https://cal.com/ubonudonkang/1-on-1-career-clarity-session';
+
+  function unlock(p, focus) {
+    const q = new URLSearchParams({ name: p.name, email: p.email, notes: `Squad payment ref ${p.ref}` });
+    book.href = `${CAL}?${q}`;
+    book.classList.remove('is-locked');
+    book.removeAttribute('aria-disabled');
+    book.removeAttribute('tabindex');
+    note.textContent = `Payment received (ref ${p.ref}). Pick a time that suits you.`;
+    status.textContent = 'Payment received. Thank you.';
+    button.disabled = true;
+    if (focus) book.focus();
+  }
+  // a refresh after paying keeps the booking step open (this browser only)
+  try { const saved = JSON.parse(sessionStorage.getItem('uu-session-paid') || 'null'); if (saved) unlock(saved, false); } catch (e) { /* storage blocked */ }
+
+  book.addEventListener('click', (e) => { if (book.classList.contains('is-locked')) e.preventDefault(); });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = form.name.value.trim(), email = form.email.value.trim();
+    if (!name) { status.textContent = 'Please enter your full name.'; form.name.focus(); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { status.textContent = 'That email address does not look right.'; form.email.focus(); return; }
+    const ref = `UU1-${Date.now().toString(36).toUpperCase()}`;
+    button.disabled = true;
+    status.textContent = 'Opening secure checkout...';
+    window.squadPay({
+      amount: 15000, email, name, ref,
+      metadata: { product: '1:1 Career Clarity Session' },
+      onSuccess: () => {
+        const p = { name, email, ref };
+        try { sessionStorage.setItem('uu-session-paid', JSON.stringify(p)); } catch (err) { /* storage blocked */ }
+        unlock(p, true);
+      },
+      onClose: () => { button.disabled = false; status.textContent = "Payment wasn't completed. You can try again."; },
+    }).then(() => { status.textContent = ''; }).catch((err) => {
+      button.disabled = false;
+      status.textContent = `${err.message} Please try again shortly.`;
+    });
+  });
+})();

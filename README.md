@@ -49,6 +49,15 @@ docs/ams/                      AMS case study documents opened in the PDF viewer
 - **AMS documents:** add a PDF to `docs/ams/`, then give its row in `project-ams/index.html` a `data-pdf` path and a `View` button, like the Data Dictionary row.
 - **Testimonials:** short quotes live in the home page carousel. The full recommendations are on the About page.
 
+## Payments (Squad by GTCO)
+
+- **Where it runs:** the BA Bridge Cohort enrolment (`ba-training/`, ₦80,000) and the 1:1 session (`resources/1-on-1-session/`, ₦15,000) open Squad's inline checkout. There is no bank-transfer option.
+- **Public key:** set `SQUAD_PUBLIC_KEY` near the bottom of `js/site.js`. Use `sandbox_pk_…` while testing and `pk_…` in production. Public keys are safe in page code. While it is empty, both pages show "Online payment is not switched on yet".
+- **Secret key:** never in this repo. It lives only in the cohort's Google Apps Script (Project Settings → Script properties → `SQUAD_SECRET_KEY`), which checks each cohort payment with Squad's verify API before marking the row Paid.
+- **Cohort flow:** the form saves the enrolment to the Apps Script endpoint (`ENDPOINT_URL` in `ba-training/index.html`) as "Awaiting payment", opens checkout with the reference `BAB-…-1` (`-2`, `-3` for retries), then posts `action=payment` so the script can verify it.
+- **1:1 flow:** pay first; the Cal.com button then unlocks with the visitor's name, email and Squad reference filled in. The Squad dashboard is the record of these payments.
+- **Checkout script:** `https://checkout.squadco.com/widget/squad.min.js` loads only when someone starts paying. If you enforce a Content Security Policy, allow it in `script-src` and `frame-src`.
+
 ## SEO and caching
 
 - **Every page's `<head>`** has its own title, description, canonical URL, link-preview tags (Open Graph and Twitter) and structured data, between `<!--seo-->` and `<!--/seo-->`. Keep titles under 60 characters and descriptions between 110 and 160.
