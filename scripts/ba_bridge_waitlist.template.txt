@@ -1,0 +1,132 @@
+DORMANT CLOSING TEMPLATE — BA Bridge waitlist flow
+
+This is plain text and is not loaded by the website. Use the closing command in
+scripts/close_ba_registration.mjs to apply it to the BA Training page.
+The command requires the closed cohort and next cohort as Month YYYY values.
+It disables new checkout on the page while preserving earlier payment returns.
+Update public copy, pricing, CTAs and structured data before publishing.
+
+=== WAITLIST SECTION ===
+<!-- BA_FLOW_SECTION_START -->
+  <!-- ================= WAITLIST ================= -->
+  <section class="section" id="waitlist">
+    <div class="wrap">
+      <div class="join">
+        <p class="eyebrow">{{NEXT_COHORT}} waitlist</p>
+        <h2>Be first to hear when registration opens.</h2>
+        <p class="section-lede">The {{CLOSED_COHORT}} cohort is full. Join the free waitlist for the next cohort planned for {{NEXT_COHORT}}. We will email you with the dates, price and enrolment details.</p>
+        <div data-fs-success class="f-done" role="status" style="display:none;">
+          <h3>You're on the {{NEXT_COHORT}} waitlist.</h3>
+          <p>Thank you for your interest in BA Bridge. We will email you when registration for the {{NEXT_COHORT}} cohort opens.</p>
+          <p>The waitlist is free and does not reserve a place.</p>
+        </div>
+        <div data-fs-error class="f-status" role="alert" style="display:none;"></div>
+        <p class="f-status" id="payment-status" role="status"></p>
+        <form id="waitlist-form" action="https://formspree.io/f/xdaqwayj" method="POST">
+          <input type="hidden" name="type" value="BA Bridge {{NEXT_COHORT}} waitlist">
+          <input type="hidden" name="cohort" value="{{NEXT_COHORT}}">
+          <input type="hidden" name="message" value="Please add me to the BA Bridge {{NEXT_COHORT}} waitlist.">
+          <div class="f-grid">
+            <label class="f-field"><span class="f-label">Full name <em>*</em></span>
+              <input type="text" name="name" autocomplete="name" required data-fs-field>
+              <span data-fs-error="name" class="f-status"></span>
+            </label>
+            <label class="f-field"><span class="f-label">Email address <em>*</em></span>
+              <input type="email" name="email" autocomplete="email" required data-fs-field>
+              <span data-fs-error="email" class="f-status"></span>
+            </label>
+          </div>
+          <label class="f-check f-consent">
+            <input type="checkbox" name="consent" value="Yes" required data-fs-field>
+            <span>I agree to be contacted about the BA Bridge {{NEXT_COHORT}} cohort. My details will be used only for this waitlist. <em>*</em></span>
+          </label>
+          <div class="f-submit">
+            <button type="submit" class="btn btn-light" data-fs-submit-btn>Join the waitlist</button>
+            <p class="f-note">No payment is required.</p>
+          </div>
+        </form>
+
+        <div class="f-done" id="form-done" tabindex="-1" hidden>
+          <h3>Payment return received. We are confirming your place.</h3>
+          <p>Thank you. We will reconcile your earlier Selar payment with this enrolment, then send your confirmation and joining details by email or WhatsApp.</p>
+          <p class="f-done-ref">Your reference: <strong id="done-ref"></strong></p>
+          <p>If anything is unclear, email us quoting that reference. Cohort enquiries: <a href="mailto:ubonanalyst@gmail.com">ubonanalyst@gmail.com</a>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- BA_FLOW_SECTION_END -->
+
+=== WAITLIST SCRIPT ===
+<!-- BA_FLOW_SCRIPT_START -->
+<script>
+  /* Keep the return message available to people who completed an earlier
+     checkout. A browser return is not verified payment. */
+  (function(){
+    var form = document.getElementById('waitlist-form');
+    var done = document.getElementById('form-done');
+    var status = document.getElementById('payment-status');
+    var pendingKey = 'uu-cohort-selar-pending';
+    var returnedKey = 'uu-cohort-selar-returned';
+
+    function valid(value){
+      return value && value.product === 'ba-bridge-selar' &&
+        typeof value.reference === 'string' && /^BAB-/.test(value.reference) &&
+        typeof value.name === 'string' && value.name &&
+        typeof value.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.email);
+    }
+    function read(key){
+      try { var value = JSON.parse(sessionStorage.getItem(key) || 'null'); return valid(value) ? value : null; }
+      catch(e) { return null; }
+    }
+    function removePaymentParam(){
+      var url = new URL(window.location.href);
+      if(!url.searchParams.has('payment')) return;
+      url.searchParams.delete('payment');
+      var query = url.searchParams.toString();
+      window.history.replaceState({}, '', url.pathname + (query ? '?' + query : '') + url.hash);
+    }
+    function showEarlierReturn(customer){
+      document.getElementById('done-ref').textContent = customer.reference;
+      form.hidden = true;
+      done.hidden = false;
+      done.focus({ preventScroll: true });
+    }
+
+    var isReturn = new URLSearchParams(window.location.search).get('payment') === 'selar';
+    var pending = read(pendingKey);
+    if(isReturn){
+      removePaymentParam();
+      if(pending){
+        try { sessionStorage.setItem(returnedKey, JSON.stringify(pending)); } catch(e) {}
+        showEarlierReturn(pending);
+        if(window.uuTrack) window.uuTrack('cohort-selar-returned');
+      } else {
+        status.textContent = 'If you completed an earlier payment, please contact us with your Selar receipt so we can check it.';
+      }
+    } else {
+      var earlierReturn = read(returnedKey);
+      if(earlierReturn) showEarlierReturn(earlierReturn);
+      else if(pending) status.textContent = 'Registration is closed. If you already paid, contact us with reference ' + pending.reference + '.';
+    }
+
+    var items = document.querySelectorAll('.reveal');
+    if(!('IntersectionObserver' in window)){
+      items.forEach(function(el){ el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    items.forEach(function(el){ io.observe(el); });
+  })();
+  window.formspree = window.formspree || function () { (formspree.q = formspree.q || []).push(arguments); };
+  formspree('initForm', { formElement: '#waitlist-form', formId: 'xdaqwayj' });
+</script>
+<script src="https://unpkg.com/@formspree/ajax@1" defer></script>
+<!-- BA_FLOW_SCRIPT_END -->
