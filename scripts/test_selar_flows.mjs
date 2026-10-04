@@ -29,6 +29,7 @@ assert.match(site, /clearProcessedPaymentParam\(\)/);
 assert.match(site, /value\.product === 'career-clarity-selar'/);
 assert.match(site, /\^\[\^\\s@\]\+@\[\^\\s@\]\+\\\.\[\^\\s@\]\+\$/);
 assert.match(site, /cal\.com\/ubonudonkang\/1-on-1-career-clarity-session/);
+assert.doesNotMatch(session, /cal\.com\/ubonudonkang\/1-on-1-career-clarity-session/, 'the booking URL must not be exposed by the page markup');
 
 assert.match(cohort, /https:\/\/selar\.com\/1187725024/);
 assert.match(cohort, /payment_status = "Awaiting payment"/);
@@ -37,7 +38,7 @@ assert.match(cohort, /payment"\) === "selar"/);
 assert.match(cohort, /removePaymentParam\(\)/);
 assert.match(cohort, /value\.product === "ba-bridge-selar"/);
 assert.doesNotMatch(cohort, /action", "payment/);
-assert.match(session, /site\.js\?v=selar-20261003/);
+assert.match(session, /site\.js\?v=booking-button-20261004/);
 assert.match(cohort, /site\.js\?v=selar-20261003/);
 assert.match(readme, /browser return, query parameter, or session-storage record is not server-verified proof/i);
 
