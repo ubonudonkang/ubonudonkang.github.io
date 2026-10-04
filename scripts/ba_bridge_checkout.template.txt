@@ -1,22 +1,20 @@
-DORMANT REOPENING TEMPLATE — BA Bridge November 2026 enrolment flow
+DORMANT REOPENING TEMPLATE — BA Bridge enrolment flow
 
 This is reference source, stored as plain text so it cannot run as a website page.
-It contains the original form and its Apps Script + Selar checkout handler.
-The public /ba-training/ page remains on the February 2027 waitlist.
+It contains the enrolment form and its Apps Script + Selar checkout handler.
+Use open_ba_registration.mjs with complete cohort details to render it.
 
-Before restoring any part of this flow, update the cohort dates, capacity, price,
-Selar product URL and return URL, Apps Script expected amount, confirmation copy,
-all sitewide CTAs, and structured data. Test the full flow offline and perform
-payment reconciliation review before publishing. A return URL is not payment proof.
+Check the deployed Apps Script, Selar product price and post-purchase return URL
+before publishing. A browser return is not payment proof.
 
-=== ORIGINAL ENROLMENT SECTION ===
+=== ENROLMENT SECTION ===
 <!-- BA_FLOW_SECTION_START -->
   <!-- ================= JOIN ================= -->
   <section class="section" id="join">
     <div class="wrap">
       <div class="join">
         <p class="eyebrow">Enrol</p>
-        <h2>Secure your place for November.</h2>
+        <h2>Apply for the {{COHORT}} cohort.</h2>
         <p class="section-lede">The form takes about 3 minutes. Payment details appear as soon as you submit it.</p>
         <form id="waitlist-form" novalidate>
 
@@ -127,14 +125,14 @@ payment reconciliation review before publishing. A return URL is not payment pro
 
           <div class="f-submit">
             <button type="submit" class="btn btn-light" id="submit-btn">Continue to payment</button>
-            <button type="button" class="btn btn-light" id="pay-retry" hidden>Pay ₦80,000</button>
+            <button type="button" class="btn btn-light" id="pay-retry" hidden>Pay ₦{{PRICE_FORMATTED}}</button>
             <p class="f-status" id="form-status" role="status" aria-live="polite"></p>
           </div>
         </form>
 
         <div class="f-done" id="form-done" tabindex="-1" hidden>
           <h3>Payment return received. We are confirming your place.</h3>
-          <p>Thank you. We will reconcile your Selar payment with this enrolment, then send your confirmation by email and WhatsApp with the joining details and session timetable before the cohort starts on 2 November 2026.</p>
+          <p>Thank you. We will reconcile your Selar payment with this enrolment, then send your confirmation by email and WhatsApp with the joining details and session timetable before the cohort starts on {{START_DATE_LONG}}.</p>
           <p class="f-done-ref">Your reference: <strong id="done-ref"></strong></p>
           <p>If anything is unclear, email us quoting that reference. Cohort enquiries: <a href="mailto:ubonanalyst@gmail.com">ubonanalyst@gmail.com</a>.</p>
         </div>
@@ -144,14 +142,13 @@ payment reconciliation review before publishing. A return URL is not payment pro
 <!-- BA_FLOW_SECTION_END -->
 
 
-=== ORIGINAL ENROLMENT SCRIPT ===
+=== ENROLMENT SCRIPT ===
 <!-- BA_FLOW_SCRIPT_START -->
 <script>
   /* =====================================================================
-     SETUP: paste your Apps Script Web app URL below. It ends in /exec.
-     Instructions are in waitlist-endpoint.gs.
+     This deployed Apps Script Web app URL must accept action=signup.
      ===================================================================== */
-  var ENDPOINT_URL = "https://script.google.com/macros/s/AKfycby94krvGfIS7mXVT-szoGHHM_pCLIU11Bh_AemMxE_nsK-X_Hm1y8yaK69zNKfU20LT/exec";
+  var ENDPOINT_URL = "{{APPS_SCRIPT_URL}}";
 
   (function(){
     var form = document.getElementById("waitlist-form");
@@ -259,7 +256,8 @@ payment reconciliation review before publishing. A return URL is not payment pro
       var ref = "BAB-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
       var buyer = { name: (grouped.name || "").trim(), email: (grouped.email || "").trim(), whatsapp: grouped.whatsapp || "" };
       grouped.reference = ref;
-      grouped.amount = "80000";
+      grouped.amount = "{{PRICE_NGN}}";
+      grouped.cohort = "{{COHORT}}";
       grouped.payment_status = "Awaiting payment";
       grouped.action = "signup";
 
@@ -269,7 +267,7 @@ payment reconciliation review before publishing. A return URL is not payment pro
 
       post(payload)
         .then(function(){
-          rememberPending({ reference: ref, name: buyer.name, email: buyer.email, whatsapp: buyer.whatsapp, product: "ba-bridge-selar" });
+          rememberPending({ reference: ref, name: buyer.name, email: buyer.email, whatsapp: buyer.whatsapp, product: "ba-bridge-selar", cohort: "{{COHORT}}" });
           submitBtn.hidden = true;
           document.getElementById("done-ref").textContent = ref;
           if (window.uuTrack) window.uuTrack("cohort-enrolment-started");
@@ -284,12 +282,13 @@ payment reconciliation review before publishing. A return URL is not payment pro
 
     /* ---------- Payment: hosted Selar checkout ---------- */
     var retryBtn = document.getElementById("pay-retry");
-    var SELAR_COHORT_URL = "https://selar.com/1187725024";
-    var PENDING_KEY = "uu-cohort-selar-pending";
-    var RETURNED_KEY = "uu-cohort-selar-returned";
+    var SELAR_COHORT_URL = "{{SELAR_URL}}";
+    var PENDING_KEY = "uu-cohort-selar-{{COHORT_SLUG}}-pending";
+    var RETURNED_KEY = "uu-cohort-selar-{{COHORT_SLUG}}-returned";
+    var LEGACY_PENDING_KEY = "uu-cohort-selar-pending";
 
     function validPending(value){
-      return value && value.product === "ba-bridge-selar" && typeof value.reference === "string" &&
+      return value && value.product === "ba-bridge-selar" && value.cohort === "{{COHORT}}" && typeof value.reference === "string" &&
         /^BAB-/.test(value.reference) && typeof value.name === "string" && value.name &&
         typeof value.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.email);
     }
@@ -300,6 +299,13 @@ payment reconciliation review before publishing. A return URL is not payment pro
     function readReturned(){
       try { var value = JSON.parse(sessionStorage.getItem(RETURNED_KEY) || "null"); return validPending(value) ? value : null; }
       catch(e) { return null; }
+    }
+    function readLegacy(key){
+      try {
+        var value = JSON.parse(sessionStorage.getItem(key) || "null");
+        return value && value.product === "ba-bridge-selar" && !value.cohort && /^BAB-/.test(value.reference || "") &&
+          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.email || "") ? value : null;
+      } catch(e) { return null; }
     }
     function rememberPending(value){
       try { sessionStorage.setItem(PENDING_KEY, JSON.stringify(value)); } catch(e) { /* checkout remains available */ }
@@ -349,6 +355,11 @@ payment reconciliation review before publishing. A return URL is not payment pro
       if(returned){
         removePaymentParam();
         if(!pending){
+          var earlier = readLegacy(LEGACY_PENDING_KEY);
+          if(earlier){
+            showReturnedPayment(earlier);
+            return;
+          }
           statusEl.textContent = "We could not restore this payment return. Please contact us if you completed payment.";
           return;
         }
