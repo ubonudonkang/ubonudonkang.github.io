@@ -8,6 +8,7 @@ const root = new URL('..', import.meta.url);
 const read = (path) => fs.readFileSync(new URL(path, root), 'utf8');
 const site = read('js/site.js');
 const cohort = read('ba-training/index.html');
+const dormantCheckout = read('scripts/ba_bridge_checkout.template.txt');
 const session = read('resources/1-on-1-session/index.html');
 const readme = read('README.md');
 
@@ -42,6 +43,16 @@ assert.match(cohort, /data-fs-success/);
 assert.match(cohort, /data-fs-submit-btn>Join the waitlist/);
 assert.doesNotMatch(cohort, /https:\/\/selar\.com\/1187725024|ENDPOINT_URL|window\.location\.assign|id="pay-retry"|Continue to payment|payment_status\s*=/,
   'closed BA registration must not create applications or open checkout');
+assert.match(dormantCheckout, /Continue to payment/);
+assert.match(dormantCheckout, /grouped\.payment_status = "Awaiting payment"/);
+assert.match(dormantCheckout, /grouped\.action = "signup"/);
+assert.match(dormantCheckout, /https:\/\/selar\.com\/1187725024/);
+assert.match(dormantCheckout, /uu-cohort-selar-pending/);
+assert.match(dormantCheckout, /=== ORIGINAL ENROLMENT SCRIPT ===/);
+assert.match(dormantCheckout, /<form id="waitlist-form"[\s\S]*?<\/form>/);
+const archivedScript = dormantCheckout.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+assert.ok(archivedScript, 'the complete dormant checkout handler must be retained');
+new vm.Script(archivedScript);
 assert.match(cohort, /uu-cohort-selar-pending/);
 assert.match(cohort, /get\('payment'\) === 'selar'/);
 assert.match(cohort, /removePaymentParam\(\)/);

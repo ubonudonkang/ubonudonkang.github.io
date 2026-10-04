@@ -1,0 +1,399 @@
+DORMANT REOPENING TEMPLATE — BA Bridge November 2026 enrolment flow
+
+This is reference source, stored as plain text so it cannot run as a website page.
+It contains the original form and its Apps Script + Selar checkout handler.
+The public /ba-training/ page remains on the February 2027 waitlist.
+
+Before restoring any part of this flow, update the cohort dates, capacity, price,
+Selar product URL and return URL, Apps Script expected amount, confirmation copy,
+all sitewide CTAs, and structured data. Test the full flow offline and perform
+payment reconciliation review before publishing. A return URL is not payment proof.
+
+=== ORIGINAL ENROLMENT SECTION ===
+  <!-- ================= JOIN ================= -->
+  <section class="section" id="join">
+    <div class="wrap">
+      <div class="join">
+        <p class="eyebrow">Enrol</p>
+        <h2>Secure your place for November.</h2>
+        <p class="section-lede">The form takes about 3 minutes. Payment details appear as soon as you submit it.</p>
+        <form id="waitlist-form" novalidate>
+
+          <fieldset>
+            <legend>About you</legend>
+            <div class="f-grid">
+              <label class="f-field"><span class="f-label">Full name <em>*</em></span>
+                <input type="text" name="name" autocomplete="name" required>
+              </label>
+              <label class="f-field"><span class="f-label">Email address <em>*</em></span>
+                <input type="email" name="email" autocomplete="email" required>
+              </label>
+              <label class="f-field"><span class="f-label">WhatsApp number <small>Optional</small></span>
+                <input type="tel" name="whatsapp" autocomplete="tel" placeholder="+234...">
+                <span class="f-hint">Include your country code if outside Nigeria, e.g. +234...</span>
+              </label>
+              <label class="f-field"><span class="f-label">City and country <em>*</em></span>
+                <input type="text" name="location" required>
+              </label>
+              <label class="f-field"><span class="f-label">Which best describes your current background? <em>*</em></span>
+                <select name="background" data-other="background_other" required>
+                  <option value="">Choose one</option>
+                  <option>Student or recent graduate</option>
+                  <option>Academic or market research</option>
+                  <option>Banking, finance, or insurance</option>
+                  <option>Operations, admin, or customer service</option>
+                  <option>Tech, but not in a BA role</option>
+                  <option>Working BA looking to level up</option>
+                  <option>Other</option>
+                </select>
+                <input type="text" class="f-other" id="background_other" name="background_other" placeholder="Tell us your background" hidden>
+              </label>
+              <label class="f-field"><span class="f-label">Years of work experience <em>*</em></span>
+                <select name="experience" required>
+                  <option value="">Choose one</option>
+                  <option>0 to 1</option>
+                  <option>2 to 4</option>
+                  <option>5 to 9</option>
+                  <option>10+</option>
+                </select>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Your goals</legend>
+            <label class="f-field"><span class="f-label">Where are you in your move into business analysis? <em>*</em></span>
+              <select name="stage" required>
+                <option value="">Choose one</option>
+                <option>Just exploring whether BA is right for me</option>
+                <option>Decided on BA, need structured training</option>
+                <option>Already doing some BA-type work informally</option>
+                <option>Currently a BA, want to get stronger</option>
+              </select>
+            </label>
+            <div class="f-field">
+              <span class="f-label">What do you most want from this program? <em>*</em> <small>Pick up to 3</small></span>
+              <div class="f-checks" data-max="3">
+                <label class="f-check"><input type="checkbox" name="wants" value="Practical, job-ready skills"><span>Practical, job-ready skills</span></label>
+                <label class="f-check"><input type="checkbox" name="wants" value="A portfolio project to show employers"><span>A portfolio project to show employers</span></label>
+                <label class="f-check"><input type="checkbox" name="wants" value="Certification prep (ECBA / CCBA)"><span>Certification prep (ECBA / CCBA)</span></label>
+                <label class="f-check"><input type="checkbox" name="wants" value="CV, LinkedIn, and interview prep"><span>CV, LinkedIn, and interview prep</span></label>
+                <label class="f-check"><input type="checkbox" name="wants" value="Mentorship from a practising BA"><span>Mentorship from a practising BA</span></label>
+                <label class="f-check"><input type="checkbox" name="wants" value="Networking and job leads"><span>Networking and job leads</span></label>
+                <label class="f-check"><input type="checkbox" name="wants" value="Other" data-other="wants_other"><span>Other</span></label>
+              </div>
+              <input type="text" class="f-other" id="wants_other" name="wants_other" placeholder="Tell us what else you want" hidden>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Availability</legend>
+            <div class="f-field">
+              <span class="f-label">When can you attend live sessions? <em>*</em></span>
+              <div class="f-checks">
+                <label class="f-check"><input type="checkbox" name="availability" value="Weekday evenings"><span>Weekday evenings</span></label>
+                <label class="f-check"><input type="checkbox" name="availability" value="Saturday mornings"><span>Saturday mornings</span></label>
+                <label class="f-check"><input type="checkbox" name="availability" value="Saturday afternoons"><span>Saturday afternoons</span></label>
+                <label class="f-check"><input type="checkbox" name="availability" value="Sunday afternoons"><span>Sunday afternoons</span></label>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Last step</legend>
+            <div class="f-grid">
+              <label class="f-field"><span class="f-label">How did you hear about this training? <em>*</em></span>
+                <select name="source" data-other="source_other" required>
+                  <option value="">Choose one</option>
+                  <option>LinkedIn</option>
+                  <option>X (Twitter)</option>
+                  <option>WhatsApp</option>
+                  <option>Referral from a friend or colleague</option>
+                  <option>Other</option>
+                </select>
+                <input type="text" class="f-other" id="source_other" name="source_other" placeholder="Where did you hear about it?" hidden>
+              </label>
+            </div>
+            <label class="f-check f-consent">
+              <input type="checkbox" name="consent" value="Yes" required>
+              <span>I agree to be contacted about this training. My details will be used only for that purpose. <em>*</em></span>
+            </label>
+          </fieldset>
+
+          <div class="f-hp" aria-hidden="true">
+            <label>Company<input type="text" name="company" tabindex="-1" autocomplete="off"></label>
+          </div>
+
+          <div class="f-submit">
+            <button type="submit" class="btn btn-light" id="submit-btn">Continue to payment</button>
+            <button type="button" class="btn btn-light" id="pay-retry" hidden>Pay ₦80,000</button>
+            <p class="f-status" id="form-status" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+
+        <div class="f-done" id="form-done" tabindex="-1" hidden>
+          <h3>Payment return received. We are confirming your place.</h3>
+          <p>Thank you. We will reconcile your Selar payment with this enrolment, then send your confirmation by email and WhatsApp with the joining details and session timetable before the cohort starts on 2 November 2026.</p>
+          <p class="f-done-ref">Your reference: <strong id="done-ref"></strong></p>
+          <p>If anything is unclear, email us quoting that reference. Cohort enquiries: <a href="mailto:ubonanalyst@gmail.com">ubonanalyst@gmail.com</a>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+=== ORIGINAL ENROLMENT SCRIPT ===
+<script>
+  /* =====================================================================
+     SETUP: paste your Apps Script Web app URL below. It ends in /exec.
+     Instructions are in waitlist-endpoint.gs.
+     ===================================================================== */
+  var ENDPOINT_URL = "https://script.google.com/macros/s/AKfycby94krvGfIS7mXVT-szoGHHM_pCLIU11Bh_AemMxE_nsK-X_Hm1y8yaK69zNKfU20LT/exec";
+
+  (function(){
+    var form = document.getElementById("waitlist-form");
+    var statusEl = document.getElementById("form-status");
+    var submitBtn = document.getElementById("submit-btn");
+    var doneEl = document.getElementById("form-done");
+
+    /* "Other" text inputs: reveal when Other is picked */
+    function toggleOther(control, targetId, active){
+      var box = document.getElementById(targetId);
+      if(!box) return;
+      box.hidden = !active;
+      if(active){ box.focus(); } else { box.value = ""; }
+    }
+    document.querySelectorAll("select[data-other]").forEach(function(sel){
+      sel.addEventListener("change", function(){
+        toggleOther(sel, sel.dataset.other, sel.value === "Other");
+      });
+    });
+    document.querySelectorAll("input[type=checkbox][data-other]").forEach(function(box){
+      box.addEventListener("change", function(){
+        toggleOther(box, box.dataset.other, box.checked);
+      });
+    });
+
+    /* Checkbox pills: visual state, and cap on multi-select groups */
+    document.querySelectorAll(".f-checks").forEach(function(group){
+      var max = parseInt(group.dataset.max || "0", 10);
+      group.addEventListener("change", function(){
+        var boxes = group.querySelectorAll("input[type=checkbox]");
+        var checked = group.querySelectorAll("input[type=checkbox]:checked").length;
+        boxes.forEach(function(box){
+          var pill = box.closest(".f-check");
+          pill.classList.toggle("checked", box.checked);
+          if(max){
+            var atMax = checked >= max && !box.checked;
+            box.disabled = atMax;
+            pill.classList.toggle("maxed", atMax);
+          }
+        });
+      });
+    });
+    document.querySelectorAll(".f-consent input").forEach(function(box){
+      box.addEventListener("change", function(){
+        box.closest(".f-check").classList.toggle("checked", box.checked);
+      });
+    });
+
+    function showError(msg, el){
+      statusEl.textContent = msg;
+      statusEl.classList.remove("ok");
+      if(el){
+        el.classList.add("invalid");
+        el.focus({ preventScroll:false });
+        el.addEventListener("input", function once(){ el.classList.remove("invalid"); el.removeEventListener("input", once); }, false);
+      }
+    }
+
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      statusEl.textContent = "";
+
+      /* Validation */
+      var required = form.querySelectorAll("[required]");
+      for(var i = 0; i < required.length; i++){
+        var el = required[i];
+        if(el.type === "checkbox"){
+          if(!el.checked){ showError("Please tick the consent box to continue.", el); return; }
+        } else if(!el.value.trim()){
+          showError("Please fill in every field marked with a star.", el); return;
+        } else if(el.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value)){
+          showError("That email address does not look right.", el); return;
+        }
+      }
+      var wants = form.querySelectorAll("input[name=wants]:checked");
+      if(wants.length === 0){ showError("Pick at least one thing you want from the program."); return; }
+      var avail = form.querySelectorAll("input[name=availability]:checked");
+      if(avail.length === 0){ showError("Pick at least one time you could attend."); return; }
+
+      if(ENDPOINT_URL.indexOf("http") !== 0){
+        showError("This form is not connected yet. Set ENDPOINT_URL in the page source.");
+        return;
+      }
+
+      /* Collect: checkbox groups join into one comma-separated value */
+      var payload = new URLSearchParams();
+      var raw = new FormData(form);
+      var grouped = {};
+      raw.forEach(function(value, key){
+        if(grouped[key] === undefined){ grouped[key] = value; }
+        else { grouped[key] = grouped[key] + ", " + value; }
+      });
+
+      /* Fold any "Other" text into its parent answer, so the sheet keeps
+         one column per question. */
+      ["background", "wants", "budget", "source"].forEach(function(key){
+        var extra = (grouped[key + "_other"] || "").trim();
+        delete grouped[key + "_other"];
+        if(extra && grouped[key]){
+          grouped[key] = grouped[key].replace(/\bOther\b/, "Other: " + extra);
+        }
+      });
+
+      /* The application is saved before checkout so it can be reconciled with a Selar sale. */
+      var ref = "BAB-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
+      var buyer = { name: (grouped.name || "").trim(), email: (grouped.email || "").trim(), whatsapp: grouped.whatsapp || "" };
+      grouped.reference = ref;
+      grouped.amount = "80000";
+      grouped.payment_status = "Awaiting payment";
+      grouped.action = "signup";
+
+      Object.keys(grouped).forEach(function(k){ payload.append(k, grouped[k]); });
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Saving...";
+
+      post(payload)
+        .then(function(){
+          rememberPending({ reference: ref, name: buyer.name, email: buyer.email, whatsapp: buyer.whatsapp, product: "ba-bridge-selar" });
+          submitBtn.hidden = true;
+          document.getElementById("done-ref").textContent = ref;
+          if (window.uuTrack) window.uuTrack("cohort-enrolment-started");
+          startPayment();
+        })
+        .catch(function(){
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Continue to payment";
+          showError("That did not go through. Please try again. Cohort enquiries: ubonanalyst@gmail.com.");
+        });
+    });
+
+    /* ---------- Payment: hosted Selar checkout ---------- */
+    var retryBtn = document.getElementById("pay-retry");
+    var SELAR_COHORT_URL = "https://selar.com/1187725024";
+    var PENDING_KEY = "uu-cohort-selar-pending";
+    var RETURNED_KEY = "uu-cohort-selar-returned";
+
+    function validPending(value){
+      return value && value.product === "ba-bridge-selar" && typeof value.reference === "string" &&
+        /^BAB-/.test(value.reference) && typeof value.name === "string" && value.name &&
+        typeof value.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.email);
+    }
+    function readPending(){
+      try { var value = JSON.parse(sessionStorage.getItem(PENDING_KEY) || "null"); return validPending(value) ? value : null; }
+      catch(e) { return null; }
+    }
+    function readReturned(){
+      try { var value = JSON.parse(sessionStorage.getItem(RETURNED_KEY) || "null"); return validPending(value) ? value : null; }
+      catch(e) { return null; }
+    }
+    function rememberPending(value){
+      try { sessionStorage.setItem(PENDING_KEY, JSON.stringify(value)); } catch(e) { /* checkout remains available */ }
+    }
+    function removePaymentParam(){
+      var url = new URL(window.location.href);
+      if(!url.searchParams.has("payment")) return;
+      url.searchParams.delete("payment");
+      var query = url.searchParams.toString();
+      window.history.replaceState({}, "", url.pathname + (query ? "?" + query : "") + url.hash);
+    }
+    function selarUrl(customer){
+      var url = new URL(SELAR_COHORT_URL);
+      url.searchParams.set("add_to_cart", "1");
+      url.searchParams.set("email", customer.email);
+      url.searchParams.set("fullname", customer.name);
+      if(customer.whatsapp) url.searchParams.set("mobile", customer.whatsapp);
+      return url.toString();
+    }
+    function showReturnedPayment(customer){
+      document.getElementById("done-ref").textContent = customer.reference;
+      statusEl.textContent = "";
+      form.hidden = true;
+      retryBtn.hidden = true;
+      doneEl.hidden = false;
+      doneEl.scrollIntoView({ behavior:"smooth", block:"center" });
+      doneEl.focus({ preventScroll:true });
+    }
+    function startPayment(){
+      var pending = readPending();
+      if(!pending){
+        statusEl.classList.remove("ok");
+        statusEl.textContent = "We could not restore your saved enrolment. Please submit the form again.";
+        return;
+      }
+      retryBtn.hidden = true;
+      statusEl.classList.add("ok");
+      statusEl.textContent = "Taking you to secure payment...";
+      if (window.uuTrack) window.uuTrack("cohort-selar-checkout-opened");
+      window.location.assign(selarUrl(pending));
+    }
+    retryBtn.addEventListener("click", startPayment);
+
+    (function restoreFlow(){
+      var returned = new URLSearchParams(window.location.search).get("payment") === "selar";
+      var pending = readPending();
+      if(returned){
+        removePaymentParam();
+        if(!pending){
+          statusEl.textContent = "We could not restore this payment return. Please contact us if you completed payment.";
+          return;
+        }
+        try { sessionStorage.setItem(RETURNED_KEY, JSON.stringify(pending)); } catch(e) {}
+        showReturnedPayment(pending);
+        if (window.uuTrack) window.uuTrack("cohort-selar-returned");
+        return;
+      }
+      var returnedState = readReturned();
+      if(returnedState){
+        showReturnedPayment(returnedState);
+        return;
+      }
+      if(pending){
+        submitBtn.hidden = true;
+        document.getElementById("done-ref").textContent = pending.reference;
+        statusEl.classList.add("ok");
+        statusEl.textContent = "Your enrolment is saved. Continue to secure payment when you are ready.";
+        retryBtn.hidden = false;
+      }
+    })();
+    /* Posts to the endpoint, falling back to a blind send if the browser
+       will not let us read the response. */
+    function post(body){
+      return fetch(ENDPOINT_URL, { method:"POST", body:body })
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          if(!res || res.result !== "ok"){ throw new Error("rejected"); }
+        })
+        .catch(function(err){
+          if(err && err.message === "rejected"){ throw err; }
+          return fetch(ENDPOINT_URL, { method:"POST", mode:"no-cors", body:body }).then(function(){ return; });
+        });
+    }
+
+    var items = document.querySelectorAll(".reveal");
+    if(!("IntersectionObserver" in window)){
+      items.forEach(function(el){ el.classList.add("in"); });
+      return;
+    }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.classList.add("in");
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+    items.forEach(function(el){ io.observe(el); });
+  })();
+</script>
