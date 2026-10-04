@@ -162,6 +162,12 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .topbar.is-scrolled::after { opacity: 1; }
 .topbar__name { font: 400 1.45rem/1 var(--serif); letter-spacing: -0.01em; }
 .topbar__meta { display: flex; align-items: center; gap: 18px; font: 500 0.75rem/1 var(--mono); color: var(--ink-2); }
+.topbar__cta { height: 36px; padding: 0 16px; font: 600 0.78rem/1 var(--sans); white-space: nowrap; flex: none; }
+@media (max-width: 640px) {
+  .topbar__meta { gap: 8px; }
+  .topbar__cta { padding: 0 13px; }
+  .topbar__cta-detail { display: none; }
+}
 /* status pill hidden for now; the markup stays on every page. To bring it back, change display: none to inline-flex */
 .avail { display: none; align-items: center; gap: 8px; }
 .avail__dot { width: 7px; height: 7px; border-radius: 50%; background: #1FA15C; box-shadow: 0 0 0 3px rgba(31,161,92,0.15); }

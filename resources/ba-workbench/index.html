@@ -82,6 +82,10 @@
   .topbar-left{display:flex; align-items:baseline; gap:10px; min-width:0;}
   .topbar-left h1{font-size:19px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .breadcrumb{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:1px;}
+  .topbar-actions{display:flex; align-items:center; gap:16px; flex-shrink:0;}
+  .cohort-cta{display:inline-flex; align-items:center; justify-content:center; min-height:36px; padding:0 16px; border-radius:999px; background:#1F3BD6; color:#fff; font-size:12px; font-weight:600; text-decoration:none; white-space:nowrap;}
+  .cohort-cta:hover{background:#172DA8;}
+  .cohort-cta:focus-visible{outline:2px solid #1F3BD6; outline-offset:3px;}
   .content{flex:1; padding:28px 30px 60px 30px; overflow-y:auto;}
 
   /* ---------- Stamp (signature element) ---------- */
@@ -201,6 +205,12 @@
     .raci-grid{grid-template-columns:1fr; }
     .raci-grid .raci-head:not(:first-child){display:none;}
   }
+  @media (max-width:520px){
+    .topbar{padding:14px; gap:8px;}
+    .topbar-actions .breadcrumb{display:none;}
+    .cohort-cta{padding:0 12px;}
+    .cohort-cta-detail{display:none;}
+  }
 </style>
   <!--seo-->
   <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
@@ -260,7 +270,10 @@
       <div class="topbar-left">
         <h1 id="topbar-title">Dashboard</h1>
       </div>
-      <div class="breadcrumb" id="topbar-crumb"></div>
+      <div class="topbar-actions">
+        <div class="breadcrumb" id="topbar-crumb"></div>
+        <a class="cohort-cta" href="/ba-training/#join" aria-label="Join November Cohort" data-goatcounter-click="header-cohort-cta">Join<span class="cohort-cta-detail"> November Cohort</span></a>
+      </div>
     </div>
     <div class="content" style="padding-bottom:0;">
       <details class="card" id="workbench-guide" open style="max-width:760px;">
