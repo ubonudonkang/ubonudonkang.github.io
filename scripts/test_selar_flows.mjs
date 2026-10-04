@@ -4,6 +4,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { closeRegistration, headerCtaToWaitlist, moveHomePromoToBottom, pointCohortLinksToWaitlist } from './close_ba_registration.mjs';
+import { renderCheckoutTemplate, validateConfig } from './open_ba_registration.mjs';
 
 const root = new URL('..', import.meta.url);
 const read = (path) => fs.readFileSync(new URL(path, root), 'utf8');
@@ -49,9 +50,9 @@ assert.doesNotMatch(cohort, /https:\/\/selar\.com\/1187725024|ENDPOINT_URL|windo
 assert.match(dormantCheckout, /Continue to payment/);
 assert.match(dormantCheckout, /grouped\.payment_status = "Awaiting payment"/);
 assert.match(dormantCheckout, /grouped\.action = "signup"/);
-assert.match(dormantCheckout, /https:\/\/selar\.com\/1187725024/);
-assert.match(dormantCheckout, /uu-cohort-selar-pending/);
-assert.match(dormantCheckout, /=== ORIGINAL ENROLMENT SCRIPT ===/);
+assert.match(dormantCheckout, /\{\{SELAR_URL\}\}/);
+assert.match(dormantCheckout, /uu-cohort-selar-\{\{COHORT_SLUG\}\}-pending/);
+assert.match(dormantCheckout, /=== ENROLMENT SCRIPT ===/);
 assert.match(dormantCheckout, /<form id="waitlist-form"[\s\S]*?<\/form>/);
 const archivedScript = dormantCheckout.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(archivedScript, 'the complete dormant checkout handler must be retained');
@@ -73,9 +74,14 @@ const sectionStart = '<!-- BA_FLOW_SECTION_START -->';
 const sectionEnd = '<!-- BA_FLOW_SECTION_END -->';
 const scriptStart = '<!-- BA_FLOW_SCRIPT_START -->';
 const scriptEnd = '<!-- BA_FLOW_SCRIPT_END -->';
+const renderedCheckout = renderCheckoutTemplate(dormantCheckout, validateConfig({
+  cohort: 'November 2026', start: '2026-11-02', deadline: '2026-10-30', seats: '10', price: '80000',
+  selar: 'https://selar.com/1187725024',
+  'apps-script': 'https://script.google.com/macros/s/AKfycby94krvGfIS7mXVT-szoGHHM_pCLIU11Bh_AemMxE_nsK-X_Hm1y8yaK69zNKfU20LT/exec',
+}));
 const openedPage = replaceFlowBlock(
-  replaceFlowBlock(cohort, dormantCheckout, sectionStart, sectionEnd),
-  dormantCheckout, scriptStart, scriptEnd,
+  replaceFlowBlock(cohort, renderedCheckout, sectionStart, sectionEnd),
+  renderedCheckout, scriptStart, scriptEnd,
 );
 const closedAgain = closeRegistration(openedPage, dormantWaitlist, 'November 2026', 'February 2027');
 assert.equal(closedAgain, cohort, 'the stored waitlist flow should restore the current closed page exactly');
@@ -84,6 +90,8 @@ assert.equal(closeRegistration(cohort, dormantWaitlist, 'November 2026', 'Februa
 const futureClosure = closeRegistration(openedPage, dormantWaitlist, 'February 2027', 'May 2027');
 assert.match(futureClosure, /name="cohort" value="May 2027"/);
 assert.match(futureClosure, /The February 2027 cohort is full/);
+assert.match(futureClosure, /uu-cohort-selar-february-2027-pending/);
+assert.match(futureClosure, /uu-cohort-selar-february-2027-returned/);
 assert.doesNotMatch(futureClosure, /Continue to payment|https:\/\/selar\.com\//);
 assert.throws(() => closeRegistration(openedPage, dormantWaitlist, 'February', 'May 2027'), /Month YYYY/);
 assert.equal(pointCohortLinksToWaitlist('<a href="/ba-training/#join">Enrol</a>'),

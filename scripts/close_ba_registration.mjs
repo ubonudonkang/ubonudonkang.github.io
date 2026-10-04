@@ -27,7 +27,12 @@ export function closeRegistration(page, template, closedCohort, nextCohort) {
   const section = locate(template, SECTION_START, SECTION_END).text
     .replaceAll('{{CLOSED_COHORT}}', closedCohort)
     .replaceAll('{{NEXT_COHORT}}', nextCohort);
-  const script = locate(template, SCRIPT_START, SCRIPT_END).text;
+  const keyPrefix = closedCohort === 'November 2026'
+    ? 'uu-cohort-selar'
+    : `uu-cohort-selar-${closedCohort.toLowerCase().replace(' ', '-')}`;
+  const script = locate(template, SCRIPT_START, SCRIPT_END).text
+    .replaceAll('uu-cohort-selar-pending', `${keyPrefix}-pending`)
+    .replaceAll('uu-cohort-selar-returned', `${keyPrefix}-returned`);
   if (section.includes('{{') || script.includes('{{')) throw new Error('The waitlist template has an unresolved placeholder.');
 
   const pageSection = locate(page, SECTION_START, SECTION_END);

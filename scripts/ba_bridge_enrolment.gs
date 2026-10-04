@@ -9,6 +9,8 @@
 var SPREADSHEET_ID = '1y5frsyZV52ciQ9AXP2_GKhnnCtXb5SrnfwBWV-4U2Sk';
 var SHEET_GID = 0;
 var NOTIFY_EMAIL = 'ubonanalyst@gmail.com';
+var COHORT_NAME = 'November 2026';
+var EXPECTED_AMOUNT_NGN = 80000;
 var FIELDS = [
   ['timestamp', 'Timestamp'], ['reference', 'Reference'], ['name', 'Full name'],
   ['email', 'Email'], ['whatsapp', 'WhatsApp'], ['location', 'City and country'],
@@ -24,7 +26,8 @@ var FIELDS = [
   ['paid_at', 'Paid at'], ['squad_status', 'Squad status'],
   ['selar_sale_reference', 'Selar sale reference'],
   ['confirm_token', 'Confirmation token'],
-  ['confirmed_at', 'Confirmed at'], ['confirmed_by', 'Confirmed by']
+  ['confirmed_at', 'Confirmed at'], ['confirmed_by', 'Confirmed by'],
+  ['cohort', 'Cohort']
 ];
 var COL = {};
 FIELDS.forEach(function(field, index) { COL[field[0]] = index + 1; });
@@ -113,6 +116,7 @@ function columnHasData_(sheet, column) {
 
 function createSignup_(sheet, data) {
   if (!data.reference || !data.name || !data.email) throw new Error('Missing required enrolment details.');
+  if (data.cohort !== COHORT_NAME) throw new Error('This cohort is not accepting enrolments.');
   if (!/^BAB-[A-Z0-9]+-[A-Z0-9]{3}$/.test(String(data.reference))) throw new Error('Invalid enrolment reference.');
   if (findByReference_(sheet, data.reference)) {
     // A browser CORS retry can send the same request twice.
@@ -123,7 +127,8 @@ function createSignup_(sheet, data) {
   var row = FIELDS.map(function(field) {
     var key = field[0];
     if (key === 'timestamp') return now;
-    if (key === 'amount') return 80000;
+    if (key === 'amount') return EXPECTED_AMOUNT_NGN;
+    if (key === 'cohort') return COHORT_NAME;
     if (key === 'payment_status') return 'Awaiting payment';
     if (key === 'verified') return 'No';
     if (key === 'confirm_token') return token;
@@ -146,6 +151,7 @@ function reviewPage_(sheet, data) {
   var details = '<dl>' +
     detail_('Reference', values[COL.reference - 1]) + detail_('Name', values[COL.name - 1]) +
     detail_('Email', values[COL.email - 1]) + detail_('WhatsApp', values[COL.whatsapp - 1]) +
+    detail_('Cohort', values[COL.cohort - 1]) +
     detail_('Amount expected (NGN)', values[COL.amount - 1]) +
     detail_('Status', values[COL.payment_status - 1]) +
     '</dl>';
@@ -195,7 +201,7 @@ function sendReviewEmail_(data, token) {
   var reviewUrl = webAppUrl_() + '?action=review&reference=' + encodeURIComponent(data.reference) + '&token=' + encodeURIComponent(token);
   var subject = '[BA Bridge] Review Selar payment: ' + data.name + ' (' + data.reference + ')';
   var html = '<p>A BA Bridge enrolment is awaiting payment review.</p>' +
-    '<p><strong>' + esc_(data.name) + '</strong><br>' + esc_(data.email) + '<br>Reference: ' + esc_(data.reference) + '<br>Amount: ₦80,000</p>' +
+    '<p><strong>' + esc_(data.name) + '</strong><br>' + esc_(data.email) + '<br>Cohort: ' + esc_(COHORT_NAME) + '<br>Reference: ' + esc_(data.reference) + '<br>Amount: ₦' + EXPECTED_AMOUNT_NGN.toLocaleString('en-NG') + '</p>' +
     '<p><a class="button" href="' + escAttr_(reviewUrl) + '">Review &amp; confirm payment</a></p>' +
     '<p>This link only opens a review screen. It does not confirm a payment by itself.</p>';
   MailApp.sendEmail({ to: NOTIFY_EMAIL, subject: subject, body: 'Review payment: ' + reviewUrl, htmlBody: emailHtml_(html) });

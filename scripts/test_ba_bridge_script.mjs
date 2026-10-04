@@ -65,12 +65,12 @@ const signup = {
   action: 'signup', reference: 'BAB-TEST-123', name: 'Ada Example', email: 'ada@example.test',
   whatsapp: '+2341000000000', location: 'Lagos, Nigeria', background: 'Finance',
   experience: '3 years', stage: 'Exploring', wants: 'Portfolio project',
-  availability: 'Saturday mornings', source: 'LinkedIn', consent: 'Yes', amount: '80000'
+  availability: 'Saturday mornings', source: 'LinkedIn', consent: 'Yes', amount: '80000', cohort: 'November 2026'
 };
 assert.equal(JSON.parse(h.context.doPost({ parameter: signup }).text).result, 'ok');
-assert.equal(h.columns, 30);
+assert.equal(h.columns, 31);
 assert.deepEqual(h.rows[0].slice(0, 26), existingHeaders);
-assert.deepEqual(h.rows[0].slice(26), ['Selar sale reference', 'Confirmation token', 'Confirmed at', 'Confirmed by']);
+assert.deepEqual(h.rows[0].slice(26), ['Selar sale reference', 'Confirmation token', 'Confirmed at', 'Confirmed by', 'Cohort']);
 const row = h.rows[1];
 assert.equal(row[1], signup.reference);
 assert.equal(row[2], signup.name);
@@ -86,16 +86,21 @@ assert.equal(row[17], 'Awaiting payment');
 assert.equal(row[21], 'No');
 assert.equal(row[22], ''); // Historical transaction column is untouched.
 assert.equal(row[27], 'test-token');
+assert.equal(row[30], 'November 2026');
 assert.equal(h.emails.length, 1);
 assert.match(h.emails[0].htmlBody, /Review &amp; confirm payment/);
+assert.match(h.emails[0].htmlBody, /Cohort: November 2026/);
 
 // A duplicate request must not create another enrolment or email.
 assert.equal(JSON.parse(h.context.doPost({ parameter: signup }).text).result, 'ok');
 assert.equal(h.rows.length, 2);
 assert.equal(h.emails.length, 1);
+assert.equal(JSON.parse(h.context.doPost({ parameter: { ...signup, reference: 'BAB-WRONG-123', cohort: 'February 2027' } }).text).result, 'error');
+assert.equal(h.rows.length, 2, 'a mismatched cohort must not create a sheet row');
 
 const review = h.context.doGet({ parameter: { action: 'review', reference: signup.reference, token: 'test-token' } });
 assert.match(review.html, /Confirm payment/);
+assert.match(review.html, /<dt>Cohort<\/dt><dd>November 2026<\/dd>/);
 assert.match(review.html, /target="_blank"/);
 assert.equal(row[17], 'Awaiting payment');
 const bad = h.context.doPost({ parameter: { action: 'confirm', intent: 'confirm', reference: signup.reference, token: 'wrong' } });
@@ -120,11 +125,11 @@ assert.match(h.context.doPost({ parameter: { action: 'confirm', intent: 'confirm
 const mismatched = makeHarness([...existingHeaders.slice(0, 17), 'Wrong status heading', ...existingHeaders.slice(18)]);
 assert.equal(JSON.parse(mismatched.context.doPost({ parameter: signup }).text).result, 'error');
 assert.equal(mismatched.rows.length, 1);
-const readyHeaders = existingHeaders.concat(['Selar sale reference', 'Confirmation token', 'Confirmed at', 'Confirmed by']);
+const readyHeaders = existingHeaders.concat(['Selar sale reference', 'Confirmation token', 'Confirmed at', 'Confirmed by', 'Cohort']);
 const ready = makeHarness(readyHeaders);
 assert.equal(JSON.parse(ready.context.doPost({ parameter: { ...signup, reference: 'BAB-READY-123' } }).text).result, 'ok');
 assert.deepEqual(ready.rows[0], readyHeaders);
-assert.equal(ready.columns, 30);
+assert.equal(ready.columns, 31);
 const unsafe = makeHarness();
 assert.equal(JSON.parse(unsafe.context.doPost({ parameter: { ...signup, reference: 'BAB-SAFE-123', name: '=2+2' } }).text).result, 'ok');
 assert.equal(unsafe.rows[1][2], "'=2+2");
