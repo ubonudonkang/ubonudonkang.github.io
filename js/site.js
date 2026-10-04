@@ -470,6 +470,7 @@ function clearProcessedPaymentParam() {
   const SELAR_SESSION_URL = 'https://selar.com/a50i7pv9b6';
   const PENDING_KEY = 'uu-session-selar-pending';
   const PAID_KEY = 'uu-session-selar-returned';
+  let bookingUrl = '';
 
   function validPaymentState(value) {
     return value && typeof value.name === 'string' && value.name &&
@@ -481,10 +482,9 @@ function clearProcessedPaymentParam() {
   }
   function unlock(p, focus) {
     const q = new URLSearchParams({ name: p.name, email: p.email, notes: `Selar return for ${p.reference}` });
-    book.href = `${CAL}?${q}`;
+    bookingUrl = `${CAL}?${q}`;
+    book.disabled = false;
     book.classList.remove('is-locked');
-    book.removeAttribute('aria-disabled');
-    book.removeAttribute('tabindex');
     note.textContent = 'Payment return received. Pick a time that suits you.';
     status.textContent = 'Payment return received. You can now choose a time.';
     button.disabled = true;
@@ -511,7 +511,10 @@ function clearProcessedPaymentParam() {
   const saved = readState(PAID_KEY);
   if (saved) unlock(saved, false);
 
-  book.addEventListener('click', (e) => { if (book.classList.contains('is-locked')) e.preventDefault(); });
+  book.addEventListener('click', () => {
+    if (!bookingUrl || book.disabled) return;
+    window.open(bookingUrl, '_blank', 'noopener,noreferrer');
+  });
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
