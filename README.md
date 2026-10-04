@@ -20,7 +20,7 @@ Never force-push to `main`: it rewrites history and can wipe out other changes.
 ## File structure
 
 ```
-index.html                     Home: hero with portrait, case file, services, work, cohort, testimonials, resources
+index.html                     Home: hero with portrait, stats, cohort, case file, services, work, testimonials, resources
 about/index.html               Bio, 4C Framework, skills, experience, certifications, full LinkedIn recommendations
 projects/index.html            Work: the five case studies
 project-rights-issue/          Case study: ₦351B rights issue digitisation (Access Bank, 2024)
@@ -48,6 +48,7 @@ docs/ams/                      Do not publish confidential client documents here
 - **Portrait:** replace `img/ubon-udonkang.jpg` with another photo of the same name. A 4:5 portrait works best.
 - **AMS documents:** confidential originals must stay out of the public repository. The Data Dictionary is available by request only, subject to permission and redaction. Removing a file from the current site does not remove old copies from Git history or caches.
 - **Testimonials:** short quotes live in the home page carousel. The full recommendations are on the About page.
+- **Cohort promotion:** the BA Bridge card appears after the homepage stats and before the final dark CTA on content pages (after the form on Contact). Its HTML is repeated in those pages, so update the date, price, seat count, and links everywhere when they change. It is intentionally absent from BA Training, BA Workbench, and the 404 page.
 
 ## Payments (Selar)
 
