@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { closeRegistration, pointCohortLinksToWaitlist } from './close_ba_registration.mjs';
+import { closeRegistration, headerCtaToWaitlist, moveHomePromoToBottom, pointCohortLinksToWaitlist } from './close_ba_registration.mjs';
 
 const root = new URL('..', import.meta.url);
 const read = (path) => fs.readFileSync(new URL(path, root), 'utf8');
@@ -12,6 +12,7 @@ const cohort = read('ba-training/index.html');
 const dormantCheckout = read('scripts/ba_bridge_checkout.template.txt');
 const dormantWaitlist = read('scripts/ba_bridge_waitlist.template.txt');
 const session = read('resources/1-on-1-session/index.html');
+const home = read('index.html');
 const readme = read('README.md');
 
 const helperStart = site.indexOf('function selarCheckoutUrl');
@@ -87,6 +88,15 @@ assert.doesNotMatch(futureClosure, /Continue to payment|https:\/\/selar\.com\//)
 assert.throws(() => closeRegistration(openedPage, dormantWaitlist, 'February', 'May 2027'), /Month YYYY/);
 assert.equal(pointCohortLinksToWaitlist('<a href="/ba-training/#join">Enrol</a>'),
   '<a href="/ba-training/#waitlist">Enrol</a>');
+assert.equal(headerCtaToWaitlist('<a class="btn btn-primary topbar__cta" href="/ba-training/#join" aria-label="Join February Cohort" data-goatcounter-click="header-cohort-cta">Join<span class="topbar__cta-detail"> February Cohort</span></a>'),
+  '<a class="btn btn-primary topbar__cta" href="/ba-training/#waitlist" aria-label="Join Waitlist" data-goatcounter-click="header-waitlist-cta">Join Waitlist</a>');
+assert.equal(headerCtaToWaitlist('<a class="btn btn-primary topbar__cta" href="#join" aria-label="Join Cohort">Join</a>', true),
+  '<a class="btn btn-primary topbar__cta" href="#waitlist" aria-label="Join Waitlist">Join Waitlist</a>');
+const movedHome = moveHomePromoToBottom(home);
+assert.ok(movedHome.indexOf('HOME_COHORT_PROMO_START') > movedHome.indexOf('══ NOTES'));
+assert.ok(movedHome.indexOf('HOME_COHORT_PROMO_END') < movedHome.indexOf('══ CLOSING'));
+assert.equal(movedHome, home, 'the closed homepage promo should already be at the bottom');
+assert.equal(moveHomePromoToBottom(movedHome), movedHome, 'closing twice must not move the promo again');
 assert.match(cohort, /uu-cohort-selar-pending/);
 assert.match(cohort, /get\('payment'\) === 'selar'/);
 assert.match(cohort, /removePaymentParam\(\)/);
@@ -162,7 +172,10 @@ for (const file of htmlFiles(fileURLToPath(root))) {
     assert.match(html, /href="\/ba-training\/#waitlist"[^>]*>Join the February waitlist/);
   }
   if (/class="topbar__cta"|class="cohort-cta"/.test(html)) {
-    assert.match(html, /aria-label="Join February 2027 Waitlist"/);
+    const button = html.match(/<a class="(?:btn btn-primary topbar__cta|cohort-cta)"[^>]*>[\s\S]*?<\/a>/)?.[0];
+    assert.ok(button, `${file} should have a header cohort button`);
+    assert.match(button, /aria-label="Join Waitlist"/);
+    assert.match(button, />Join Waitlist<\/a>$/);
   }
 }
 assert.equal(promotionCount, 21, 'all content-page promotions should point to the waitlist');
