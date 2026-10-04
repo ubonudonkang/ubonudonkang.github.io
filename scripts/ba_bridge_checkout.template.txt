@@ -10,6 +10,7 @@ all sitewide CTAs, and structured data. Test the full flow offline and perform
 payment reconciliation review before publishing. A return URL is not payment proof.
 
 === ORIGINAL ENROLMENT SECTION ===
+<!-- BA_FLOW_SECTION_START -->
   <!-- ================= JOIN ================= -->
   <section class="section" id="join">
     <div class="wrap">
@@ -140,9 +141,11 @@ payment reconciliation review before publishing. A return URL is not payment pro
       </div>
     </div>
   </section>
+<!-- BA_FLOW_SECTION_END -->
 
 
 === ORIGINAL ENROLMENT SCRIPT ===
+<!-- BA_FLOW_SCRIPT_START -->
 <script>
   /* =====================================================================
      SETUP: paste your Apps Script Web app URL below. It ends in /exec.
@@ -397,3 +400,4 @@ payment reconciliation review before publishing. A return URL is not payment pro
     items.forEach(function(el){ io.observe(el); });
   })();
 </script>
+<!-- BA_FLOW_SCRIPT_END -->

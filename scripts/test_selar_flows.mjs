@@ -3,12 +3,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import { closeRegistration, pointCohortLinksToWaitlist } from './close_ba_registration.mjs';
 
 const root = new URL('..', import.meta.url);
 const read = (path) => fs.readFileSync(new URL(path, root), 'utf8');
 const site = read('js/site.js');
 const cohort = read('ba-training/index.html');
 const dormantCheckout = read('scripts/ba_bridge_checkout.template.txt');
+const dormantWaitlist = read('scripts/ba_bridge_waitlist.template.txt');
 const session = read('resources/1-on-1-session/index.html');
 const readme = read('README.md');
 
@@ -53,6 +55,38 @@ assert.match(dormantCheckout, /<form id="waitlist-form"[\s\S]*?<\/form>/);
 const archivedScript = dormantCheckout.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(archivedScript, 'the complete dormant checkout handler must be retained');
 new vm.Script(archivedScript);
+assert.match(dormantWaitlist, /\{\{CLOSED_COHORT\}\}/);
+assert.match(dormantWaitlist, /\{\{NEXT_COHORT\}\}/);
+assert.match(dormantWaitlist, /formspree\('initForm'/);
+
+function flowBlock(source, start, end) {
+  const first = source.indexOf(start);
+  const last = source.indexOf(end, first);
+  assert.ok(first >= 0 && last > first);
+  return source.slice(first, last + end.length);
+}
+function replaceFlowBlock(page, template, start, end) {
+  return page.replace(flowBlock(page, start, end), flowBlock(template, start, end));
+}
+const sectionStart = '<!-- BA_FLOW_SECTION_START -->';
+const sectionEnd = '<!-- BA_FLOW_SECTION_END -->';
+const scriptStart = '<!-- BA_FLOW_SCRIPT_START -->';
+const scriptEnd = '<!-- BA_FLOW_SCRIPT_END -->';
+const openedPage = replaceFlowBlock(
+  replaceFlowBlock(cohort, dormantCheckout, sectionStart, sectionEnd),
+  dormantCheckout, scriptStart, scriptEnd,
+);
+const closedAgain = closeRegistration(openedPage, dormantWaitlist, 'November 2026', 'February 2027');
+assert.equal(closedAgain, cohort, 'the stored waitlist flow should restore the current closed page exactly');
+assert.equal(closeRegistration(cohort, dormantWaitlist, 'November 2026', 'February 2027'), cohort,
+  'closing an already closed page should be idempotent');
+const futureClosure = closeRegistration(openedPage, dormantWaitlist, 'February 2027', 'May 2027');
+assert.match(futureClosure, /name="cohort" value="May 2027"/);
+assert.match(futureClosure, /The February 2027 cohort is full/);
+assert.doesNotMatch(futureClosure, /Continue to payment|https:\/\/selar\.com\//);
+assert.throws(() => closeRegistration(openedPage, dormantWaitlist, 'February', 'May 2027'), /Month YYYY/);
+assert.equal(pointCohortLinksToWaitlist('<a href="/ba-training/#join">Enrol</a>'),
+  '<a href="/ba-training/#waitlist">Enrol</a>');
 assert.match(cohort, /uu-cohort-selar-pending/);
 assert.match(cohort, /get\('payment'\) === 'selar'/);
 assert.match(cohort, /removePaymentParam\(\)/);

@@ -521,15 +521,16 @@
     </div>
   </section>
 
+  <!-- BA_FLOW_SECTION_START -->
   <!-- ================= WAITLIST ================= -->
   <section class="section" id="waitlist">
     <div class="wrap">
       <div class="join">
         <p class="eyebrow">February 2027 waitlist</p>
         <h2>Be first to hear when registration opens.</h2>
-        <p class="section-lede">The November cohort is full. Join the free waitlist for the next cohort planned for February 2027. We will email you with the dates, price and enrolment details.</p>
+        <p class="section-lede">The November 2026 cohort is full. Join the free waitlist for the next cohort planned for February 2027. We will email you with the dates, price and enrolment details.</p>
         <div data-fs-success class="f-done" role="status" style="display:none;">
-          <h3>You're on the February waitlist.</h3>
+          <h3>You're on the February 2027 waitlist.</h3>
           <p>Thank you for your interest in BA Bridge. We will email you when registration for the February 2027 cohort opens.</p>
           <p>The waitlist is free and does not reserve a place.</p>
         </div>
@@ -568,6 +569,7 @@
       </div>
     </div>
   </section>
+  <!-- BA_FLOW_SECTION_END -->
 
 </main>
 
@@ -579,9 +581,10 @@
   </div>
 </footer>
 
+<!-- BA_FLOW_SCRIPT_START -->
 <script>
   /* Keep the return message available to people who completed an earlier
-     November checkout. A browser return is not verified payment. */
+     checkout. A browser return is not verified payment. */
   (function(){
     var form = document.getElementById('waitlist-form');
     var done = document.getElementById('form-done');
@@ -622,12 +625,12 @@
         showEarlierReturn(pending);
         if(window.uuTrack) window.uuTrack('cohort-selar-returned');
       } else {
-        status.textContent = 'If you completed a November payment, please contact us with your Selar receipt so we can check it.';
+        status.textContent = 'If you completed an earlier payment, please contact us with your Selar receipt so we can check it.';
       }
     } else {
       var earlierReturn = read(returnedKey);
       if(earlierReturn) showEarlierReturn(earlierReturn);
-      else if(pending) status.textContent = 'November registration is closed. If you already paid, contact us with reference ' + pending.reference + '.';
+      else if(pending) status.textContent = 'Registration is closed. If you already paid, contact us with reference ' + pending.reference + '.';
     }
 
     var items = document.querySelectorAll('.reveal');
@@ -649,6 +652,7 @@
   formspree('initForm', { formElement: '#waitlist-form', formId: 'xdaqwayj' });
 </script>
 <script src="https://unpkg.com/@formspree/ajax@1" defer></script>
+<!-- BA_FLOW_SCRIPT_END -->
 <nav class="dock" aria-label="Site">
   <span class="dock-bg" aria-hidden="true"></span>
   <a href="/" class="dock-item app-home" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="duo" d="M4 10.4 12 4l8 6.4v8.1a1.5 1.5 0 0 1-1.5 1.5H15v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5H5.5A1.5 1.5 0 0 1 4 18.5z"/></svg><span class="dock-tip">Home</span></a>
