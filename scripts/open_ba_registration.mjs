@@ -5,8 +5,14 @@ import { fileURLToPath } from 'node:url';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const SECTION_START = '<!-- BA_FLOW_SECTION_START -->';
 const SECTION_END = '<!-- BA_FLOW_SECTION_END -->';
-const SCRIPT_START = '<!-- BA_FLOW_SCRIPT_START -->';
-const SCRIPT_END = '<!-- BA_FLOW_SCRIPT_END -->';
+
+/* The one endpoint every form posts to, read from js/forms.js so it is never repeated. */
+export function defaultEndpoint(formsSource = fs.readFileSync(path.join(repo, 'js/forms.js'), 'utf8')) {
+  const match = formsSource.match(/const ENDPOINT = '([^']+)'/);
+  if (!match) throw new Error('Could not find ENDPOINT in js/forms.js.');
+  return match[1];
+}
+
 const MONTH_YEAR = /^(January|February|March|April|May|June|July|August|September|October|November|December) (20\d{2})$/;
 
 function one(source, pattern, replacement, label) {
@@ -54,7 +60,7 @@ export function validateConfig(input) {
   let selar;
   let endpoint;
   try { selar = new URL(input.selar); } catch { throw new Error('--selar must be a Selar product URL.'); }
-  try { endpoint = new URL(input['apps-script']); } catch { throw new Error('--apps-script must be a deployed Google Apps Script /exec URL.'); }
+  try { endpoint = new URL(input['apps-script'] || defaultEndpoint()); } catch { throw new Error('--apps-script must be a deployed Google Apps Script /exec URL.'); }
   if (selar.protocol !== 'https:' || !['selar.com', 'www.selar.com'].includes(selar.hostname) ||
       !/^\/[A-Za-z0-9_-]+\/?$/.test(selar.pathname) || selar.search || selar.hash)
     throw new Error('--selar must be a plain https://selar.com/PRODUCT URL.');
@@ -77,7 +83,9 @@ export function renderCheckoutTemplate(template, c) {
   const values = {
     COHORT: c.cohort, COHORT_SLUG: c.slug, START_DATE_LONG: c.startLong,
     PRICE_FORMATTED: c.priceText, PRICE_NGN: String(c.price),
-    APPS_SCRIPT_URL: c.endpoint, SELAR_URL: c.selar,
+    // Only a different deployment needs saying; otherwise js/forms.js already knows the endpoint.
+    ENDPOINT_ATTR: c.endpoint === defaultEndpoint() ? '' : ` data-endpoint="${c.endpoint}"`,
+    SELAR_URL: c.selar,
   };
   const rendered = template.replace(/\{\{([A-Z_]+)\}\}/g, (_, key) => {
     if (!(key in values)) throw new Error(`Unknown checkout placeholder ${key}.`);
@@ -114,7 +122,6 @@ export function openTrainingPage(page, template, c) {
   if (!page.includes('<section class="section" id="waitlist">'))
     throw new Error('BA Training must be in waitlist mode before the open command runs.');
   page = replaceBlock(page, template, SECTION_START, SECTION_END);
-  page = replaceBlock(page, template, SCRIPT_START, SCRIPT_END);
   page = one(page, /  \.price-waitlist-note \{[^}]*\}/,
     '  .price-amount { margin: 0; font: 400 2.5rem/1 var(--serif); letter-spacing: -0.02em; }', 'BA price style');
   page = one(page, /<div class="pilot">[^<]*<\/div>/,
@@ -213,10 +220,7 @@ export function openContentPage(page, c, { home = false, training = false } = {}
 }
 
 export function updateAppsScript(source, c) {
-  source = one(source, /var COHORT_NAME = '[^']*';/, `var COHORT_NAME = '${c.cohort}';`, 'Apps Script cohort');
-  source = one(source, /var EXPECTED_AMOUNT_NGN = \d+;/, `var EXPECTED_AMOUNT_NGN = ${c.price};`, 'Apps Script expected amount');
-  if (!source.includes("['cohort', 'Cohort']")) throw new Error('Apps Script is missing the Cohort sheet column.');
-  return source;
+  return one(source, /const EXPECTED_AMOUNT = \d+;/, `const EXPECTED_AMOUNT = ${c.price};`, 'Apps Script expected amount');
 }
 
 export function openReadme(source, c) {
@@ -238,7 +242,7 @@ function htmlFiles(dir) {
 }
 
 function usage() {
-  return 'Usage: node scripts/open_ba_registration.mjs --cohort "February 2027" --start 2027-02-02 --deadline 2027-01-25 --seats 10 --price 80000 --selar https://selar.com/PRODUCT --apps-script https://script.google.com/macros/s/DEPLOYMENT/exec [--apply]\nWithout --apply this is a preview. The command edits local files only; deploy Apps Script, check Selar settings, and publish the site separately.';
+  return 'Usage: node scripts/open_ba_registration.mjs --cohort "February 2027" --start 2027-02-02 --deadline 2027-01-25 --seats 10 --price 80000 --selar https://selar.com/PRODUCT [--apps-script https://script.google.com/macros/s/DEPLOYMENT/exec] [--apply]\nWithout --apply this is a preview. The command edits local files only; deploy the Apps Script, check Selar settings, and publish the site separately.';
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -258,7 +262,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const template = renderCheckoutTemplate(fs.readFileSync(path.join(repo, 'scripts/ba_bridge_checkout.template.txt'), 'utf8'), c);
     const trainingPath = path.join(repo, 'ba-training/index.html');
     const homePath = path.join(repo, 'index.html');
-    const appsPath = path.join(repo, 'scripts/ba_bridge_enrolment.gs');
+    const appsPath = path.join(repo, 'scripts/site_forms.gs');
     const changes = htmlFiles(repo).map((file) => {
       const original = fs.readFileSync(file, 'utf8');
       const content = file === trainingPath

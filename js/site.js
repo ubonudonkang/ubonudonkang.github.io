@@ -418,24 +418,6 @@ document.querySelectorAll('[data-copy-text]').forEach(el => el.addEventListener(
   });
 })();
 
-/* ── Contact form: prefill a document request (?request=…&from=…) ── */
-(function prefillRequest() {
-  const form = document.getElementById('contact-form');
-  if (!form) return;
-  const params = new URLSearchParams(location.search);
-  const doc = params.get('request');
-  if (!doc) return;
-  const from = params.get('from');
-  const type = form.querySelector('#ty');
-  const msg = form.querySelector('#msg');
-  if (type) type.value = 'resource';
-  if (msg && !msg.value) {
-    msg.value = `Hi Ubon, I'd like to request "${doc}"${from ? ` (from the ${from})` : ''}. `;
-  }
-  (form.closest('.form-card') || form).scrollIntoView({ block: 'start' });
-  form.querySelector('#fn')?.focus({ preventScroll: true });
-})();
-
 /* ── Hosted Selar checkout helpers ─────────────────────────────── */
 window.uuTrack = function (name) {
   try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: name, title: name, event: true }); } catch (e) { /* analytics must never break checkout */ }
@@ -528,23 +510,4 @@ function clearProcessedPaymentParam() {
     window.uuTrack('session-selar-checkout-opened');
     window.location.assign(selarCheckoutUrl(SELAR_SESSION_URL, payment));
   });
-})();
-
-/* ── Contact: count a sent enquiry by type (consulting, contract, role…) ─ */
-(function enquiryEvent() {
-  const done = document.querySelector('[data-fs-success]');
-  const type = document.getElementById('ty');
-  const form = document.getElementById('contact-form');
-  if (!done || !type || !form) return;
-  let counted = false;
-  let submittedType = 'unspecified';
-  form.addEventListener('submit', () => {
-    submittedType = type.value || 'unspecified';
-    counted = false;
-  }, true);
-  new MutationObserver(() => {
-    if (counted || done.hidden || getComputedStyle(done).display === 'none') return;
-    counted = true;
-    window.uuTrack(`contact-enquiry-${submittedType}`);
-  }).observe(done, { attributes: true, attributeFilter: ['style', 'hidden', 'class'] });
 })();
