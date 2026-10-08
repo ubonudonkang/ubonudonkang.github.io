@@ -15,33 +15,32 @@ Update public copy, pricing, CTAs and structured data before publishing.
         <p class="eyebrow">{{NEXT_COHORT}} waitlist</p>
         <h2>Be first to hear when registration opens.</h2>
         <p class="section-lede">The {{CLOSED_COHORT}} cohort is full. Join the free waitlist for the next cohort planned for {{NEXT_COHORT}}. We will email you with the dates, price and enrolment details.</p>
-        <div data-fs-success class="f-done" role="status" style="display:none;">
+        <div id="waitlist-success" data-fs-success class="f-done" role="status" style="display:none;">
           <h3>You're on the {{NEXT_COHORT}} waitlist.</h3>
           <p>Thank you for your interest in BA Bridge. We will email you when registration for the {{NEXT_COHORT}} cohort opens.</p>
           <p>The waitlist is free and does not reserve a place.</p>
         </div>
-        <div data-fs-error class="f-status" role="alert" style="display:none;"></div>
+        <div id="waitlist-error" data-fs-error class="f-status" role="alert" style="display:none;"></div>
         <p class="f-status" id="payment-status" role="status"></p>
-        <form id="waitlist-form" action="https://formspree.io/f/xdaqwayj" method="POST">
+        <form id="waitlist-form" action="https://script.google.com/macros/s/AKfycby7mk3vlrWam2VUbdMzx6BuoK_FlZspve5-aYlr2kR2G_zflNUfhZqvBKFK9BDT2FYv/exec" method="POST">
+          <input type="hidden" name="form_name" value="ba-waitlist-{{NEXT_COHORT_SLUG}}">
           <input type="hidden" name="type" value="BA Bridge {{NEXT_COHORT}} waitlist">
           <input type="hidden" name="cohort" value="{{NEXT_COHORT}}">
-          <input type="hidden" name="message" value="Please add me to the BA Bridge {{NEXT_COHORT}} waitlist.">
+          <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
           <div class="f-grid">
             <label class="f-field"><span class="f-label">Full name <em>*</em></span>
-              <input type="text" name="name" autocomplete="name" required data-fs-field>
-              <span data-fs-error="name" class="f-status"></span>
+              <input type="text" name="name" autocomplete="name" required>
             </label>
             <label class="f-field"><span class="f-label">Email address <em>*</em></span>
-              <input type="email" name="email" autocomplete="email" required data-fs-field>
-              <span data-fs-error="email" class="f-status"></span>
+              <input type="email" name="email" autocomplete="email" required>
             </label>
           </div>
           <label class="f-check f-consent">
-            <input type="checkbox" name="consent" value="Yes" required data-fs-field>
+            <input type="checkbox" name="consent" value="Yes" required>
             <span>I agree to be contacted about the BA Bridge {{NEXT_COHORT}} cohort. My details will be used only for this waitlist. <em>*</em></span>
           </label>
           <div class="f-submit">
-            <button type="submit" class="btn btn-light" data-fs-submit-btn>Join the waitlist</button>
+            <button type="submit" class="btn btn-light">Join the waitlist</button>
             <p class="f-note">No payment is required.</p>
           </div>
         </form>
@@ -125,8 +124,56 @@ Update public copy, pricing, CTAs and structured data before publishing.
     }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
     items.forEach(function(el){ io.observe(el); });
   })();
-  window.formspree = window.formspree || function () { (formspree.q = formspree.q || []).push(arguments); };
-  formspree('initForm', { formElement: '#waitlist-form', formId: 'xdaqwayj' });
 </script>
-<script src="https://unpkg.com/@formspree/ajax@1" defer></script>
+<script>
+  /* Waitlist signups go to a Google Sheet through an Apps Script web app.
+     Apps Script's redirect carries no CORS headers, so the request is sent
+     no-cors: the response is opaque, a resolved fetch counts as success, and
+     only a network failure shows the error. */
+  (function(){
+    var form = document.getElementById('waitlist-form');
+    var success = document.getElementById('waitlist-success');
+    var failure = document.getElementById('waitlist-error');
+    var button = form && form.querySelector('button[type=submit]');
+    if(!form || !success || !failure || !button) return;
+    var label = button.textContent;
+    var sending = false;
+
+    function reveal(el){
+      el.style.display = 'block';
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      if(sending) return;
+      if(!form.elements.consent.checked){ form.elements.consent.focus(); return; }
+
+      sending = true;
+      button.disabled = true;
+      button.textContent = 'Sending…';
+      failure.style.display = 'none';
+      success.style.display = 'none';
+
+      var data = new URLSearchParams(new FormData(form));
+      data.set('name', data.get('name').trim());
+      data.set('email', data.get('email').trim());
+
+      fetch(form.getAttribute('action'), { method: 'POST', mode: 'no-cors', body: data })
+        .then(function(){
+          form.reset();
+          reveal(success);
+        })
+        .catch(function(){
+          failure.textContent = "Something went wrong. Email ubonanalyst@gmail.com and I'll add you manually.";
+          reveal(failure);
+        })
+        .then(function(){
+          sending = false;
+          button.disabled = false;
+          button.textContent = label;
+        });
+    });
+  })();
+</script>
 <!-- BA_FLOW_SCRIPT_END -->

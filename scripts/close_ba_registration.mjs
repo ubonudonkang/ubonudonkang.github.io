@@ -24,8 +24,10 @@ export function closeRegistration(page, template, closedCohort, nextCohort) {
   if (!MONTH_YEAR.test(closedCohort) || !MONTH_YEAR.test(nextCohort) || closedCohort === nextCohort) {
     throw new Error('Provide different closed and next cohorts as Month YYYY, for example "February 2027" "May 2027".');
   }
+  const nextSlug = `${nextCohort.slice(0, 3).toLowerCase()}-${nextCohort.slice(-4)}`;
   const section = locate(template, SECTION_START, SECTION_END).text
     .replaceAll('{{CLOSED_COHORT}}', closedCohort)
+    .replaceAll('{{NEXT_COHORT_SLUG}}', nextSlug)
     .replaceAll('{{NEXT_COHORT}}', nextCohort);
   const keyPrefix = closedCohort === 'November 2026'
     ? 'uu-cohort-selar'

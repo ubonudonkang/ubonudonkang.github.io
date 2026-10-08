@@ -38,13 +38,27 @@ assert.match(site, /\^\[\^\\s@\]\+@\[\^\\s@\]\+\\\.\[\^\\s@\]\+\$/);
 assert.match(site, /cal\.com\/ubonudonkang\/1-on-1-career-clarity-session/);
 assert.doesNotMatch(session, /cal\.com\/ubonudonkang\/1-on-1-career-clarity-session/, 'the booking URL must not be exposed by the page markup');
 
-assert.match(cohort, /action="https:\/\/formspree\.io\/f\/xdaqwayj" method="POST"/);
-assert.match(cohort, /name="cohort" value="February 2027"/);
-assert.match(cohort, /name="name"[^>]*required data-fs-field/);
-assert.match(cohort, /name="email"[^>]*required data-fs-field/);
-assert.match(cohort, /name="consent"[^>]*required data-fs-field/);
-assert.match(cohort, /data-fs-success/);
-assert.match(cohort, /data-fs-submit-btn>Join the waitlist/);
+const waitlistForm = cohort.match(/<form id="waitlist-form"[\s\S]*?<\/form>/)?.[0];
+assert.ok(waitlistForm, 'the waitlist form is present');
+assert.match(waitlistForm, /action="https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec" method="POST"/);
+assert.doesNotMatch(cohort, /formspree/i, 'the waitlist must not use Formspree');
+assert.match(waitlistForm, /name="form_name" value="ba-waitlist-feb-2027"/);
+assert.match(waitlistForm, /name="cohort" value="February 2027"/);
+assert.match(waitlistForm, /name="type" value="BA Bridge February 2027 waitlist"/);
+assert.match(waitlistForm, /<input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">/);
+assert.match(waitlistForm, /name="name"[^>]*required/);
+assert.match(waitlistForm, /name="email"[^>]*required/);
+assert.match(waitlistForm, /name="consent" value="Yes" required/);
+assert.deepEqual([...new Set([...waitlistForm.matchAll(/<input\b[^>]*?\sname="([^"]+)"/g)].map((m) => m[1]))].sort(),
+  ['_gotcha', 'cohort', 'consent', 'email', 'form_name', 'name', 'type'],
+  'the Apps Script only stores these fields, so the form must send no others');
+assert.match(cohort, /id="waitlist-success"/);
+assert.match(cohort, /Something went wrong\. Email ubonanalyst@gmail\.com and I'll add you manually\./);
+assert.match(cohort, /new URLSearchParams\(new FormData\(form\)\)/);
+assert.match(cohort, /method: 'POST', mode: 'no-cors', body: data/, 'Apps Script sends no CORS headers, so the request must be no-cors');
+assert.match(cohort, />Join the waitlist<\/button>/);
+assert.match(read('contact/index.html'), /<form id="contact-form" action="https:\/\/formspree\.io\/f\/xdaqwayj" method="POST">/,
+  'the contact form must keep posting to Formspree');
 assert.doesNotMatch(cohort, /https:\/\/selar\.com\/1187725024|ENDPOINT_URL|window\.location\.assign|id="pay-retry"|Continue to payment|payment_status\s*=/,
   'closed BA registration must not create applications or open checkout');
 assert.match(dormantCheckout, /Continue to payment/);
@@ -59,7 +73,9 @@ assert.ok(archivedScript, 'the complete dormant checkout handler must be retaine
 new vm.Script(archivedScript);
 assert.match(dormantWaitlist, /\{\{CLOSED_COHORT\}\}/);
 assert.match(dormantWaitlist, /\{\{NEXT_COHORT\}\}/);
-assert.match(dormantWaitlist, /formspree\('initForm'/);
+assert.match(dormantWaitlist, /\{\{NEXT_COHORT_SLUG\}\}/);
+assert.match(dormantWaitlist, /new URLSearchParams\(new FormData\(form\)\)/);
+assert.doesNotMatch(dormantWaitlist, /formspree/i);
 
 function flowBlock(source, start, end) {
   const first = source.indexOf(start);
@@ -89,6 +105,7 @@ assert.equal(closeRegistration(cohort, dormantWaitlist, 'November 2026', 'Februa
   'closing an already closed page should be idempotent');
 const futureClosure = closeRegistration(openedPage, dormantWaitlist, 'February 2027', 'May 2027');
 assert.match(futureClosure, /name="cohort" value="May 2027"/);
+assert.match(futureClosure, /name="form_name" value="ba-waitlist-may-2027"/);
 assert.match(futureClosure, /The February 2027 cohort is full/);
 assert.match(futureClosure, /uu-cohort-selar-february-2027-pending/);
 assert.match(futureClosure, /uu-cohort-selar-february-2027-returned/);
@@ -126,7 +143,6 @@ function runEarlierReturn(search, stored = {}) {
     'done-ref': { textContent: '' },
   };
   let replaced = '';
-  let formspreeInit = null;
   const context = {
     URL, URLSearchParams,
     sessionStorage: {
@@ -139,13 +155,10 @@ function runEarlierReturn(search, stored = {}) {
     },
     location: { href: `https://ubonudonkang.com/ba-training/${search}`, search },
     history: { replaceState(_state, _title, url) { replaced = url; } },
-    formspree(...args) { formspreeInit = args; },
   };
   context.window = context;
   vm.createContext(context);
   vm.runInContext(legacyScript.slice(8, -9), context);
-  assert.equal(formspreeInit[0], 'initForm');
-  assert.equal(formspreeInit[1].formId, 'xdaqwayj');
   return { elements, values, replaced };
 }
 const earlierBuyer = { product: 'ba-bridge-selar', reference: 'BAB-OLD-123', name: 'Ada Example', email: 'ada@example.test' };

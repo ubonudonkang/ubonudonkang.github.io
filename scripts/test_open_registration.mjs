@@ -41,7 +41,7 @@ assert.match(training, /12 seats available/);
 assert.match(training, /2 February 2027/);
 assert.match(training, /25 January 2027/);
 assert.match(training, /href="#join" aria-label="Join February Cohort"/);
-assert.doesNotMatch(training, /action="https:\/\/formspree\.io|name="cohort" value="February 2027"|Join the waitlist/);
+assert.doesNotMatch(training, /action="https:\/\/formspree\.io|action="https:\/\/script\.google\.com\/macros\/s\/[^"]+" method="POST"|name="form_name" value="ba-waitlist|name="cohort" value="February 2027"|Join the waitlist/);
 assert.doesNotMatch(training, /href="#waitlist"|November cohort full|All 10 November seats taken/);
 const script = training.match(/<!-- BA_FLOW_SCRIPT_START -->\s*<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script);
