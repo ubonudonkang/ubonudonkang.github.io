@@ -4,8 +4,6 @@ import { fileURLToPath } from 'node:url';
 
 const SECTION_START = '<!-- BA_FLOW_SECTION_START -->';
 const SECTION_END = '<!-- BA_FLOW_SECTION_END -->';
-const SCRIPT_START = '<!-- BA_FLOW_SCRIPT_START -->';
-const SCRIPT_END = '<!-- BA_FLOW_SCRIPT_END -->';
 const MONTH_YEAR = /^(?:January|February|March|April|May|June|July|August|September|October|November|December) 20\d{2}$/;
 
 function locate(source, startMarker, endMarker) {
@@ -25,25 +23,21 @@ export function closeRegistration(page, template, closedCohort, nextCohort) {
     throw new Error('Provide different closed and next cohorts as Month YYYY, for example "February 2027" "May 2027".');
   }
   const nextSlug = `${nextCohort.slice(0, 3).toLowerCase()}-${nextCohort.slice(-4)}`;
-  const section = locate(template, SECTION_START, SECTION_END).text
-    .replaceAll('{{CLOSED_COHORT}}', closedCohort)
-    .replaceAll('{{NEXT_COHORT_SLUG}}', nextSlug)
-    .replaceAll('{{NEXT_COHORT}}', nextCohort);
-  const keyPrefix = closedCohort === 'November 2026'
+  const storagePrefix = closedCohort === 'November 2026'
     ? 'uu-cohort-selar'
     : `uu-cohort-selar-${closedCohort.toLowerCase().replace(' ', '-')}`;
-  const script = locate(template, SCRIPT_START, SCRIPT_END).text
-    .replaceAll('uu-cohort-selar-pending', `${keyPrefix}-pending`)
-    .replaceAll('uu-cohort-selar-returned', `${keyPrefix}-returned`);
-  if (section.includes('{{') || script.includes('{{')) throw new Error('The waitlist template has an unresolved placeholder.');
+  const section = locate(template, SECTION_START, SECTION_END).text
+    .replaceAll('{{CLOSED_COHORT}}', closedCohort)
+    .replaceAll('{{CLOSED_STORAGE_PREFIX}}', storagePrefix)
+    .replaceAll('{{NEXT_COHORT_SLUG}}', nextSlug)
+    .replaceAll('{{NEXT_COHORT}}', nextCohort);
+  if (section.includes('{{')) throw new Error('The waitlist template has an unresolved placeholder.');
 
   const pageSection = locate(page, SECTION_START, SECTION_END);
   let result = page.slice(0, pageSection.start) + section + page.slice(pageSection.end);
-  const pageScript = locate(result, SCRIPT_START, SCRIPT_END);
-  result = result.slice(0, pageScript.start) + script + result.slice(pageScript.end);
   result = result.replaceAll('href="#join"', 'href="#waitlist"')
     .replaceAll('href="/ba-training/#join"', 'href="/ba-training/#waitlist"');
-  if (/ENDPOINT_URL|SELAR_COHORT_URL|https:\/\/selar\.com\/|Continue to payment|window\.location\.assign/.test(result)) {
+  if (/data-form="enrol"|data-selar-url|https:\/\/selar\.com\/|Continue to payment/.test(result)) {
     throw new Error('A checkout path remains on the BA Training page; review it before closing registration.');
   }
   return result;

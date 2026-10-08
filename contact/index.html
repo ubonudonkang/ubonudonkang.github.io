@@ -106,29 +106,30 @@
 
         <div data-fs-error class="notice notice--err" style="display:none;"></div>
 
-        <form id="contact-form" action="https://formspree.io/f/xdaqwayj" method="POST">
+        <form id="contact-form" data-form="contact" data-error-text="Something went wrong. Please email ubonudonkang@gmail.com and I'll reply directly.">
+          <input type="hidden" name="form_name" value="contact">
+          <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
           <div class="fgrid">
             <label class="field" for="fn">
               <span class="field__lbl">First name</span>
-              <input class="input" id="fn" name="first_name" type="text" placeholder="Ada" autocomplete="given-name" required data-fs-field/>
+              <input class="input" id="fn" name="first_name" type="text" placeholder="Ada" autocomplete="given-name" required/>
             </label>
             <label class="field" for="ln">
               <span class="field__lbl">Last name</span>
-              <input class="input" id="ln" name="last_name" type="text" placeholder="Okafor" autocomplete="family-name" required data-fs-field/>
+              <input class="input" id="ln" name="last_name" type="text" placeholder="Okafor" autocomplete="family-name" required/>
             </label>
           </div>
           <label class="field" for="em">
             <span class="field__lbl">Email</span>
-            <input class="input" id="em" name="email" type="email" placeholder="ada@company.com" autocomplete="email" required data-fs-field/>
-            <span class="field__err" data-fs-error="email"></span>
+            <input class="input" id="em" name="email" type="email" placeholder="ada@company.com" autocomplete="email" required/>
           </label>
           <label class="field" for="co">
             <span class="field__lbl">Company</span>
-            <input class="input" id="co" name="company" type="text" placeholder="Fintech Ltd" autocomplete="organization" data-fs-field/>
+            <input class="input" id="co" name="company" type="text" placeholder="Fintech Ltd" autocomplete="organization"/>
           </label>
           <label class="field" for="ty">
             <span class="field__lbl">Engagement type</span>
-            <select class="input" id="ty" name="type" data-fs-field>
+            <select class="input" id="ty" name="type">
               <option value="" disabled selected>Select</option>
               <option value="contract">Contract</option>
               <option value="freelance">Freelance / Project</option>
@@ -140,10 +141,9 @@
           </label>
           <label class="field" for="msg">
             <span class="field__lbl">Message</span>
-            <textarea class="input" id="msg" name="message" placeholder="Tell me about the project, problem, or role..." required data-fs-field></textarea>
-            <span class="field__err" data-fs-error="message"></span>
+            <textarea class="input" id="msg" name="message" placeholder="Tell me about the project, problem, or role..." required></textarea>
           </label>
-          <button type="submit" class="btn btn-primary btn-block" data-fs-submit-btn>Send message <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+          <button type="submit" class="btn btn-primary btn-block">Send message <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
           <p class="form-note">Your message goes directly to my inbox.</p>
         </form>
       </div>
@@ -210,11 +210,7 @@
 
 <div class="toast" id="toast" role="status"></div>
 <script src="/js/site.js?v=919b9139"></script>
-<script>
-  window.formspree = window.formspree || function () { (formspree.q = formspree.q || []).push(arguments); };
-  formspree('initForm', { formElement: '#contact-form', formId: 'xdaqwayj' });
-</script>
-<script src="https://unpkg.com/@formspree/ajax@1" defer></script>
+<script src="/js/forms.js?v=forms-20261008"></script>
 
 </body>
 </html>

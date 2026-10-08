@@ -529,14 +529,14 @@
         <p class="eyebrow">February 2027 waitlist</p>
         <h2>Be first to hear when registration opens.</h2>
         <p class="section-lede">The November 2026 cohort is full. Join the free waitlist for the next cohort planned for February 2027. We will email you with the dates, price and enrolment details.</p>
-        <div id="waitlist-success" data-fs-success class="f-done" role="status" style="display:none;">
+        <div data-fs-success class="f-done" role="status" style="display:none;">
           <h3>You're on the February 2027 waitlist.</h3>
           <p>Thank you for your interest in BA Bridge. We will email you when registration for the February 2027 cohort opens.</p>
           <p>The waitlist is free and does not reserve a place.</p>
         </div>
-        <div id="waitlist-error" data-fs-error class="f-status" role="alert" style="display:none;"></div>
+        <div data-fs-error class="f-status" role="alert" style="display:none;"></div>
         <p class="f-status" id="payment-status" role="status"></p>
-        <form id="waitlist-form" action="https://script.google.com/macros/s/AKfycby7mk3vlrWam2VUbdMzx6BuoK_FlZspve5-aYlr2kR2G_zflNUfhZqvBKFK9BDT2FYv/exec" method="POST">
+        <form id="waitlist-form" data-form="waitlist" data-storage-prefix="uu-cohort-selar" data-error-text="Something went wrong. Email ubonanalyst@gmail.com and I'll add you manually.">
           <input type="hidden" name="form_name" value="ba-waitlist-feb-2027">
           <input type="hidden" name="type" value="BA Bridge February 2027 waitlist">
           <input type="hidden" name="cohort" value="February 2027">
@@ -580,58 +580,9 @@
   </div>
 </footer>
 
-<!-- BA_FLOW_SCRIPT_START -->
 <script>
-  /* Keep the return message available to people who completed an earlier
-     checkout. A browser return is not verified payment. */
+  /* Scroll reveal for the sections on this page. */
   (function(){
-    var form = document.getElementById('waitlist-form');
-    var done = document.getElementById('form-done');
-    var status = document.getElementById('payment-status');
-    var pendingKey = 'uu-cohort-selar-pending';
-    var returnedKey = 'uu-cohort-selar-returned';
-
-    function valid(value){
-      return value && value.product === 'ba-bridge-selar' &&
-        typeof value.reference === 'string' && /^BAB-/.test(value.reference) &&
-        typeof value.name === 'string' && value.name &&
-        typeof value.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.email);
-    }
-    function read(key){
-      try { var value = JSON.parse(sessionStorage.getItem(key) || 'null'); return valid(value) ? value : null; }
-      catch(e) { return null; }
-    }
-    function removePaymentParam(){
-      var url = new URL(window.location.href);
-      if(!url.searchParams.has('payment')) return;
-      url.searchParams.delete('payment');
-      var query = url.searchParams.toString();
-      window.history.replaceState({}, '', url.pathname + (query ? '?' + query : '') + url.hash);
-    }
-    function showEarlierReturn(customer){
-      document.getElementById('done-ref').textContent = customer.reference;
-      form.hidden = true;
-      done.hidden = false;
-      done.focus({ preventScroll: true });
-    }
-
-    var isReturn = new URLSearchParams(window.location.search).get('payment') === 'selar';
-    var pending = read(pendingKey);
-    if(isReturn){
-      removePaymentParam();
-      if(pending){
-        try { sessionStorage.setItem(returnedKey, JSON.stringify(pending)); } catch(e) {}
-        showEarlierReturn(pending);
-        if(window.uuTrack) window.uuTrack('cohort-selar-returned');
-      } else {
-        status.textContent = 'If you completed an earlier payment, please contact us with your Selar receipt so we can check it.';
-      }
-    } else {
-      var earlierReturn = read(returnedKey);
-      if(earlierReturn) showEarlierReturn(earlierReturn);
-      else if(pending) status.textContent = 'Registration is closed. If you already paid, contact us with reference ' + pending.reference + '.';
-    }
-
     var items = document.querySelectorAll('.reveal');
     if(!('IntersectionObserver' in window)){
       items.forEach(function(el){ el.classList.add('in'); });
@@ -648,58 +599,6 @@
     items.forEach(function(el){ io.observe(el); });
   })();
 </script>
-<script>
-  /* Waitlist signups go to a Google Sheet through an Apps Script web app.
-     Apps Script's redirect carries no CORS headers, so the request is sent
-     no-cors: the response is opaque, a resolved fetch counts as success, and
-     only a network failure shows the error. */
-  (function(){
-    var form = document.getElementById('waitlist-form');
-    var success = document.getElementById('waitlist-success');
-    var failure = document.getElementById('waitlist-error');
-    var button = form && form.querySelector('button[type=submit]');
-    if(!form || !success || !failure || !button) return;
-    var label = button.textContent;
-    var sending = false;
-
-    function reveal(el){
-      el.style.display = 'block';
-      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }
-
-    form.addEventListener('submit', function(e){
-      e.preventDefault();
-      if(sending) return;
-      if(!form.elements.consent.checked){ form.elements.consent.focus(); return; }
-
-      sending = true;
-      button.disabled = true;
-      button.textContent = 'Sending…';
-      failure.style.display = 'none';
-      success.style.display = 'none';
-
-      var data = new URLSearchParams(new FormData(form));
-      data.set('name', data.get('name').trim());
-      data.set('email', data.get('email').trim());
-
-      fetch(form.getAttribute('action'), { method: 'POST', mode: 'no-cors', body: data })
-        .then(function(){
-          form.reset();
-          reveal(success);
-        })
-        .catch(function(){
-          failure.textContent = "Something went wrong. Email ubonanalyst@gmail.com and I'll add you manually.";
-          reveal(failure);
-        })
-        .then(function(){
-          sending = false;
-          button.disabled = false;
-          button.textContent = label;
-        });
-    });
-  })();
-</script>
-<!-- BA_FLOW_SCRIPT_END -->
 <nav class="dock" aria-label="Site">
   <span class="dock-bg" aria-hidden="true"></span>
   <a href="/" class="dock-item app-home" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="duo" d="M4 10.4 12 4l8 6.4v8.1a1.5 1.5 0 0 1-1.5 1.5H15v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5H5.5A1.5 1.5 0 0 1 4 18.5z"/></svg><span class="dock-tip">Home</span></a>
@@ -714,5 +613,6 @@
 
 <div class="toast" id="toast" role="status"></div>
 <script src="/js/site.js?v=selar-20261003"></script>
+<script src="/js/forms.js?v=forms-20261008"></script>
 </body>
 </html>

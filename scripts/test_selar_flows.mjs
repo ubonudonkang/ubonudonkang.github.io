@@ -40,8 +40,9 @@ assert.doesNotMatch(session, /cal\.com\/ubonudonkang\/1-on-1-career-clarity-sess
 
 const waitlistForm = cohort.match(/<form id="waitlist-form"[\s\S]*?<\/form>/)?.[0];
 assert.ok(waitlistForm, 'the waitlist form is present');
-assert.match(waitlistForm, /action="https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec" method="POST"/);
-assert.doesNotMatch(cohort, /formspree/i, 'the waitlist must not use Formspree');
+assert.match(waitlistForm, /<form id="waitlist-form" data-form="waitlist" data-storage-prefix="uu-cohort-selar"/);
+assert.doesNotMatch(waitlistForm, /\saction=/, 'the endpoint lives in js/forms.js only');
+assert.doesNotMatch(cohort + read('contact/index.html'), /formspree|script\.google\.com/i, 'no page names a form backend');
 assert.match(waitlistForm, /name="form_name" value="ba-waitlist-feb-2027"/);
 assert.match(waitlistForm, /name="cohort" value="February 2027"/);
 assert.match(waitlistForm, /name="type" value="BA Bridge February 2027 waitlist"/);
@@ -51,31 +52,29 @@ assert.match(waitlistForm, /name="email"[^>]*required/);
 assert.match(waitlistForm, /name="consent" value="Yes" required/);
 assert.deepEqual([...new Set([...waitlistForm.matchAll(/<input\b[^>]*?\sname="([^"]+)"/g)].map((m) => m[1]))].sort(),
   ['_gotcha', 'cohort', 'consent', 'email', 'form_name', 'name', 'type'],
-  'the Apps Script only stores these fields, so the form must send no others');
-assert.match(cohort, /id="waitlist-success"/);
-assert.match(cohort, /Something went wrong\. Email ubonanalyst@gmail\.com and I'll add you manually\./);
-assert.match(cohort, /new URLSearchParams\(new FormData\(form\)\)/);
-assert.match(cohort, /method: 'POST', mode: 'no-cors', body: data/, 'Apps Script sends no CORS headers, so the request must be no-cors');
+  'the Waitlist tab only stores these fields, so the form must send no others');
+assert.match(cohort, /<div data-fs-success class="f-done"/);
+assert.match(cohort, /<script src="\/js\/forms\.js\?v=[^"]+"><\/script>/);
+assert.doesNotMatch(cohort, /BA_FLOW_SCRIPT/, 'form behaviour lives in js/forms.js, not in the page');
 assert.match(cohort, />Join the waitlist<\/button>/);
-assert.match(read('contact/index.html'), /<form id="contact-form" action="https:\/\/formspree\.io\/f\/xdaqwayj" method="POST">/,
-  'the contact form must keep posting to Formspree');
+const contactForm = read('contact/index.html');
+assert.match(contactForm, /<form id="contact-form" data-form="contact"/);
+assert.match(contactForm, /name="form_name" value="contact"/);
+assert.match(contactForm, /<script src="\/js\/forms\.js\?v=[^"]+"><\/script>/);
+assert.doesNotMatch(contactForm, /unpkg\.com/);
 assert.doesNotMatch(cohort, /https:\/\/selar\.com\/1187725024|ENDPOINT_URL|window\.location\.assign|id="pay-retry"|Continue to payment|payment_status\s*=/,
   'closed BA registration must not create applications or open checkout');
 assert.match(dormantCheckout, /Continue to payment/);
-assert.match(dormantCheckout, /grouped\.payment_status = "Awaiting payment"/);
-assert.match(dormantCheckout, /grouped\.action = "signup"/);
 assert.match(dormantCheckout, /\{\{SELAR_URL\}\}/);
-assert.match(dormantCheckout, /uu-cohort-selar-\{\{COHORT_SLUG\}\}-pending/);
-assert.match(dormantCheckout, /=== ENROLMENT SCRIPT ===/);
-assert.match(dormantCheckout, /<form id="waitlist-form"[\s\S]*?<\/form>/);
-const archivedScript = dormantCheckout.match(/<script>([\s\S]*?)<\/script>/)?.[1];
-assert.ok(archivedScript, 'the complete dormant checkout handler must be retained');
-new vm.Script(archivedScript);
+assert.match(dormantCheckout, /data-storage-prefix="uu-cohort-selar-\{\{COHORT_SLUG\}\}"/);
+assert.match(dormantCheckout, /=== ENROLMENT SECTION ===/);
+assert.match(dormantCheckout, /<form id="enrol-form" data-form="enrol"[\s\S]*?<\/form>/);
+assert.doesNotMatch(dormantCheckout, /<script/, 'enrolment behaviour lives in js/forms.js');
 assert.match(dormantWaitlist, /\{\{CLOSED_COHORT\}\}/);
 assert.match(dormantWaitlist, /\{\{NEXT_COHORT\}\}/);
 assert.match(dormantWaitlist, /\{\{NEXT_COHORT_SLUG\}\}/);
-assert.match(dormantWaitlist, /new URLSearchParams\(new FormData\(form\)\)/);
-assert.doesNotMatch(dormantWaitlist, /formspree/i);
+assert.match(dormantWaitlist, /\{\{CLOSED_STORAGE_PREFIX\}\}/);
+assert.doesNotMatch(dormantWaitlist, /formspree|<script/i);
 
 function flowBlock(source, start, end) {
   const first = source.indexOf(start);
@@ -88,17 +87,11 @@ function replaceFlowBlock(page, template, start, end) {
 }
 const sectionStart = '<!-- BA_FLOW_SECTION_START -->';
 const sectionEnd = '<!-- BA_FLOW_SECTION_END -->';
-const scriptStart = '<!-- BA_FLOW_SCRIPT_START -->';
-const scriptEnd = '<!-- BA_FLOW_SCRIPT_END -->';
 const renderedCheckout = renderCheckoutTemplate(dormantCheckout, validateConfig({
   cohort: 'November 2026', start: '2026-11-02', deadline: '2026-10-30', seats: '10', price: '80000',
   selar: 'https://selar.com/1187725024',
-  'apps-script': 'https://script.google.com/macros/s/AKfycby94krvGfIS7mXVT-szoGHHM_pCLIU11Bh_AemMxE_nsK-X_Hm1y8yaK69zNKfU20LT/exec',
 }));
-const openedPage = replaceFlowBlock(
-  replaceFlowBlock(cohort, renderedCheckout, sectionStart, sectionEnd),
-  renderedCheckout, scriptStart, scriptEnd,
-);
+const openedPage = replaceFlowBlock(cohort, renderedCheckout, sectionStart, sectionEnd);
 const closedAgain = closeRegistration(openedPage, dormantWaitlist, 'November 2026', 'February 2027');
 assert.equal(closedAgain, cohort, 'the stored waitlist flow should restore the current closed page exactly');
 assert.equal(closeRegistration(cohort, dormantWaitlist, 'November 2026', 'February 2027'), cohort,
@@ -107,8 +100,7 @@ const futureClosure = closeRegistration(openedPage, dormantWaitlist, 'February 2
 assert.match(futureClosure, /name="cohort" value="May 2027"/);
 assert.match(futureClosure, /name="form_name" value="ba-waitlist-may-2027"/);
 assert.match(futureClosure, /The February 2027 cohort is full/);
-assert.match(futureClosure, /uu-cohort-selar-february-2027-pending/);
-assert.match(futureClosure, /uu-cohort-selar-february-2027-returned/);
+assert.match(futureClosure, /data-storage-prefix="uu-cohort-selar-february-2027"/);
 assert.doesNotMatch(futureClosure, /Continue to payment|https:\/\/selar\.com\//);
 assert.throws(() => closeRegistration(openedPage, dormantWaitlist, 'February', 'May 2027'), /Month YYYY/);
 assert.equal(pointCohortLinksToWaitlist('<a href="/ba-training/#join">Enrol</a>'),
@@ -122,59 +114,10 @@ assert.ok(movedHome.indexOf('HOME_COHORT_PROMO_START') > movedHome.indexOf('═�
 assert.ok(movedHome.indexOf('HOME_COHORT_PROMO_END') < movedHome.indexOf('══ CLOSING'));
 assert.equal(movedHome, home, 'the closed homepage promo should already be at the bottom');
 assert.equal(moveHomePromoToBottom(movedHome), movedHome, 'closing twice must not move the promo again');
-assert.match(cohort, /uu-cohort-selar-pending/);
-assert.match(cohort, /get\('payment'\) === 'selar'/);
-assert.match(cohort, /removePaymentParam\(\)/);
-assert.match(cohort, /value\.product === 'ba-bridge-selar'/);
-assert.doesNotMatch(cohort, /action", "payment/);
 assert.doesNotMatch(cohort, /schema\.org\/InStock|2026-11-02/, 'closed cohort must not be advertised as available to search engines');
 assert.match(session, /site\.js\?v=booking-button-20261004/);
 assert.match(cohort, /site\.js\?v=selar-20261003/);
 assert.match(readme, /browser return, query parameter, or session-storage record is not server-verified proof/i);
-
-const legacyScript = cohort.match(/<script>\s*\/\* Keep the return message[\s\S]*?<\/script>/)?.[0];
-assert.ok(legacyScript, 'earlier buyer return handler is present');
-function runEarlierReturn(search, stored = {}) {
-  const values = new Map(Object.entries(stored));
-  const elements = {
-    'waitlist-form': { hidden: false },
-    'form-done': { hidden: true, focus() {} },
-    'payment-status': { textContent: '' },
-    'done-ref': { textContent: '' },
-  };
-  let replaced = '';
-  const context = {
-    URL, URLSearchParams,
-    sessionStorage: {
-      getItem: (key) => values.get(key) ?? null,
-      setItem: (key, value) => values.set(key, value),
-    },
-    document: {
-      getElementById: (id) => elements[id],
-      querySelectorAll: () => [],
-    },
-    location: { href: `https://ubonudonkang.com/ba-training/${search}`, search },
-    history: { replaceState(_state, _title, url) { replaced = url; } },
-  };
-  context.window = context;
-  vm.createContext(context);
-  vm.runInContext(legacyScript.slice(8, -9), context);
-  return { elements, values, replaced };
-}
-const earlierBuyer = { product: 'ba-bridge-selar', reference: 'BAB-OLD-123', name: 'Ada Example', email: 'ada@example.test' };
-const unmatchedReturn = runEarlierReturn('?payment=selar');
-assert.equal(unmatchedReturn.elements['form-done'].hidden, true, 'a query parameter alone cannot show the earlier payment card');
-assert.equal(unmatchedReturn.replaced, '/ba-training/');
-const matchedReturn = runEarlierReturn('?payment=selar', { 'uu-cohort-selar-pending': JSON.stringify(earlierBuyer) });
-assert.equal(matchedReturn.elements['form-done'].hidden, false);
-assert.equal(matchedReturn.elements['waitlist-form'].hidden, true);
-assert.equal(matchedReturn.elements['done-ref'].textContent, earlierBuyer.reference);
-assert.equal(matchedReturn.replaced, '/ba-training/');
-assert.ok(matchedReturn.values.has('uu-cohort-selar-returned'));
-const refreshed = runEarlierReturn('', { 'uu-cohort-selar-returned': JSON.stringify(earlierBuyer) });
-assert.equal(refreshed.elements['form-done'].hidden, false);
-const unrelated = runEarlierReturn('?payment=selar', { 'uu-cohort-selar-pending': JSON.stringify({ ...earlierBuyer, product: 'another-product' }) });
-assert.equal(unrelated.elements['form-done'].hidden, true);
 
 function htmlFiles(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
