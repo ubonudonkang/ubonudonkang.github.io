@@ -24,7 +24,7 @@
      which checks every payment with Squad before it counts. squad.min.js loads
      on first use. If you enforce a Content Security Policy, allow
      checkout.squadco.com in script-src and frame-src. */
-  const SQUAD_PUBLIC_KEY = '';
+  const SQUAD_PUBLIC_KEY = 'pk_87829ad6c810e30065ebfee10ac6a16884446b5c';
   const SQUAD_WIDGET = 'https://checkout.squadco.com/widget/squad.min.js';
   const SQUAD_REF = /^(BAB-[A-Z0-9]+-[A-Z0-9]{3})-\d{1,3}$/;
   let squadLoading = null;
