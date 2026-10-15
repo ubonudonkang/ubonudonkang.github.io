@@ -2,12 +2,13 @@ DORMANT REOPENING TEMPLATE — BA Bridge enrolment flow
 
 This is reference source, stored as plain text so it cannot run as a website page.
 It contains the enrolment form. Its behaviour (saving to Apps Script, opening
-Selar, restoring a payment return) lives in js/forms.js and is driven by the
-data-* attributes on the form.
+Squad checkout, restoring a payment return) lives in js/forms.js and is driven by
+the data-* attributes on the form. The Squad public key is SQUAD_PUBLIC_KEY there.
 Use open_ba_registration.mjs with complete cohort details to render it.
 
-Check the deployed Apps Script, Selar product price and post-purchase return URL
-before publishing. A browser return is not payment proof.
+Check the deployed Apps Script (its EXPECTED_AMOUNT must match the price) and
+Squad's webhook and redirect URLs before publishing. A browser return is not
+payment proof; the Apps Script checks every payment with Squad.
 
 === ENROLMENT SECTION ===
 <!-- BA_FLOW_SECTION_START -->
@@ -17,8 +18,8 @@ before publishing. A browser return is not payment proof.
       <div class="join">
         <p class="eyebrow">Enrol</p>
         <h2>Apply for the {{COHORT}} cohort.</h2>
-        <p class="section-lede">The form takes about 3 minutes. Payment details appear as soon as you submit it.</p>
-        <form id="enrol-form" data-form="enrol" data-cohort="{{COHORT}}" data-amount="{{PRICE_NGN}}" data-selar-url="{{SELAR_URL}}" data-storage-prefix="uu-cohort-selar-{{COHORT_SLUG}}"{{ENDPOINT_ATTR}} novalidate>
+        <p class="section-lede">The form takes about 3 minutes. A secure payment window opens as soon as you submit it.</p>
+        <form id="enrol-form" data-form="enrol" data-cohort="{{COHORT}}" data-amount="{{PRICE_NGN}}" data-storage-prefix="uu-cohort-pay-{{COHORT_SLUG}}"{{ENDPOINT_ATTR}} novalidate>
 
           <fieldset>
             <legend>About you</legend>
@@ -133,8 +134,8 @@ before publishing. A browser return is not payment proof.
         </form>
 
         <div class="f-done" id="form-done" tabindex="-1" hidden>
-          <h3>Payment return received. We are confirming your place.</h3>
-          <p>Thank you. We will reconcile your Selar payment with this enrolment, then send your confirmation by email and WhatsApp with the joining details and session timetable before the cohort starts on {{START_DATE_LONG}}.</p>
+          <h3>Payment received. We are confirming your place.</h3>
+          <p>Thank you. We will check your payment against this enrolment, then send your confirmation by email and WhatsApp with the joining details and session timetable before the cohort starts on {{START_DATE_LONG}}.</p>
           <p class="f-done-ref">Your reference: <strong id="done-ref"></strong></p>
           <p>If anything is unclear, email us quoting that reference. Cohort enquiries: <a href="mailto:ubonanalyst@gmail.com">ubonanalyst@gmail.com</a>.</p>
         </div>

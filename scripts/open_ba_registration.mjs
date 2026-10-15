@@ -13,6 +13,17 @@ export function defaultEndpoint(formsSource = fs.readFileSync(path.join(repo, 'j
   return match[1];
 }
 
+/* Squad's public key sits in js/forms.js (SQUAD_PUBLIC_KEY). Returns a message when payment
+   would not work, or a note when it is a sandbox key; '' when it is a live key. */
+export function squadKeyNotice(formsSource = fs.readFileSync(path.join(repo, 'js/forms.js'), 'utf8')) {
+  const key = formsSource.match(/const SQUAD_PUBLIC_KEY = '([^']*)'/)?.[1];
+  if (key === undefined) throw new Error('Could not find SQUAD_PUBLIC_KEY in js/forms.js.');
+  if (!key) return { blocking: true, text: 'SQUAD_PUBLIC_KEY in js/forms.js is empty, so checkout would not open. Add the public key from the Squad dashboard (Settings, API keys).' };
+  if (!/^(sandbox_)?pk_[A-Za-z0-9]+$/.test(key)) return { blocking: true, text: 'SQUAD_PUBLIC_KEY in js/forms.js does not look like a Squad public key (sandbox_pk_... or pk_...).' };
+  if (key.startsWith('sandbox_')) return { blocking: false, text: 'SQUAD_PUBLIC_KEY is a sandbox key. Payments will not be real until it is replaced with the live pk_ key.' };
+  return null;
+}
+
 const MONTH_YEAR = /^(January|February|March|April|May|June|July|August|September|October|November|December) (20\d{2})$/;
 
 function one(source, pattern, replacement, label) {
@@ -57,21 +68,16 @@ export function validateConfig(input) {
   const price = Number(input.price);
   if (!Number.isSafeInteger(seats) || seats < 1 || seats > 1000) throw new Error('--seats must be a positive whole number (up to 1000).');
   if (!Number.isSafeInteger(price) || price < 1 || price > 100000000) throw new Error('--price must be a positive NGN whole number.');
-  let selar;
   let endpoint;
-  try { selar = new URL(input.selar); } catch { throw new Error('--selar must be a Selar product URL.'); }
   try { endpoint = new URL(input['apps-script'] || defaultEndpoint()); } catch { throw new Error('--apps-script must be a deployed Google Apps Script /exec URL.'); }
-  if (selar.protocol !== 'https:' || !['selar.com', 'www.selar.com'].includes(selar.hostname) ||
-      !/^\/[A-Za-z0-9_-]+\/?$/.test(selar.pathname) || selar.search || selar.hash)
-    throw new Error('--selar must be a plain https://selar.com/PRODUCT URL.');
   if (endpoint.protocol !== 'https:' || endpoint.hostname !== 'script.google.com' ||
       !/^\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(endpoint.pathname) || endpoint.search || endpoint.hash)
     throw new Error('--apps-script must be a deployed https://script.google.com/macros/s/.../exec URL.');
-  if (/\/(?:NEW_PRODUCT|PRODUCT|YOUR_DEPLOYMENT|DEPLOYMENT|TEST_DEPLOYMENT|TESTPRODUCT|EXAMPLE|PLACEHOLDER)(?:\/|$)/i.test(selar.pathname + endpoint.pathname))
-    throw new Error('Replace example Selar and Apps Script URLs with the actual product and deployed endpoint.');
+  if (/\/(?:YOUR_DEPLOYMENT|DEPLOYMENT|TEST_DEPLOYMENT|EXAMPLE|PLACEHOLDER)(?:\/|$)/i.test(endpoint.pathname))
+    throw new Error('Replace the example Apps Script URL with the actual deployed endpoint.');
   return {
     cohort: input.cohort, month, start: input.start, deadline: input.deadline,
-    seats, price, selar: selar.toString(), endpoint: endpoint.toString(),
+    seats, price, endpoint: endpoint.toString(),
     priceText: new Intl.NumberFormat('en-NG').format(price),
     startLong: new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(start),
     deadlineLong: new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(deadline),
@@ -85,7 +91,6 @@ export function renderCheckoutTemplate(template, c) {
     PRICE_FORMATTED: c.priceText, PRICE_NGN: String(c.price),
     // Only a different deployment needs saying; otherwise js/forms.js already knows the endpoint.
     ENDPOINT_ATTR: c.endpoint === defaultEndpoint() ? '' : ` data-endpoint="${c.endpoint}"`,
-    SELAR_URL: c.selar,
   };
   const rendered = template.replace(/\{\{([A-Z_]+)\}\}/g, (_, key) => {
     if (!(key in values)) throw new Error(`Unknown checkout placeholder ${key}.`);
@@ -131,7 +136,7 @@ export function openTrainingPage(page, template, c) {
   page = one(page, /<p class="hero-seats">[\s\S]*?<\/p>/,
     `<p class="hero-seats"><span class="pill pill--progress">${c.seats} seats available</span></p>`, 'BA seat count');
   page = one(page, /<p class="reassure">[\s\S]*?<\/p>/,
-    `<p class="reassure">The ${c.cohort} cohort starts ${c.startLong}. Applications close ${c.deadlineLong}, or earlier if places fill.<br>Your place is confirmed after your Selar payment is checked.</p>`, 'BA reassurance');
+    `<p class="reassure">The ${c.cohort} cohort starts ${c.startLong}. Applications close ${c.deadlineLong}, or earlier if places fill.<br>Your place is confirmed once your payment is checked.</p>`, 'BA reassurance');
   page = one(page, /<span class="chip chip-open">[^<]*<\/span>/,
     `<span class="chip chip-open">Starts: ${c.startLong}</span>`, 'BA story date');
   const optionsStart = page.indexOf('<!-- ================= OPTIONS ================= -->');
@@ -140,15 +145,15 @@ export function openTrainingPage(page, template, c) {
   let options = page.slice(optionsStart, instructorStart);
   options = one(options, /<h2>[^<]*<\/h2>/, `<h2>Join the ${c.cohort} cohort.</h2>`, 'BA price heading');
   options = one(options, /<div class="price-main">[\s\S]*?<\/div>\s*(?=<ul class="price-list">)/,
-    `<div class="price-main">\n          <span class="pill pill--progress">${c.seats} seats available</span>\n          <p class="price-amount">₦${c.priceText}</p>\n          <dl class="price-dates">\n            <div><dt>Starts</dt><dd>${c.startLong}</dd></div>\n            <div><dt>Apply by</dt><dd>${c.deadlineLong}</dd></div>\n          </dl>\n          <a class="btn btn-primary" href="#join">Enrol for ${c.month}</a>\n          <p class="price-blurb">Submit the form before going to Selar. We confirm places after matching payment to your enrolment.</p>\n        </div>\n        `,
+    `<div class="price-main">\n          <span class="pill pill--progress">${c.seats} seats available</span>\n          <p class="price-amount">₦${c.priceText}</p>\n          <dl class="price-dates">\n            <div><dt>Starts</dt><dd>${c.startLong}</dd></div>\n            <div><dt>Apply by</dt><dd>${c.deadlineLong}</dd></div>\n          </dl>\n          <a class="btn btn-primary" href="#join">Enrol for ${c.month}</a>\n          <p class="price-blurb">Submit the form first, then pay securely by card, bank transfer or USSD through Squad. We confirm your place after checking the payment against your enrolment.</p>\n        </div>\n        `,
     'BA price card');
   page = page.slice(0, optionsStart) + options + page.slice(instructorStart);
   page = replaceFaq(page, 'When does it start?',
     `The ${c.cohort} cohort starts ${c.startLong}. Applications close ${c.deadlineLong}, or earlier if all ${c.seats} seats are taken.`);
   page = replaceFaq(page, 'How do I pay?',
-    `The fee is ₦${c.priceText}. Submit the enrolment form first; then the website takes you to the Selar product to pay. Please keep your Selar receipt and enrolment reference.`);
+    `The fee is ₦${c.priceText}. Submit the enrolment form first; a secure Squad checkout then opens where you can pay by card, bank transfer or USSD. Please keep your payment receipt and enrolment reference.`);
   page = replaceFaq(page, 'When is my place confirmed?',
-    'A browser return from Selar is not proof of payment. We confirm your place after manually checking your Selar sale against the saved enrolment, then email your joining details.');
+    'Squad confirms your payment to us directly. We then check it against your enrolment and email your joining details.');
   page = page.replaceAll('href="#waitlist"', 'href="#join"').replaceAll('#waitlist > .wrap', '#join > .wrap');
   return updateTrainingSeo(page, c);
 }
@@ -227,9 +232,9 @@ export function openReadme(source, c) {
   source = one(source, /^ba-training\/index\.html\s+BA Bridge Cohort:.*$/m,
     `ba-training/index.html         BA Bridge Cohort: ${c.cohort} enrolment`, 'README BA page status');
   source = one(source, /^- \*\*(?:[A-Z][a-z]+ waitlist|[A-Z][a-z]+ 20\d{2} enrolment):\*\*.*$/m,
-    `- **${c.cohort} enrolment:** ${c.seats} seats are advertised at ₦${c.priceText}; applications close ${c.deadlineLong} or earlier if full. The BA Training form saves applications to the Apps Script sheet before opening Selar.`, 'README cohort status');
+    `- **${c.cohort} enrolment:** ${c.seats} seats are advertised at ₦${c.priceText}; applications close ${c.deadlineLong} or earlier if full. The BA Training form saves applications to the Apps Script sheet before opening Squad checkout.`, 'README cohort status');
   source = one(source, /^- \*\*BA Bridge registration is (?:closed|open):\*\*.*$/m,
-    `- **BA Bridge registration is open:** the ${c.cohort} cohort starts ${c.startLong}. The site opens ${c.selar} after enrolment. Set the Selar product price and return URL separately, and reconcile every sale before confirming a place.`, 'README payment status');
+    `- **BA Bridge registration is open:** the ${c.cohort} cohort starts ${c.startLong}. The site opens Squad checkout after enrolment, and Squad's webhook makes the Apps Script verify the payment and email the review link. The price is set in the enrolment form and the Apps Script by the open command. Compare each payment with the Squad dashboard before confirming a place.`, 'README payment status');
   return source;
 }
 
@@ -242,7 +247,7 @@ function htmlFiles(dir) {
 }
 
 function usage() {
-  return 'Usage: node scripts/open_ba_registration.mjs --cohort "February 2027" --start 2027-02-02 --deadline 2027-01-25 --seats 10 --price 80000 --selar https://selar.com/PRODUCT [--apps-script https://script.google.com/macros/s/DEPLOYMENT/exec] [--apply]\nWithout --apply this is a preview. The command edits local files only; deploy the Apps Script, check Selar settings, and publish the site separately.';
+  return 'Usage: node scripts/open_ba_registration.mjs --cohort "February 2027" --start 2027-02-02 --deadline 2027-01-25 --seats 10 --price 80000 [--apps-script https://script.google.com/macros/s/DEPLOYMENT/exec] [--apply]\nWithout --apply this is a preview. The command edits local files only; deploy the Apps Script, check the Squad dashboard settings, and publish the site separately.';
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -254,11 +259,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     for (let i = 0; i < args.length; i++) {
       const flag = args[i];
       if (flag === '--apply') { apply = true; continue; }
-      if (!['--cohort', '--start', '--deadline', '--seats', '--price', '--selar', '--apps-script'].includes(flag) ||
+      if (!['--cohort', '--start', '--deadline', '--seats', '--price', '--apps-script'].includes(flag) ||
           !args[i + 1] || args[i + 1].startsWith('--') || input[flag.slice(2)]) throw new Error(`Invalid or repeated argument: ${flag}\n${usage()}`);
       input[flag.slice(2)] = args[++i];
     }
     const c = validateConfig(input);
+    const keyNotice = squadKeyNotice();
+    if (keyNotice?.blocking && apply) throw new Error(keyNotice.text);
     const template = renderCheckoutTemplate(fs.readFileSync(path.join(repo, 'scripts/ba_bridge_checkout.template.txt'), 'utf8'), c);
     const trainingPath = path.join(repo, 'ba-training/index.html');
     const homePath = path.join(repo, 'index.html');
@@ -284,8 +291,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     if (apply) for (const { file, content } of changed) fs.writeFileSync(file, content);
     console.log(`${apply ? 'Updated' : 'Preview:'} ${changed.length} local files for ${c.cohort}: ${c.seats} seats at ₦${c.priceText}, starting ${c.startLong}.`);
     for (const { file } of changed) console.log(`  ${path.relative(repo, file)}`);
+    if (keyNotice) console.log(`${keyNotice.blocking ? 'Cannot apply yet' : 'Note'}: ${keyNotice.text}`);
     if (!apply) console.log('Add --apply to make these local edits.');
-    console.log('Before publishing: deploy the updated Apps Script, confirm its sheet and endpoint, and set the Selar product price and return URL to https://ubonudonkang.com/ba-training/?payment=selar. A browser return is not payment verification.');
+    console.log('Before publishing: deploy the updated Apps Script (it now holds the new EXPECTED_AMOUNT), confirm the webhook URL and redirect URL in the Squad dashboard (see the README), and make a sandbox payment end to end. A browser return is not payment verification; the Apps Script checks each payment with Squad.');
   } catch (error) {
     console.error(error.message);
     process.exitCode = 1;

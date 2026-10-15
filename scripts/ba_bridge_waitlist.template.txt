@@ -48,7 +48,7 @@ Update public copy, pricing, CTAs and structured data before publishing.
 
         <div class="f-done" id="form-done" tabindex="-1" hidden>
           <h3>Payment return received. We are confirming your place.</h3>
-          <p>Thank you. We will reconcile your earlier Selar payment with this enrolment, then send your confirmation and joining details by email or WhatsApp.</p>
+          <p>Thank you. We will check your earlier payment against this enrolment, then send your confirmation and joining details by email or WhatsApp.</p>
           <p class="f-done-ref">Your reference: <strong id="done-ref"></strong></p>
           <p>If anything is unclear, email us quoting that reference. Cohort enquiries: <a href="mailto:ubonanalyst@gmail.com">ubonanalyst@gmail.com</a>.</p>
         </div>

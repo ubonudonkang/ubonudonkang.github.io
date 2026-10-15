@@ -16,26 +16,20 @@ const session = read('resources/1-on-1-session/index.html');
 const home = read('index.html');
 const readme = read('README.md');
 
-const helperStart = site.indexOf('function selarCheckoutUrl');
-const helperEnd = site.indexOf('/* ── 1:1 session', helperStart);
-assert.ok(helperStart >= 0 && helperEnd > helperStart, 'checkout helper is present');
-const sandbox = { URL };
-vm.createContext(sandbox);
-vm.runInContext(site.slice(helperStart, helperEnd), sandbox);
-
-const careerUrl = new URL(sandbox.selarCheckoutUrl('https://selar.com/a50i7pv9b6', { name: 'Ada Example', email: 'ada@example.test' }));
-assert.equal(careerUrl.origin + careerUrl.pathname, 'https://selar.com/a50i7pv9b6');
-assert.equal(careerUrl.searchParams.get('add_to_cart'), '1');
-assert.equal(careerUrl.searchParams.get('fullname'), 'Ada Example');
-assert.equal(careerUrl.searchParams.get('email'), 'ada@example.test');
-
-assert.match(site, /uu-session-selar-pending/);
-assert.match(site, /uu-session-selar-returned/);
-assert.match(site, /payment'\) === 'selar'/);
-assert.match(site, /clearProcessedPaymentParam\(\)/);
-assert.match(site, /value\.product === 'career-clarity-selar'/);
-assert.match(site, /\^\[\^\\s@\]\+@\[\^\\s@\]\+\\\.\[\^\\s@\]\+\$/);
-assert.match(site, /cal\.com\/ubonudonkang\/1-on-1-career-clarity-session/);
+// The 1:1 session is paid through Squad. Its behaviour lives in js/forms.js; the price is set on the form and mirrored in the Apps Script.
+const formsJs = read('js/forms.js');
+const appsScriptSource = read('scripts/site_forms.gs');
+assert.doesNotMatch(site, /selar/i, 'site.js no longer carries any Selar checkout');
+assert.match(site, /window\.uuTrack = /);
+assert.match(session, /<form class="paybox" id="session-pay" data-form="session" data-amount="15000" novalidate>/);
+assert.match(session, /<script src="\/js\/forms\.js\?v=[^"]+"><\/script>/);
+assert.doesNotMatch(session, /selar/i, 'the session page no longer mentions or links to Selar');
+assert.match(session, /through Squad/);
+assert.equal(Number(session.match(/id="session-pay"[^>]*data-amount="(\d+)"/)[1]), Number(appsScriptSource.match(/const SESSION_AMOUNT = (\d+);/)[1]),
+  'the price on the page and the amount the Apps Script expects must agree');
+assert.equal(JSON.parse(session.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)[1])['@graph'][0].offers.price,
+  Number(session.match(/id="session-pay"[^>]*data-amount="(\d+)"/)[1]), 'structured data shows the same price');
+assert.match(formsJs, /cal\.com\/ubonudonkang\/1-on-1-career-clarity-session/);
 assert.doesNotMatch(session, /cal\.com\/ubonudonkang\/1-on-1-career-clarity-session/, 'the booking URL must not be exposed by the page markup');
 
 const waitlistForm = cohort.match(/<form id="waitlist-form"[\s\S]*?<\/form>/)?.[0];
@@ -62,11 +56,11 @@ assert.match(contactForm, /<form id="contact-form" data-form="contact"/);
 assert.match(contactForm, /name="form_name" value="contact"/);
 assert.match(contactForm, /<script src="\/js\/forms\.js\?v=[^"]+"><\/script>/);
 assert.doesNotMatch(contactForm, /unpkg\.com/);
-assert.doesNotMatch(cohort, /https:\/\/selar\.com\/1187725024|ENDPOINT_URL|window\.location\.assign|id="pay-retry"|Continue to payment|payment_status\s*=/,
+assert.doesNotMatch(cohort, /https:\/\/selar\.com\/1187725024|squadco\.com|ENDPOINT_URL|window\.location\.assign|id="pay-retry"|Continue to payment|payment_status\s*=/,
   'closed BA registration must not create applications or open checkout');
 assert.match(dormantCheckout, /Continue to payment/);
-assert.match(dormantCheckout, /\{\{SELAR_URL\}\}/);
-assert.match(dormantCheckout, /data-storage-prefix="uu-cohort-selar-\{\{COHORT_SLUG\}\}"/);
+assert.doesNotMatch(dormantCheckout, /selar/i, 'new enrolments pay through Squad');
+assert.match(dormantCheckout, /data-storage-prefix="uu-cohort-pay-\{\{COHORT_SLUG\}\}"/);
 assert.match(dormantCheckout, /=== ENROLMENT SECTION ===/);
 assert.match(dormantCheckout, /<form id="enrol-form" data-form="enrol"[\s\S]*?<\/form>/);
 assert.doesNotMatch(dormantCheckout, /<script/, 'enrolment behaviour lives in js/forms.js');
@@ -89,7 +83,6 @@ const sectionStart = '<!-- BA_FLOW_SECTION_START -->';
 const sectionEnd = '<!-- BA_FLOW_SECTION_END -->';
 const renderedCheckout = renderCheckoutTemplate(dormantCheckout, validateConfig({
   cohort: 'November 2026', start: '2026-11-02', deadline: '2026-10-30', seats: '10', price: '80000',
-  selar: 'https://selar.com/1187725024',
 }));
 const openedPage = replaceFlowBlock(cohort, renderedCheckout, sectionStart, sectionEnd);
 const closedAgain = closeRegistration(openedPage, dormantWaitlist, 'November 2026', 'February 2027');
@@ -100,7 +93,7 @@ const futureClosure = closeRegistration(openedPage, dormantWaitlist, 'February 2
 assert.match(futureClosure, /name="cohort" value="May 2027"/);
 assert.match(futureClosure, /name="form_name" value="ba-waitlist-may-2027"/);
 assert.match(futureClosure, /The February 2027 cohort is full/);
-assert.match(futureClosure, /data-storage-prefix="uu-cohort-selar-february-2027"/);
+assert.match(futureClosure, /data-storage-prefix="uu-cohort-pay-february-2027"/);
 assert.doesNotMatch(futureClosure, /Continue to payment|https:\/\/selar\.com\//);
 assert.throws(() => closeRegistration(openedPage, dormantWaitlist, 'February', 'May 2027'), /Month YYYY/);
 assert.equal(pointCohortLinksToWaitlist('<a href="/ba-training/#join">Enrol</a>'),
@@ -144,8 +137,11 @@ for (const file of htmlFiles(fileURLToPath(root))) {
 }
 assert.equal(promotionCount, 21, 'all content-page promotions should point to the waitlist');
 
-const retiredProvider = new RegExp('s' + 'quad', 'i');
-for (const [name, source] of Object.entries({ site, cohort, session, readme })) {
-  assert.doesNotMatch(source, retiredProvider, `${name} must not retain retired checkout integration`);
+// The browser carries only Squad's public key (pk_). A secret key (sk_) in any shipped file would expose the account.
+const forms = read('js/forms.js');
+const appsScript = read('scripts/site_forms.gs');
+for (const [name, source] of Object.entries({ site, forms, cohort, session, readme, appsScript })) {
+  assert.doesNotMatch(source, /['"`](?:sandbox_)?sk_[A-Za-z0-9]{8,}/, `${name} must not contain a Squad secret key`);
 }
-console.log('Selar and closed-cohort waitlist offline checks passed.');
+assert.doesNotMatch(forms, /selarCheckoutUrl|selar\.com/i, 'enrolment no longer opens Selar');
+console.log('Squad enrolment templates, Selar legacy and closed-cohort waitlist offline checks passed.');
