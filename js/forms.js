@@ -7,6 +7,7 @@
  *   data-form="contact"   contact page enquiry            -> Contact tab
  *   data-form="waitlist"  BA Bridge cohort waitlist       -> Waitlist tab
  *   data-form="enrol"     BA Bridge enrolment + Squad     -> BA Training tab
+ *   data-form="session"   1:1 session payment (Squad)     -> Sessions tab (via Squad's webhook)
  *
  * Needs /js/site.js first (window.uuTrack).
  */
@@ -432,9 +433,99 @@
     }
   }
 
+  /* ── 1:1 session: pay first, then the Cal.com button unlocks ─────────
+     There is no application to save. Squad checkout opens with a reference
+     (UU1-...), and the Apps Script learns of the payment from Squad's webhook
+     and verifies it. The unlock below trusts the browser's own report of
+     success, as it always has; the Cal.com booking quotes the reference so a
+     booking can be matched to a verified payment. */
+  function initSession(form) {
+    const endpoint = form.dataset.endpoint || ENDPOINT;
+    const amount = Number(form.dataset.amount);
+    const status = form.querySelector('[data-pay-status]');
+    const button = form.querySelector('button[type="submit"]');
+    const book = document.getElementById('session-book');
+    const note = document.getElementById('session-book-note');
+    const CAL = 'https://cal.com/ubonudonkang/1-on-1-career-clarity-session';
+    const PENDING_KEY = 'uu-session-pay-pending';
+    const PAID_KEY = 'uu-session-pay-paid';
+    let bookingUrl = '';
+
+    const valid = (v) => v && typeof v.name === 'string' && v.name &&
+      typeof v.email === 'string' && EMAIL_RE.test(v.email) &&
+      typeof v.reference === 'string' && /^UU1-[A-Z0-9]+$/.test(v.reference) &&
+      v.product === 'career-clarity-squad';
+    const read = (key) => {
+      try { const v = JSON.parse(sessionStorage.getItem(key) || 'null'); return valid(v) ? v : null; }
+      catch (e) { return null; }
+    };
+    const save = (key, v) => { try { sessionStorage.setItem(key, JSON.stringify(v)); } catch (e) { /* the booking still unlocks for this visit */ } };
+
+    function unlock(p, focus) {
+      const q = new URLSearchParams({ name: p.name, email: p.email, notes: `Squad payment ref ${p.reference}` });
+      bookingUrl = `${CAL}?${q}`;
+      book.disabled = false;
+      book.classList.remove('is-locked');
+      note.textContent = 'Payment received. Pick a time that suits you.';
+      status.textContent = 'Payment received. Thank you.';
+      button.disabled = true;
+      if (focus) book.focus();
+    }
+
+    // Someone who paid through the earlier provider and comes back with its return parameter.
+    if (new URLSearchParams(location.search).get('payment') === 'selar') {
+      clearPaymentParams();
+      status.textContent = 'We could not restore your booking details. Please contact us if you completed payment.';
+    }
+
+    const saved = read(PAID_KEY);
+    if (saved) unlock(saved, false);
+
+    book.addEventListener('click', () => {
+      if (!bookingUrl || book.disabled) return;
+      window.open(bookingUrl, '_blank', 'noopener,noreferrer');
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (button.disabled) return;
+      const nameInput = form.querySelector('[name="name"]');
+      const emailInput = form.querySelector('[name="email"]');
+      const name = nameInput.value.trim(), email = emailInput.value.trim();
+      if (!name) { status.textContent = 'Please enter your full name.'; nameInput.focus(); return; }
+      if (!EMAIL_RE.test(email)) { status.textContent = 'That email address does not look right.'; emailInput.focus(); return; }
+
+      // A new reference for every attempt, because Squad needs a fresh one each time.
+      const payment = { name, email, reference: `UU1-${Date.now().toString(36).toUpperCase()}`, product: 'career-clarity-squad' };
+      save(PENDING_KEY, payment);
+      button.disabled = true;
+      status.textContent = 'Opening secure checkout...';
+      track('session-squad-checkout-opened');
+
+      squadPay({
+        amount, email, name, ref: payment.reference,
+        metadata: { product: '1:1 Career Clarity Session', name, email },
+        onSuccess: () => {
+          save(PAID_KEY, payment);
+          track('session-squad-paid');
+          unlock(payment, true);
+          reportPayment(endpoint, payment.reference);
+        },
+        onClose: () => {
+          button.disabled = false;
+          status.textContent = "Payment wasn't completed. You can try again.";
+        },
+      }).then(() => { status.textContent = ''; }).catch((err) => {
+        button.disabled = false;
+        status.textContent = `${err.message} Please try again shortly.`;
+      });
+    });
+  }
+
   document.querySelectorAll('form[data-form]').forEach((form) => {
     const kind = form.dataset.form;
     if (kind === 'contact' || kind === 'waitlist') initNotice(form, kind);
     else if (kind === 'enrol') initEnrol(form);
+    else if (kind === 'session') initSession(form);
   });
 })();

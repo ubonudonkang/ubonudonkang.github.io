@@ -37,6 +37,7 @@ function run({ kind, dataset = {}, fields = [], search = '', storage = {}, fetch
   const tracked = [];
   const assigned = [];
   const widgets = [];
+  const windows = [];
   const store = new Map(Object.entries(storage));
   const success = element({ style: { display: 'none' } });
   const failure = element({ style: { display: 'none' } });
@@ -69,6 +70,7 @@ function run({ kind, dataset = {}, fields = [], search = '', storage = {}, fetch
   };
   context.window = context;
   context.window.location.assign = (url) => assigned.push(url);
+  context.open = (url, target, features) => windows.push({ url, target, features });
   // Squad's checkout widget: records how it was set up and lets a test finish or close it.
   context.squad = class {
     constructor(options) { this.options = options; widgets.push(this); }
@@ -79,7 +81,7 @@ function run({ kind, dataset = {}, fields = [], search = '', storage = {}, fetch
   context.window.uuTrack = context.uuTrack;
   vm.createContext(context);
   vm.runInContext(source, context);
-  return { form, button, success, failure, byId, calls, tracked, assigned, store, replaced, widgets };
+  return { form, button, success, failure, byId, calls, tracked, assigned, store, replaced, widgets, windows };
 }
 
 const ok = () => Promise.resolve({ json: () => Promise.resolve({ result: 'ok' }) });
@@ -368,4 +370,110 @@ const bodies = (t) => t.calls.map((c) => c.body);
   assert.equal(saved.widgets[0].options.transaction_ref, 'BAB-NEW-123-1');
 }
 
-console.log('Form script checks passed (contact, waitlist, Squad enrolment and returns).');
+/* ── 1:1 session (Squad) ────────────────────────────────── */
+const SESSION_PAID = 'uu-session-pay-paid';
+function sessionRun(overrides = {}) {
+  const status = element();
+  const nameInput = element({ value: ' Ada Example ' });
+  const emailInput = element({ value: 'ada@example.test' });
+  const book = element({ disabled: true });
+  book.classes.add('is-locked');
+  const note = element({ textContent: 'Unlocks after payment.' });
+  const t = run({
+    kind: 'session', dataset: { amount: '15000' }, source: formsWithKey, fetchImpl: ok,
+    extra: { q: { '[data-pay-status]': [status], '[name="name"]': [nameInput], '[name="email"]': [emailInput] }, ids: { 'session-book': book, 'session-book-note': note } },
+    ...overrides,
+  });
+  return { ...t, status, nameInput, emailInput, book, note };
+}
+{
+  const t = sessionRun();
+  t.form.fire('submit');
+  await flush();
+  assert.equal(t.widgets.length, 1);
+  const o = t.widgets[0].options;
+  assert.equal(o.key, SANDBOX_PUBLIC_KEY);
+  assert.equal(o.amount, 1500000, 'N15,000 in kobo');
+  assert.equal(o.currency_code, 'NGN');
+  assert.match(o.transaction_ref, /^UU1-[A-Z0-9]+$/);
+  assert.equal(o.email, 'ada@example.test');
+  assert.equal(o.customer_name, 'Ada Example', 'the name is trimmed');
+  assert.deepEqual({ ...o.metadata }, { product: '1:1 Career Clarity Session', name: 'Ada Example', email: 'ada@example.test' });
+  assert.equal(t.button.disabled, true, 'a second click while checkout is open does nothing');
+  t.form.fire('submit');
+  await flush();
+  assert.equal(t.widgets.length, 1);
+  assert.equal(t.book.disabled, true, 'booking stays locked until payment is reported');
+  assert.deepEqual(t.tracked, ['session-squad-checkout-opened']);
+  assert.equal(t.calls.length, 0);
+
+  // Paying unlocks Cal.com with the visitor's details and the Squad reference, and tells the endpoint to verify.
+  o.onSuccess({});
+  await flush();
+  assert.equal(t.book.disabled, false);
+  assert.equal(t.book.classes.has('is-locked'), false);
+  assert.match(t.note.textContent, /Payment received/);
+  assert.deepEqual(t.tracked, ['session-squad-checkout-opened', 'session-squad-paid']);
+  assert.deepEqual(t.calls.map((c) => c.body), [{ action: 'payment', squad_ref: o.transaction_ref }]);
+  assert.equal(JSON.parse(t.store.get(SESSION_PAID)).reference, o.transaction_ref, 'paid state is kept so a refresh leaves booking open');
+  t.book.fire('click');
+  assert.equal(t.windows.length, 1);
+  const cal = new URL(t.windows[0].url);
+  assert.equal(cal.origin + cal.pathname, 'https://cal.com/ubonudonkang/1-on-1-career-clarity-session');
+  assert.equal(cal.searchParams.get('name'), 'Ada Example');
+  assert.equal(cal.searchParams.get('email'), 'ada@example.test');
+  assert.equal(cal.searchParams.get('notes'), 'Squad payment ref ' + o.transaction_ref);
+  assert.equal(t.windows[0].target, '_blank');
+  assert.match(t.windows[0].features, /noopener/);
+}
+{
+  // Closing checkout without paying unlocks nothing and lets the visitor try again with a new reference.
+  const t = sessionRun();
+  t.form.fire('submit');
+  await flush();
+  t.widgets[0].options.onClose();
+  assert.equal(t.button.disabled, false);
+  assert.match(t.status.textContent, /Payment wasn't completed/);
+  assert.equal(t.book.disabled, true);
+  assert.equal(t.calls.length, 0);
+  await new Promise((resolve) => setTimeout(resolve, 2));
+  t.form.fire('submit');
+  await flush();
+  assert.equal(t.widgets.length, 2);
+  assert.notEqual(t.widgets[1].options.transaction_ref, t.widgets[0].options.transaction_ref);
+}
+{
+  const bad = sessionRun();
+  bad.emailInput.value = 'nope';
+  bad.form.fire('submit');
+  assert.match(bad.status.textContent, /email address does not look right/);
+  assert.equal(bad.widgets.length, 0);
+  const noName = sessionRun();
+  noName.nameInput.value = '   ';
+  noName.form.fire('submit');
+  assert.match(noName.status.textContent, /enter your full name/);
+  assert.equal(noName.widgets.length, 0);
+  // Without a public key nothing opens, and the visitor is told why.
+  const off = sessionRun({ source: forms.replace(/const SQUAD_PUBLIC_KEY = '[^']*';/, "const SQUAD_PUBLIC_KEY = '';") });
+  off.form.fire('submit');
+  await flush();
+  assert.match(off.status.textContent, /Online payment is not switched on yet/);
+  assert.equal(off.button.disabled, false);
+}
+{
+  // A refresh after paying keeps this browser's booking step open; nothing else does.
+  const paid = { name: 'Ada Example', email: 'ada@example.test', reference: 'UU1-ABC123', product: 'career-clarity-squad' };
+  const back = sessionRun({ storage: { [SESSION_PAID]: JSON.stringify(paid) } });
+  assert.equal(back.book.disabled, false);
+  back.book.fire('click');
+  assert.equal(new URL(back.windows[0].url).searchParams.get('notes'), 'Squad payment ref UU1-ABC123');
+  assert.equal(sessionRun({ storage: { [SESSION_PAID]: JSON.stringify({ ...paid, product: 'career-clarity-selar' }) } }).book.disabled, true);
+  assert.equal(sessionRun({ storage: { [SESSION_PAID]: JSON.stringify({ ...paid, reference: 'junk' }) } }).book.disabled, true);
+  // The earlier provider's return parameter cannot unlock anything.
+  const old = sessionRun({ search: '?payment=selar' });
+  assert.equal(old.book.disabled, true);
+  assert.match(old.status.textContent, /could not restore your booking details/);
+  assert.deepEqual(old.replaced, ['/page/']);
+}
+
+console.log('Form script checks passed (contact, waitlist, Squad enrolment, 1:1 session).');

@@ -4,6 +4,7 @@
  *
  *   BA Training (gid 0)  action=signup               BA Bridge enrolment, Squad payments, payment review, welcome emails
  *   BA Bridge Invites    admin panel                 private one-time registration links
+ *   Sessions             Squad webhook / action=payment  1:1 Career Clarity session payments
  *   Waitlist             form_name=ba-waitlist-*     cohort waitlist signups
  *   Contact              form_name=contact           contact page enquiries
  *
@@ -27,6 +28,8 @@
  *      "Paid (Squad verified)" and the review email goes to NOTIFY_EMAIL at once.
  *      Opening that email's link and pressing Confirm is still what sends the
  *      student's welcome email.
+ *   The 1:1 session (references UU1-...) is paid the same way but has no enrolment
+ *   row: a verified payment is logged to the Sessions tab and announced by email.
  *   Selar (the earlier provider) is kept only for payments already made.
  */
 
@@ -55,6 +58,12 @@ const SQUAD_SANDBOX_API = 'https://sandbox-api-d.squadco.com';
 // Squad needs a fresh transaction reference for every checkout attempt.
 const SQUAD_REF_PATTERN = /^(BAB-[A-Z0-9]+-[A-Z0-9]{3})-(\d{1,3})$/;
 const SQUAD_SWEEP_HANDLER = 'sweepAwaitingSquadPayments';
+
+// 1:1 Career Clarity session. The price is also shown on the session page (data-amount).
+const SESSION_AMOUNT = 15000;
+const SESSION_REF_PATTERN = /^UU1-[A-Z0-9]{5,12}$/;
+// Session references have no row to check first, so lookups for unknown ones are capped.
+const SESSION_PROBES_PER_HOUR = 60;
 
 const COHORT_REMINDER_CC = 'alabioluwafunmito@gmail.com';
 const COHORT_REMINDER_LOG_PROPERTY = 'BA_BRIDGE_COHORT_WELCOME_REMINDER_SENT';
@@ -144,6 +153,16 @@ const FORM_TABS = {
     dedupeFields: ['submission_id'],
     dedupeKey: values => String(values.submission_id || '').trim()
   }
+};
+FORM_TABS.sessions = {
+  tab: 'Sessions',
+  fields: [
+    ['timestamp', 'Timestamp'], ['reference', 'Squad reference'], ['name', 'Name'],
+    ['email', 'Email'], ['amount', 'Amount paid (NGN)'], ['status', 'Status'], ['source', 'Reported by']
+  ],
+  required: [],
+  dedupeFields: ['reference'],
+  dedupeKey: values => String(values.reference || '').trim()
 };
 const MAX_FIELD_LENGTH = 5000;
 
@@ -499,7 +518,7 @@ function squadRefFromWebhook_(data) {
 
   for (let i = 0; i < candidates.length; i++) {
     const ref = String(candidates[i] || '').trim();
-    if (SQUAD_REF_PATTERN.test(ref)) return ref;
+    if (SQUAD_REF_PATTERN.test(ref) || SESSION_REF_PATTERN.test(ref)) return ref;
   }
 
   return '';
@@ -513,6 +532,9 @@ function squadRefFromWebhook_(data) {
  */
 function processSquadPayment_(sheet, squadRef, source) {
   const ref = String(squadRef || '').trim();
+
+  if (SESSION_REF_PATTERN.test(ref)) return processSessionPayment_(ref, source);
+
   const match = SQUAD_REF_PATTERN.exec(ref);
 
   if (!match) return { result: 'ignored', reason: 'Not a BA Bridge payment reference.' };
@@ -595,6 +617,90 @@ function processSquadPayment_(sheet, squadRef, source) {
   };
 }
 
+/*
+ * 1:1 session payment. There is no enrolment to find, so Squad is asked
+ * directly, and only a limited number of unknown references are looked up per
+ * hour so that strangers cannot use up this script's Squad calls. The page
+ * still unlocks the booking button itself; this is the server-side record that
+ * the payment is real and for the right amount.
+ */
+function processSessionPayment_(ref, source) {
+  const def = FORM_TABS.sessions;
+  const tab = getFormTab_(def);
+
+  if (formRowExists_(tab, def, ref)) return { result: 'ok', reference: ref, already_processed: true };
+
+  if (!allowSessionProbe_()) return { result: 'ignored', reason: 'Too many unverified lookups this hour.' };
+
+  const tx = verifySquadTransaction_(ref);
+
+  if (!tx.found) return { result: 'not_paid', reference: ref, reason: 'Squad has no transaction with this reference.' };
+
+  const status = tx.status.toLowerCase();
+
+  if (status !== 'success') {
+    return {
+      result: status === 'pending' || status === 'processing' ? 'pending' : 'not_paid',
+      reference: ref,
+      status: tx.status
+    };
+  }
+
+  const amountMatches =
+    tx.amount === SESSION_AMOUNT * 100 &&
+    (!tx.currency || tx.currency === 'NGN');
+
+  const values = {
+    reference: ref,
+    name: tx.name,
+    email: tx.email,
+    amount: isFinite(tx.amount) ? tx.amount / 100 : '',
+    status: amountMatches ? 'Paid' : 'Amount needs review',
+    source
+  };
+
+  tab.sheet.appendRow(tab.header.map(label => {
+    const field = def.fields.filter(f => f[1] === label)[0];
+    if (!field) return '';
+    if (field[0] === 'timestamp') return new Date();
+    const value = values[field[0]];
+    return typeof value === 'number' ? value : safeCellText_(value);
+  }));
+
+  const who = tx.name || tx.email || ref;
+
+  try {
+    MailApp.sendEmail({
+      to: SITE_NOTIFY_EMAIL,
+      subject: '[1:1 Session] ' + (amountMatches ? 'Paid' : 'CHECK AMOUNT') + ': ' + who + ' (' + ref + ')',
+      body:
+        (amountMatches
+          ? 'Squad confirmed this 1:1 session payment directly.\n\n'
+          : 'Squad reports a successful payment, but not of the expected NGN ' + SESSION_AMOUNT + '. Check the Squad dashboard before the session.\n\n') +
+        'Reference: ' + ref + '\n' +
+        'Name: ' + (tx.name || 'not given') + '\n' +
+        'Email: ' + (tx.email || 'not given') + '\n' +
+        'Amount: ' + tx.currency + ' ' + (isFinite(tx.amount) ? tx.amount / 100 : 'unknown') + '\n\n' +
+        'Their Cal.com booking will quote this reference in its notes.',
+      name: 'ubonudonkang.com'
+    });
+  } catch (ignore) {
+    // The saved row is the record; a mail failure must not lose it.
+  }
+
+  return { result: 'ok', reference: ref, amount_matches: amountMatches };
+}
+
+function allowSessionProbe_() {
+  const cache = CacheService.getScriptCache();
+  const count = Number(cache.get('SESSION_PROBES') || 0);
+
+  if (count >= SESSION_PROBES_PER_HOUR) return false;
+
+  cache.put('SESSION_PROBES', String(count + 1), 3600);
+  return true;
+}
+
 function isSquadPaid_(values) {
   return cell_(values, 'squad_status').toLowerCase() === 'success' && !!cell_(values, 'squad_ref');
 }
@@ -639,7 +745,9 @@ function verifySquadTransaction_(squadRef) {
     status: String(data.transaction_status || '').trim(),
     amount: Number(data.transaction_amount),
     currency: String(data.transaction_currency_id || data.currency || '').trim().toUpperCase(),
-    type: String(data.transaction_type || '').trim()
+    type: String(data.transaction_type || '').trim(),
+    email: String(data.email || '').trim(),
+    name: String(data.customer_name || (data.meta && data.meta.name) || '').trim()
   };
 }
 
@@ -2392,6 +2500,7 @@ function checkSetup() {
     `Invite sheet: ${inviteSheet.getName()}\n` +
     `Waitlist sheet: ${getFormTab_(FORM_TABS.waitlist).sheet.getName()}\n` +
     `Contact sheet: ${getFormTab_(FORM_TABS.contact).sheet.getName()}\n` +
+    `Sessions sheet: ${getFormTab_(FORM_TABS.sessions).sheet.getName()}\n` +
     `Notification email: ${NOTIFY_EMAIL}\n` +
     `Waitlist and contact email: ${SITE_NOTIFY_EMAIL}\n` +
     `Welcome email CC: ${WELCOME_EMAIL_CC}\n` +
@@ -2400,7 +2509,7 @@ function checkSetup() {
     `Admin key configured: ${!!props.getProperty(ADMIN_KEY_PROPERTY)}\n` +
     `Squad: ${squad}\n` +
     `Squad sweep trigger installed: ${sweeping}\n` +
-    `Expected payment: NGN ${EXPECTED_AMOUNT}`;
+    `Expected payments: cohort NGN ${EXPECTED_AMOUNT}, 1:1 session NGN ${SESSION_AMOUNT}`;
 
   Logger.log(result);
   return result;

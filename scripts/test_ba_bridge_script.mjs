@@ -49,6 +49,7 @@ function makeHarness({ enrolment = enrolmentHeaders, tabs = {}, squad = null } =
   const emails = [];
   const fetches = [];
   const triggers = [];
+  const cacheStore = new Map();
   const enrolmentSheet = makeSheet('BA Training', enrolment);
   const named = { ...tabs };
   const book = {
@@ -75,6 +76,7 @@ function makeHarness({ enrolment = enrolmentHeaders, tabs = {}, squad = null } =
         return { getResponseCode: () => answer.code, getContentText: () => JSON.stringify(answer.body ?? {}) };
       }
     },
+    CacheService: { getScriptCache: () => ({ get: (k) => cacheStore.get(k) ?? null, put: (k, v) => { cacheStore.set(k, v); } }) },
     ScriptApp: {
       getProjectTriggers: () => triggers,
       deleteTrigger(t) { triggers.splice(triggers.indexOf(t), 1); },
@@ -97,7 +99,7 @@ function makeHarness({ enrolment = enrolmentHeaders, tabs = {}, squad = null } =
   vm.runInContext(source, context);
   const post = (parameter) => context.doPost({ parameter });
   const result = (output) => JSON.parse(output.text).result;
-  return { context, post, result, emails, enrolmentSheet, named, fetches, triggers, properties };
+  return { context, post, result, emails, enrolmentSheet, named, fetches, triggers, properties, cacheStore };
 }
 
 /* ── Waitlist: writes to the existing Waitlist tab, matched by heading ── */
@@ -382,6 +384,64 @@ const COLS = { payment: 17, verified: 21, squadRef: 22, amountPaid: 23, paidAt: 
   assert.equal(h.triggers[0].every, 30);
   h.context.removeSquadSweepTrigger();
   assert.equal(h.triggers.length, 0);
+}
+
+/* ── 1:1 session payments (UU1- references) ── */
+{
+  const answers = {};
+  const respond = (url) => answers[url.split('/verify/')[1]] || { code: 400, body: { data: null } };
+  const h = makeHarness({ squad: { key: SANDBOX_KEY, respond } });
+  const sessionEmails = () => h.emails.filter((m) => /\[1:1 Session\]/.test(m.subject));
+  const rows = () => (h.named.Sessions ? h.named.Sessions.rows : []);
+
+  // Unknown or unpaid references record nothing.
+  assert.equal(JSON.parse(postJson(h, webhook('UU1-NOSUCH1')).text).result, 'not_paid');
+  assert.equal(rows().length <= 1, true);
+  answers['UU1-PEND001'] = squadOk({ transaction_amount: 1500000, transaction_status: 'Pending' });
+  assert.equal(JSON.parse(postJson(h, webhook('UU1-PEND001')).text).result, 'pending');
+  assert.equal(sessionEmails().length, 0);
+
+  // A paid session is logged once, announced once, and the amount is checked.
+  answers['UU1-PAID0001'] = squadOk({ transaction_amount: 1500000, email: 'ada@example.test', customer_name: 'Ada Example' });
+  const first = JSON.parse(postJson(h, webhook('UU1-PAID0001')).text);
+  assert.equal(first.result, 'ok');
+  assert.equal(first.amount_matches, true);
+  assert.deepEqual(rows()[0], ['Timestamp', 'Squad reference', 'Name', 'Email', 'Amount paid (NGN)', 'Status', 'Reported by']);
+  assert.deepEqual(rows()[1].slice(1), ['UU1-PAID0001', 'Ada Example', 'ada@example.test', 15000, 'Paid', 'webhook']);
+  assert.equal(sessionEmails().length, 1);
+  assert.equal(sessionEmails()[0].to, 'ubonudonkang@gmail.com');
+  assert.match(sessionEmails()[0].subject, /\[1:1 Session\] Paid: Ada Example \(UU1-PAID0001\)/);
+  assert.match(sessionEmails()[0].body, /quote this reference/);
+
+  // The browser's report of the same payment, and webhook retries, change nothing and cost no Squad call.
+  const fetchesBefore = h.fetches.length;
+  assert.equal(JSON.parse(h.post({ action: 'payment', squad_ref: 'UU1-PAID0001' }).text).already_processed, true);
+  assert.equal(JSON.parse(postJson(h, webhook('UU1-PAID0001')).text).already_processed, true);
+  assert.equal(h.fetches.length, fetchesBefore);
+  assert.equal(rows().length, 2);
+  assert.equal(sessionEmails().length, 1);
+
+  // A different amount is recorded but flagged.
+  answers['UU1-LOW00001'] = squadOk({ transaction_amount: 10000 });
+  assert.equal(JSON.parse(h.post({ action: 'payment', squad_ref: 'UU1-LOW00001' }).text).amount_matches, false);
+  assert.equal(rows()[2][5], 'Amount needs review');
+  assert.match(sessionEmails()[1].subject, /CHECK AMOUNT/);
+  assert.match(sessionEmails()[1].body, /not of the expected NGN 15000/);
+
+  // The cohort flow is untouched by the session path.
+  assert.equal(JSON.parse(postJson(h, webhook('BAB-NOPE-XYZ-1')).text).result, 'unmatched');
+  assert.equal(JSON.parse(postJson(h, webhook('UU1-lowercase')).text).result, 'ignored');
+}
+{
+  // Strangers cannot use up the script's Squad calls by sending made-up session references.
+  const h = makeHarness({ squad: { key: SANDBOX_KEY, respond: () => ({ code: 400, body: { data: null } }) } });
+  for (let i = 0; i < 70; i++) postJson(h, webhook('UU1-JUNK' + String(i).padStart(4, '0')));
+  assert.equal(h.fetches.length, 60, 'only 60 unknown references are looked up per hour');
+  assert.equal(JSON.parse(postJson(h, webhook('UU1-JUNK9999')).text).result, 'ignored');
+  // Cohort payments are not affected, because their references are checked against the sheet first.
+  h.post(enrolment('BAB-SQ9-ABC'));
+  assert.notEqual(JSON.parse(postJson(h, webhook('BAB-SQ9-ABC-1')).text).result, 'ignored');
+  assert.equal(h.fetches.length, 61);
 }
 
 const mismatched = makeHarness({ enrolment: [...enrolmentHeaders.slice(0, 17), 'Wrong status heading', ...enrolmentHeaders.slice(18)] });

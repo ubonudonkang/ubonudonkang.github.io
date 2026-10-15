@@ -16,26 +16,20 @@ const session = read('resources/1-on-1-session/index.html');
 const home = read('index.html');
 const readme = read('README.md');
 
-const helperStart = site.indexOf('function selarCheckoutUrl');
-const helperEnd = site.indexOf('/* ── 1:1 session', helperStart);
-assert.ok(helperStart >= 0 && helperEnd > helperStart, 'checkout helper is present');
-const sandbox = { URL };
-vm.createContext(sandbox);
-vm.runInContext(site.slice(helperStart, helperEnd), sandbox);
-
-const careerUrl = new URL(sandbox.selarCheckoutUrl('https://selar.com/a50i7pv9b6', { name: 'Ada Example', email: 'ada@example.test' }));
-assert.equal(careerUrl.origin + careerUrl.pathname, 'https://selar.com/a50i7pv9b6');
-assert.equal(careerUrl.searchParams.get('add_to_cart'), '1');
-assert.equal(careerUrl.searchParams.get('fullname'), 'Ada Example');
-assert.equal(careerUrl.searchParams.get('email'), 'ada@example.test');
-
-assert.match(site, /uu-session-selar-pending/);
-assert.match(site, /uu-session-selar-returned/);
-assert.match(site, /payment'\) === 'selar'/);
-assert.match(site, /clearProcessedPaymentParam\(\)/);
-assert.match(site, /value\.product === 'career-clarity-selar'/);
-assert.match(site, /\^\[\^\\s@\]\+@\[\^\\s@\]\+\\\.\[\^\\s@\]\+\$/);
-assert.match(site, /cal\.com\/ubonudonkang\/1-on-1-career-clarity-session/);
+// The 1:1 session is paid through Squad. Its behaviour lives in js/forms.js; the price is set on the form and mirrored in the Apps Script.
+const formsJs = read('js/forms.js');
+const appsScriptSource = read('scripts/site_forms.gs');
+assert.doesNotMatch(site, /selar/i, 'site.js no longer carries any Selar checkout');
+assert.match(site, /window\.uuTrack = /);
+assert.match(session, /<form class="paybox" id="session-pay" data-form="session" data-amount="15000" novalidate>/);
+assert.match(session, /<script src="\/js\/forms\.js\?v=[^"]+"><\/script>/);
+assert.doesNotMatch(session, /selar/i, 'the session page no longer mentions or links to Selar');
+assert.match(session, /through Squad/);
+assert.equal(Number(session.match(/id="session-pay"[^>]*data-amount="(\d+)"/)[1]), Number(appsScriptSource.match(/const SESSION_AMOUNT = (\d+);/)[1]),
+  'the price on the page and the amount the Apps Script expects must agree');
+assert.equal(JSON.parse(session.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)[1])['@graph'][0].offers.price,
+  Number(session.match(/id="session-pay"[^>]*data-amount="(\d+)"/)[1]), 'structured data shows the same price');
+assert.match(formsJs, /cal\.com\/ubonudonkang\/1-on-1-career-clarity-session/);
 assert.doesNotMatch(session, /cal\.com\/ubonudonkang\/1-on-1-career-clarity-session/, 'the booking URL must not be exposed by the page markup');
 
 const waitlistForm = cohort.match(/<form id="waitlist-form"[\s\S]*?<\/form>/)?.[0];
