@@ -62,11 +62,11 @@ assert.match(contactForm, /<form id="contact-form" data-form="contact"/);
 assert.match(contactForm, /name="form_name" value="contact"/);
 assert.match(contactForm, /<script src="\/js\/forms\.js\?v=[^"]+"><\/script>/);
 assert.doesNotMatch(contactForm, /unpkg\.com/);
-assert.doesNotMatch(cohort, /https:\/\/selar\.com\/1187725024|ENDPOINT_URL|window\.location\.assign|id="pay-retry"|Continue to payment|payment_status\s*=/,
+assert.doesNotMatch(cohort, /https:\/\/selar\.com\/1187725024|squadco\.com|ENDPOINT_URL|window\.location\.assign|id="pay-retry"|Continue to payment|payment_status\s*=/,
   'closed BA registration must not create applications or open checkout');
 assert.match(dormantCheckout, /Continue to payment/);
-assert.match(dormantCheckout, /\{\{SELAR_URL\}\}/);
-assert.match(dormantCheckout, /data-storage-prefix="uu-cohort-selar-\{\{COHORT_SLUG\}\}"/);
+assert.doesNotMatch(dormantCheckout, /selar/i, 'new enrolments pay through Squad');
+assert.match(dormantCheckout, /data-storage-prefix="uu-cohort-pay-\{\{COHORT_SLUG\}\}"/);
 assert.match(dormantCheckout, /=== ENROLMENT SECTION ===/);
 assert.match(dormantCheckout, /<form id="enrol-form" data-form="enrol"[\s\S]*?<\/form>/);
 assert.doesNotMatch(dormantCheckout, /<script/, 'enrolment behaviour lives in js/forms.js');
@@ -89,7 +89,6 @@ const sectionStart = '<!-- BA_FLOW_SECTION_START -->';
 const sectionEnd = '<!-- BA_FLOW_SECTION_END -->';
 const renderedCheckout = renderCheckoutTemplate(dormantCheckout, validateConfig({
   cohort: 'November 2026', start: '2026-11-02', deadline: '2026-10-30', seats: '10', price: '80000',
-  selar: 'https://selar.com/1187725024',
 }));
 const openedPage = replaceFlowBlock(cohort, renderedCheckout, sectionStart, sectionEnd);
 const closedAgain = closeRegistration(openedPage, dormantWaitlist, 'November 2026', 'February 2027');
@@ -100,7 +99,7 @@ const futureClosure = closeRegistration(openedPage, dormantWaitlist, 'February 2
 assert.match(futureClosure, /name="cohort" value="May 2027"/);
 assert.match(futureClosure, /name="form_name" value="ba-waitlist-may-2027"/);
 assert.match(futureClosure, /The February 2027 cohort is full/);
-assert.match(futureClosure, /data-storage-prefix="uu-cohort-selar-february-2027"/);
+assert.match(futureClosure, /data-storage-prefix="uu-cohort-pay-february-2027"/);
 assert.doesNotMatch(futureClosure, /Continue to payment|https:\/\/selar\.com\//);
 assert.throws(() => closeRegistration(openedPage, dormantWaitlist, 'February', 'May 2027'), /Month YYYY/);
 assert.equal(pointCohortLinksToWaitlist('<a href="/ba-training/#join">Enrol</a>'),
@@ -144,8 +143,11 @@ for (const file of htmlFiles(fileURLToPath(root))) {
 }
 assert.equal(promotionCount, 21, 'all content-page promotions should point to the waitlist');
 
-const retiredProvider = new RegExp('s' + 'quad', 'i');
-for (const [name, source] of Object.entries({ site, cohort, session, readme })) {
-  assert.doesNotMatch(source, retiredProvider, `${name} must not retain retired checkout integration`);
+// The browser carries only Squad's public key (pk_). A secret key (sk_) in any shipped file would expose the account.
+const forms = read('js/forms.js');
+const appsScript = read('scripts/site_forms.gs');
+for (const [name, source] of Object.entries({ site, forms, cohort, session, readme, appsScript })) {
+  assert.doesNotMatch(source, /['"`](?:sandbox_)?sk_[A-Za-z0-9]{8,}/, `${name} must not contain a Squad secret key`);
 }
-console.log('Selar and closed-cohort waitlist offline checks passed.');
+assert.doesNotMatch(forms, /selarCheckoutUrl|selar\.com/i, 'enrolment no longer opens Selar');
+console.log('Squad enrolment templates, Selar legacy and closed-cohort waitlist offline checks passed.');

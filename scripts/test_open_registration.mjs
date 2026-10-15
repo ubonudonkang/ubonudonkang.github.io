@@ -4,13 +4,13 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { openTrainingPage, openContentPage, renderCheckoutTemplate, updateAppsScript,
-  validateConfig, moveHomePromoBelowHero, openReadme, defaultEndpoint } from './open_ba_registration.mjs';
+  validateConfig, moveHomePromoBelowHero, openReadme, defaultEndpoint, squadKeyNotice } from './open_ba_registration.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const input = {
   cohort: 'February 2027', start: '2027-02-02', deadline: '2027-01-25',
-  seats: '12', price: '90000', selar: 'https://selar.com/abc123',
+  seats: '12', price: '90000',
 };
 const config = validateConfig(input);
 assert.equal(config.endpoint, defaultEndpoint(), 'without --apps-script the shared endpoint in js/forms.js is used');
@@ -20,18 +20,25 @@ assert.equal(config.priceText, '90,000');
 assert.equal(config.startLong, '2 February 2027');
 assert.throws(() => validateConfig({ ...input, cohort: 'March 2027' }), /must match/);
 assert.throws(() => validateConfig({ ...input, deadline: '2027-02-03' }), /before --start/);
-assert.throws(() => validateConfig({ ...input, selar: 'https://evil.example/product' }), /--selar/);
 assert.throws(() => validateConfig({ ...input, 'apps-script': 'https://script.google.com/macros/library/d/ABC/1' }), /deployed/);
 assert.throws(() => validateConfig({ ...input, seats: '0' }), /positive whole number/);
 assert.throws(() => validateConfig({ ...input, price: '90000.5' }), /positive NGN whole number/);
-assert.throws(() => validateConfig({ ...input, selar: 'https://selar.com/NEW_PRODUCT' }), /Replace example/);
+assert.throws(() => validateConfig({ ...input, 'apps-script': 'https://script.google.com/macros/s/YOUR_DEPLOYMENT/exec' }), /Replace the example/);
+
+// Squad's public key lives in js/forms.js; opening registration needs it.
+assert.equal(squadKeyNotice("const SQUAD_PUBLIC_KEY = '';").blocking, true);
+assert.equal(squadKeyNotice("const SQUAD_PUBLIC_KEY = 'whatever';").blocking, true);
+assert.equal(squadKeyNotice("const SQUAD_PUBLIC_KEY = 'sandbox_pk_abc123';").blocking, false);
+assert.match(squadKeyNotice("const SQUAD_PUBLIC_KEY = 'sandbox_pk_abc123';").text, /sandbox/);
+assert.equal(squadKeyNotice("const SQUAD_PUBLIC_KEY = 'pk_abc123';"), null);
+assert.throws(() => squadKeyNotice('nothing here'), /Could not find SQUAD_PUBLIC_KEY/);
 
 const template = renderCheckoutTemplate(read('scripts/ba_bridge_checkout.template.txt'), config);
 assert.doesNotMatch(template, /\{\{/);
 assert.match(template, /data-amount="90000"/);
 assert.match(template, /data-cohort="February 2027"/);
-assert.match(template, /data-selar-url="https:\/\/selar\.com\/abc123"/);
-assert.match(template, /data-storage-prefix="uu-cohort-selar-february-2027"/);
+assert.doesNotMatch(template, /selar/i);
+assert.match(template, /data-storage-prefix="uu-cohort-pay-february-2027"/);
 assert.doesNotMatch(template, /data-endpoint=/, 'the default endpoint is not repeated in the page');
 assert.match(renderCheckoutTemplate(read('scripts/ba_bridge_checkout.template.txt'),
   validateConfig({ ...input, 'apps-script': 'https://script.google.com/macros/s/AKfycbyabc123/exec' })),

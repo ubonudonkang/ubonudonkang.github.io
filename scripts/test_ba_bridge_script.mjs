@@ -45,8 +45,10 @@ function makeSheet(name, headers) {
   };
 }
 
-function makeHarness({ enrolment = enrolmentHeaders, tabs = {} } = {}) {
+function makeHarness({ enrolment = enrolmentHeaders, tabs = {}, squad = null } = {}) {
   const emails = [];
+  const fetches = [];
+  const triggers = [];
   const enrolmentSheet = makeSheet('BA Training', enrolment);
   const named = { ...tabs };
   const book = {
@@ -55,13 +57,29 @@ function makeHarness({ enrolment = enrolmentHeaders, tabs = {} } = {}) {
     insertSheet(name) { named[name] = makeSheet(name, null); return named[name]; }
   };
   const properties = { BA_BRIDGE_WHATSAPP_GROUP_URL: 'https://chat.whatsapp.com/TestGroup123' };
+  if (squad) properties.SQUAD_SECRET_KEY = squad.key;
   let uuid = 0;
   const context = {
     SpreadsheetApp: { openById(id) { assert.equal(id, BOOK_ID); return book; }, flush() {} },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
-    Utilities: { getUuid: () => (uuid++ === 0 ? 'test-token' : `uuid-${uuid}`), formatDate: () => '2026-10-08 09:00:00' },
+    Utilities: { getUuid: () => (uuid++ === 0 ? 'test-token' : `uuid-${uuid}`), formatDate: (date) => date.toISOString().slice(0, 19).replace('T', ' ') },
     Session: { getScriptTimeZone: () => 'Africa/Lagos' },
-    PropertiesService: { getScriptProperties: () => ({ getProperty: (key) => properties[key] ?? null }) },
+    PropertiesService: { getScriptProperties: () => ({
+      getProperty: (key) => properties[key] ?? null,
+      setProperty: (key, value) => { properties[key] = value; },
+    }) },
+    UrlFetchApp: {
+      fetch(url, options) {
+        fetches.push({ url, options });
+        const answer = squad.respond(url);
+        return { getResponseCode: () => answer.code, getContentText: () => JSON.stringify(answer.body ?? {}) };
+      }
+    },
+    ScriptApp: {
+      getProjectTriggers: () => triggers,
+      deleteTrigger(t) { triggers.splice(triggers.indexOf(t), 1); },
+      newTrigger: (handler) => ({ timeBased: () => ({ everyMinutes: (n) => ({ create() { triggers.push({ getHandlerFunction: () => handler, every: n }); } }) }) }),
+    },
     MailApp: {
       getRemainingDailyQuota: () => 100,
       // Supports both call styles used by the script: (to, subject, body) and ({...}).
@@ -79,7 +97,7 @@ function makeHarness({ enrolment = enrolmentHeaders, tabs = {} } = {}) {
   vm.runInContext(source, context);
   const post = (parameter) => context.doPost({ parameter });
   const result = (output) => JSON.parse(output.text).result;
-  return { context, post, result, emails, enrolmentSheet, named };
+  return { context, post, result, emails, enrolmentSheet, named, fetches, triggers, properties };
 }
 
 /* ── Waitlist: writes to the existing Waitlist tab, matched by heading ── */
@@ -205,8 +223,169 @@ assert.equal(welcome.cc, 'alabioluwafunmito@gmail.com,ubonudonkang@gmail.com');
 assert.match(welcome.body, /chat\.whatsapp\.com\/TestGroup123/);
 assert.match(h.context.doPost({ parameter: { action: 'confirm', intent: 'confirm', reference: enrol.reference, token: 'test-token' } }).html, /already marked as paid/);
 
+
+/* ── Squad payments: webhook, browser path, verification, sweep ── */
+const SANDBOX_KEY = 'sandbox_sk_testkey123';
+const squadOk = (extra = {}) => ({
+  code: 200,
+  body: { status: 200, success: true, data: { transaction_status: 'Success', transaction_amount: 8000000, transaction_currency_id: 'NGN', transaction_type: 'Card', ...extra } },
+});
+const webhook = (ref, event = 'charge_successful') => ({
+  Event: event, TransactionRef: ref,
+  Body: { transaction_ref: ref, merchant_ref: ref, amount: 8000000, transaction_status: 'Success', currency: 'NGN' },
+});
+// Apps Script gives doPost the parsed JSON body as postData, not as parameters.
+const postJson = (h, payload) => h.context.doPost({ parameter: {}, postData: { type: 'application/json', contents: JSON.stringify(payload) } });
+const enrolment = (reference) => ({
+  action: 'signup', reference, name: 'Ada Example', email: 'ada@example.test', whatsapp: '+2341',
+  location: 'Lagos', background: 'Finance', experience: '3', stage: 'x', wants: 'y', availability: 'z', source: 'LinkedIn', consent: 'Yes',
+});
+const paidRow = (h, n = 1) => h.enrolmentSheet.rows[n];
+const COLS = { payment: 17, verified: 21, squadRef: 22, amountPaid: 23, paidAt: 24, squadStatus: 25, reviewSent: 32 };
+
+{
+  const answers = {};
+  const h = makeHarness({ squad: { key: SANDBOX_KEY, respond: (url) => answers[url.split('/verify/')[1]] || { code: 400, body: { data: null } } } });
+  const REF = 'BAB-SQ1-ABC';
+  assert.equal(h.result(h.post(enrolment(REF))), 'ok');
+  const reviewCount = () => h.emails.filter((m) => /Review payment/.test(m.subject)).length;
+
+  // Forged or irrelevant webhooks never reach Squad's API.
+  assert.equal(JSON.parse(postJson(h, webhook('BAB-NOPE-XYZ-1')).text).result, 'unmatched');
+  assert.equal(JSON.parse(postJson(h, webhook('SQ-OTHER-PRODUCT')).text).result, 'ignored');
+  assert.equal(JSON.parse(postJson(h, webhook(REF + '-1', 'transfer_refund')).text).result, 'ignored');
+  assert.equal(h.fetches.length, 0, 'nothing is verified for references that are not awaiting payment here');
+  assert.equal(paidRow(h)[COLS.payment], 'Awaiting payment');
+
+  // A webhook for a reference Squad does not know changes nothing.
+  assert.equal(JSON.parse(postJson(h, webhook(REF + '-1')).text).result, 'not_paid');
+  assert.equal(h.fetches.length, 1);
+  assert.equal(paidRow(h)[COLS.payment], 'Awaiting payment');
+  assert.equal(reviewCount(), 0);
+
+  // The sandbox key goes to the sandbox API as a bearer token.
+  assert.equal(h.fetches[0].url, 'https://sandbox-api-d.squadco.com/transaction/verify/BAB-SQ1-ABC-1');
+  assert.equal(h.fetches[0].options.headers.Authorization, 'Bearer ' + SANDBOX_KEY);
+
+  // Squad says an attempt is still pending (bank transfer): recorded, no email yet.
+  answers[REF + '-1'] = squadOk({ transaction_status: 'Pending' });
+  assert.equal(JSON.parse(postJson(h, webhook(REF + '-1')).text).result, 'pending');
+  assert.equal(paidRow(h)[COLS.squadStatus], 'Pending');
+  assert.equal(paidRow(h)[COLS.payment], 'Awaiting payment');
+  assert.equal(reviewCount(), 0);
+
+  // The real payment arrives (attempt 2) by webhook.
+  answers[REF + '-2'] = squadOk();
+  const paid = JSON.parse(postJson(h, webhook(REF + '-2')).text);
+  assert.equal(paid.result, 'ok');
+  assert.equal(paid.amount_matches, true);
+  assert.equal(paid.review_email_sent, true);
+  const row = paidRow(h);
+  assert.equal(row[COLS.payment], 'Paid (Squad verified)');
+  assert.equal(row[COLS.squadRef], REF + '-2');
+  assert.equal(row[COLS.squadStatus], 'Success');
+  assert.equal(row[COLS.amountPaid], 80000);
+  assert.equal(row[COLS.verified], 'No', 'the owner still confirms before the welcome email');
+  assert.equal(reviewCount(), 1, 'the review email is sent automatically');
+  const review = h.emails.find((m) => /Review payment/.test(m.subject));
+  assert.equal(review.to, 'ubonanalyst@gmail.com');
+  assert.match(review.body, /Squad reference: BAB-SQ1-ABC-2/);
+  assert.match(review.body, /review&reference=BAB-SQ1-ABC&token=test-token|review&reference=BAB-SQ1-ABC&token=/);
+  assert.equal(h.emails.some((m) => m.to === 'ada@example.test'), false, 'no welcome email until the owner confirms');
+
+  // Retries and the browser report of the same payment do nothing more.
+  const fetchesBefore = h.fetches.length;
+  assert.equal(JSON.parse(postJson(h, webhook(REF + '-2')).text).already_processed, true);
+  assert.equal(JSON.parse(h.post({ action: 'payment', reference: REF, squad_ref: REF + '-2' }).text).already_processed, true);
+  assert.equal(h.fetches.length, fetchesBefore, 'a processed payment is not verified again');
+  assert.equal(reviewCount(), 1);
+
+  // A second successful payment for the same enrolment warns the owner once.
+  answers[REF + '-3'] = squadOk();
+  assert.equal(JSON.parse(postJson(h, webhook(REF + '-3')).text).result, 'duplicate_payment');
+  assert.equal(JSON.parse(postJson(h, webhook(REF + '-3')).text).result, 'duplicate_payment');
+  assert.equal(h.emails.filter((m) => /Second Squad payment/.test(m.subject)).length, 1);
+  assert.equal(paidRow(h)[COLS.squadRef], REF + '-2', 'the first payment stays on the record');
+
+  // The review link now shows the Squad details, and confirming sends the welcome email.
+  const page = h.context.doGet({ parameter: { action: 'review', reference: REF, token: 'test-token' } });
+  assert.match(page.html, /<dt>Squad reference<\/dt><dd>BAB-SQ1-ABC-2<\/dd>/);
+  assert.doesNotMatch(page.html, /Selar/);
+  const confirm = h.context.doPost({ parameter: { action: 'confirm', intent: 'confirm', reference: REF, token: 'test-token', amount_paid: '80000' } });
+  assert.match(confirm.html, /Payment confirmed/);
+  assert.ok(h.emails.find((m) => m.to === 'ada@example.test'));
+}
+
+{
+  // The browser path verifies the same way, and ignores any reference the browser claims.
+  const h = makeHarness({ squad: { key: 'sk_livekey456', respond: () => squadOk() } });
+  h.post(enrolment('BAB-SQ2-ABC'));
+  h.post(enrolment('BAB-SQ2-DEF'));
+  const out = JSON.parse(h.post({ action: 'payment', reference: 'BAB-SQ2-DEF', squad_ref: 'BAB-SQ2-ABC-1' }).text);
+  assert.equal(out.reference, 'BAB-SQ2-ABC');
+  assert.equal(h.enrolmentSheet.rows[1][COLS.payment], 'Paid (Squad verified)');
+  assert.equal(h.enrolmentSheet.rows[2][COLS.payment], 'Awaiting payment');
+  assert.equal(h.fetches[0].url, 'https://api-d.squadco.com/transaction/verify/BAB-SQ2-ABC-1', 'a live key uses the live API');
+  assert.equal(JSON.parse(h.post({ action: 'payment', squad_ref: 'junk' }).text).result, 'ignored');
+  assert.equal(h.fetches.length, 1);
+}
+
+{
+  // A payment of the wrong amount is recorded but not treated as settled.
+  const h = makeHarness({ squad: { key: SANDBOX_KEY, respond: () => squadOk({ transaction_amount: 100000 }) } });
+  h.post(enrolment('BAB-SQ3-ABC'));
+  const out = JSON.parse(postJson(h, webhook('BAB-SQ3-ABC-1')).text);
+  assert.equal(out.amount_matches, false);
+  assert.equal(h.enrolmentSheet.rows[1][COLS.payment], 'Squad payment: amount needs review');
+  assert.equal(h.enrolmentSheet.rows[1][COLS.amountPaid], 1000);
+  assert.match(h.emails.find((m) => /Review payment/.test(m.subject)).body, /not the expected NGN 80000/);
+  // A different currency is also held for review.
+  const usd = makeHarness({ squad: { key: SANDBOX_KEY, respond: () => squadOk({ transaction_currency_id: 'USD' }) } });
+  usd.post(enrolment('BAB-SQ3-DEF'));
+  assert.equal(JSON.parse(postJson(usd, webhook('BAB-SQ3-DEF-1')).text).amount_matches, false);
+}
+
+{
+  // Squad problems never mark anything paid, and say what is wrong.
+  const bad = makeHarness({ squad: { key: SANDBOX_KEY, respond: () => ({ code: 401, body: {} }) } });
+  bad.post(enrolment('BAB-SQ4-ABC'));
+  const rejected = JSON.parse(postJson(bad, webhook('BAB-SQ4-ABC-1')).text);
+  assert.equal(rejected.result, 'error');
+  assert.match(rejected.message, /rejected the secret key/);
+  assert.equal(bad.enrolmentSheet.rows[1][COLS.payment], 'Awaiting payment');
+  const down = makeHarness({ squad: { key: SANDBOX_KEY, respond: () => ({ code: 503, body: {} }) } });
+  down.post(enrolment('BAB-SQ4-DEF'));
+  assert.match(JSON.parse(postJson(down, webhook('BAB-SQ4-DEF-1')).text).message, /HTTP 503/);
+  const unset = makeHarness({ squad: { key: 'not-a-key', respond: () => squadOk() } });
+  unset.post(enrolment('BAB-SQ4-GHI'));
+  assert.match(JSON.parse(postJson(unset, webhook('BAB-SQ4-GHI-1')).text).message, /Set SQUAD_SECRET_KEY/);
+  assert.equal(unset.enrolmentSheet.rows[1][COLS.payment], 'Awaiting payment');
+}
+
+{
+  // The sweep picks up a payment whose webhook was missed, and only looks at awaiting enrolments.
+  const paidRefs = new Set(['BAB-SQ5-ABC-2']);
+  const h = makeHarness({ squad: { key: SANDBOX_KEY, respond: (url) => (paidRefs.has(url.split('/verify/')[1]) ? squadOk() : { code: 400, body: {} }) } });
+  h.post(enrolment('BAB-SQ5-ABC'));
+  h.post(enrolment('BAB-SQ5-DEF'));
+  const summary = h.context.sweepAwaitingSquadPayments();
+  assert.match(summary, /Newly paid: 1 Errors: 0/);
+  assert.equal(h.enrolmentSheet.rows[1][COLS.payment], 'Paid (Squad verified)');
+  assert.equal(h.enrolmentSheet.rows[2][COLS.payment], 'Awaiting payment');
+  const calls = h.fetches.length;
+  h.context.sweepAwaitingSquadPayments();
+  assert.equal(h.fetches.length, calls + 3, 'a paid enrolment is not checked again; the unpaid one is tried for 3 attempts');
+  assert.equal(h.emails.filter((m) => /Review payment/.test(m.subject)).length, 1);
+  h.context.installSquadSweepTrigger();
+  h.context.installSquadSweepTrigger();
+  assert.equal(h.triggers.length, 1, 'installing twice leaves one trigger');
+  assert.equal(h.triggers[0].every, 30);
+  h.context.removeSquadSweepTrigger();
+  assert.equal(h.triggers.length, 0);
+}
+
 const mismatched = makeHarness({ enrolment: [...enrolmentHeaders.slice(0, 17), 'Wrong status heading', ...enrolmentHeaders.slice(18)] });
 assert.match(mismatched.post(enrol).html, /header mismatch/);
 assert.equal(mismatched.enrolmentSheet.rows.length, 1);
 
-console.log('Site forms script checks passed (waitlist, contact, enrolment, payment confirmation).');
+console.log('Site forms script checks passed (waitlist, contact, enrolment, Squad payments, payment confirmation).');

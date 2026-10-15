@@ -2,7 +2,7 @@
  * ubonudonkang.com forms: one Apps Script web app for every website form.
  * All data lives in tabs of the same workbook (SPREADSHEET_ID):
  *
- *   BA Training (gid 0)  action=signup               BA Bridge enrolment, payment review, Selar, welcome emails
+ *   BA Training (gid 0)  action=signup               BA Bridge enrolment, Squad payments, payment review, welcome emails
  *   BA Bridge Invites    admin panel                 private one-time registration links
  *   Waitlist             form_name=ba-waitlist-*     cohort waitlist signups
  *   Contact              form_name=contact           contact page enquiries
@@ -11,8 +11,23 @@
  * declares the same top-level names (for example NOTIFY_EMAIL) stops the whole
  * project compiling, and every form then fails silently.
  *
- * Registration, private invites, offline enrolment, payment review,
- * Selar detection and welcome-email workflow.
+ * Registration, private invites, offline enrolment, Squad payment
+ * verification, payment review and welcome-email workflow.
+ *
+ * Payments (Squad):
+ *   1. The website saves the enrolment (action=signup) as "Awaiting payment",
+ *      then opens Squad checkout with the reference BAB-...-N (N = attempt).
+ *   2. A paid transaction reaches this script two ways: Squad's webhook (a JSON
+ *      POST with Event=charge_successful) and the browser (action=payment).
+ *      Either way the script asks Squad's verify API about that reference, with
+ *      the secret key from Script Properties, and trusts nothing in the request.
+ *      Apps Script cannot read request headers, so the webhook's signature header
+ *      cannot be checked; the verify call is what makes a forged webhook harmless.
+ *   3. On a verified payment of the right amount the row becomes
+ *      "Paid (Squad verified)" and the review email goes to NOTIFY_EMAIL at once.
+ *      Opening that email's link and pressing Confirm is still what sends the
+ *      student's welcome email.
+ *   Selar (the earlier provider) is kept only for payments already made.
  */
 
 // ==================== CONFIG ====================
@@ -31,6 +46,15 @@ const BA_GROUP_PROPERTY = 'BA_BRIDGE_WHATSAPP_GROUP_URL';
 const ADMIN_KEY_PROPERTY = 'BA_BRIDGE_ADMIN_KEY';
 const SELAR_KEY_PROPERTY = 'BA_BRIDGE_SELAR_WEBHOOK_KEY';
 const SELAR_PRODUCT_PROPERTY = 'BA_BRIDGE_SELAR_PRODUCT_MATCH';
+
+// Squad: the secret key lives only in Script Properties (sandbox_sk_... or sk_...).
+const SQUAD_SECRET_PROPERTY = 'SQUAD_SECRET_KEY';
+const SQUAD_LIVE_API = 'https://api-d.squadco.com';
+const SQUAD_SANDBOX_API = 'https://sandbox-api-d.squadco.com';
+// The site pays with the enrolment reference plus an attempt number, because
+// Squad needs a fresh transaction reference for every checkout attempt.
+const SQUAD_REF_PATTERN = /^(BAB-[A-Z0-9]+-[A-Z0-9]{3})-(\d{1,3})$/;
+const SQUAD_SWEEP_HANDLER = 'sweepAwaitingSquadPayments';
 
 const COHORT_REMINDER_CC = 'alabioluwafunmito@gmail.com';
 const COHORT_REMINDER_LOG_PROPERTY = 'BA_BRIDGE_COHORT_WELCOME_REMINDER_SENT';
@@ -132,6 +156,9 @@ function doPost(e) {
   const formKind = formKindFor_(data);
   if (formKind) return handleFormPost_(formKind, data);
 
+  // Squad's webhook: a JSON body with Event and Body, and no action.
+  if (isSquadWebhook_(data)) return handleSquadWebhook_(data);
+
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -151,6 +178,9 @@ function doPost(e) {
 
       case 'invite_submit':
         return submitInviteRegistration_(sheet, data);
+
+      case 'payment':
+        return json_(processSquadPayment_(sheet, data.squad_ref, 'browser'));
 
       case 'confirm':
         return confirmPayment_(sheet, data);
@@ -433,6 +463,326 @@ function createSignup_(sheet, data) {
   });
 }
 
+// ==================== SQUAD PAYMENTS ====================
+
+function isSquadWebhook_(data) {
+  return !data.action && !data.form_name && !!data.Event;
+}
+
+/*
+ * Squad's webhook. It is only a prompt to look: nothing in the request is
+ * trusted. The reference it names is checked against the sheet first (so
+ * strangers cannot make this script spend Squad API calls), then verified
+ * directly with Squad.
+ */
+function handleSquadWebhook_(data) {
+  return withLock_(() => {
+    try {
+      if (String(data.Event).toLowerCase() !== 'charge_successful') {
+        return json_({ result: 'ignored', reason: 'Not a successful charge.' });
+      }
+
+      const squadRef = squadRefFromWebhook_(data);
+      if (!squadRef) return json_({ result: 'ignored', reason: 'Not a BA Bridge payment.' });
+
+      return json_(processSquadPayment_(getSheet_(), squadRef, 'webhook'));
+    } catch (err) {
+      console.error('Squad webhook error:', err);
+      return json_({ result: 'error', message: String(err) });
+    }
+  });
+}
+
+function squadRefFromWebhook_(data) {
+  const body = data.Body && typeof data.Body === 'object' ? data.Body : {};
+  const candidates = [data.TransactionRef, body.transaction_ref, body.merchant_ref, body.gateway_ref];
+
+  for (let i = 0; i < candidates.length; i++) {
+    const ref = String(candidates[i] || '').trim();
+    if (SQUAD_REF_PATTERN.test(ref)) return ref;
+  }
+
+  return '';
+}
+
+/*
+ * The one place a payment is recognised, whichever way it arrived (webhook,
+ * browser, or the sweep). Safe to run any number of times for the same
+ * reference: a payment is recorded once and the review email is sent once.
+ * Callers hold the script lock.
+ */
+function processSquadPayment_(sheet, squadRef, source) {
+  const ref = String(squadRef || '').trim();
+  const match = SQUAD_REF_PATTERN.exec(ref);
+
+  if (!match) return { result: 'ignored', reason: 'Not a BA Bridge payment reference.' };
+
+  const reference = match[1];
+  let found = findByReference_(sheet, reference);
+
+  if (!found) return { result: 'unmatched', reference };
+
+  if (isSquadPaid_(found.values) && cell_(found.values, 'squad_ref') === ref) {
+    return { result: 'ok', reference, already_processed: true };
+  }
+
+  const tx = verifySquadTransaction_(ref);
+
+  if (!tx.found) {
+    return { result: 'not_paid', reference, reason: 'Squad has no transaction with this reference.' };
+  }
+
+  const status = tx.status.toLowerCase();
+
+  if (status !== 'success') {
+    // Record what Squad says, unless the enrolment is already paid by another attempt.
+    if (!isSquadPaid_(found.values)) {
+      setRowValue_(sheet, found.row, 'squad_ref', safeCellText_(ref));
+      setRowValue_(sheet, found.row, 'squad_status', safeCellText_(tx.status || 'Unknown'));
+    }
+
+    return {
+      result: status === 'pending' || status === 'processing' ? 'pending' : 'not_paid',
+      reference,
+      status: tx.status
+    };
+  }
+
+  if (isSquadPaid_(found.values)) {
+    warnDuplicatePayment_(found, ref, tx);
+    return { result: 'duplicate_payment', reference };
+  }
+
+  // Squad amounts are in kobo.
+  const amountMatches =
+    tx.amount === EXPECTED_AMOUNT * 100 &&
+    (!tx.currency || tx.currency === 'NGN');
+
+  found = ensureConfirmToken_(sheet, found);
+
+  setRowValue_(sheet, found.row, 'squad_ref', safeCellText_(ref));
+  setRowValue_(sheet, found.row, 'squad_status', safeCellText_(tx.status));
+  setRowValue_(sheet, found.row, 'paid_at', stamp_());
+  setRowValue_(sheet, found.row, 'amount_paid', isFinite(tx.amount) ? tx.amount / 100 : '');
+  setRowValue_(
+    sheet,
+    found.row,
+    'payment_status',
+    amountMatches ? 'Paid (Squad verified)' : 'Squad payment: amount needs review'
+  );
+  SpreadsheetApp.flush();
+
+  found = findByReference_(sheet, reference);
+
+  const paidText = isFinite(tx.amount)
+    ? tx.currency + ' ' + (tx.amount / 100)
+    : 'an unknown amount';
+
+  const review = sendReviewEmail_(sheet, found, {
+    force: true,
+    reason: amountMatches
+      ? 'Squad confirmed this payment directly (' + source + '). Compare it with the Squad dashboard, then confirm.'
+      : 'Squad reports a successful payment of ' + paidText + ', which is not the expected NGN ' +
+        EXPECTED_AMOUNT + '. Check the Squad dashboard before confirming.'
+  });
+
+  return {
+    result: 'ok',
+    reference,
+    amount_matches: amountMatches,
+    review_email_sent: !!review.sent,
+    review_email_error: review.error || ''
+  };
+}
+
+function isSquadPaid_(values) {
+  return cell_(values, 'squad_status').toLowerCase() === 'success' && !!cell_(values, 'squad_ref');
+}
+
+function verifySquadTransaction_(squadRef) {
+  const key = configuredSquadSecret_();
+
+  const response = UrlFetchApp.fetch(
+    squadApiBase_(key) + '/transaction/verify/' + encodeURIComponent(squadRef),
+    {
+      method: 'get',
+      headers: { Authorization: 'Bearer ' + key },
+      muteHttpExceptions: true
+    }
+  );
+
+  const code = response.getResponseCode();
+
+  if (code === 401 || code === 403) {
+    throw new Error(
+      'Squad rejected the secret key. Check ' + SQUAD_SECRET_PROPERTY +
+      ' is the key for the same mode (sandbox or live) as the payment.'
+    );
+  }
+
+  if (code === 400 || code === 404) return { found: false };
+
+  if (code !== 200) throw new Error('Squad verify returned HTTP ' + code + '.');
+
+  let body = {};
+
+  try {
+    body = JSON.parse(response.getContentText());
+  } catch (ignore) {
+    throw new Error('Squad verify returned an unreadable answer.');
+  }
+
+  const data = body && body.data && typeof body.data === 'object' ? body.data : {};
+
+  return {
+    found: true,
+    status: String(data.transaction_status || '').trim(),
+    amount: Number(data.transaction_amount),
+    currency: String(data.transaction_currency_id || data.currency || '').trim().toUpperCase(),
+    type: String(data.transaction_type || '').trim()
+  };
+}
+
+function squadApiBase_(key) {
+  return /^sandbox_/i.test(key) ? SQUAD_SANDBOX_API : SQUAD_LIVE_API;
+}
+
+function configuredSquadSecret_() {
+  const key = String(
+    PropertiesService.getScriptProperties().getProperty(SQUAD_SECRET_PROPERTY) || ''
+  ).trim();
+
+  if (!/^(sandbox_)?sk_\S+$/.test(key)) {
+    throw new Error(
+      'Set ' + SQUAD_SECRET_PROPERTY + ' (sandbox_sk_... or sk_...) under Apps Script → Project Settings → Script Properties.'
+    );
+  }
+
+  return key;
+}
+
+// A second successful payment for an enrolment that is already paid needs a human (refund).
+function warnDuplicatePayment_(found, ref, tx) {
+  const props = PropertiesService.getScriptProperties();
+  const key = 'SQUAD_DUPLICATE_WARNED_' + ref;
+
+  if (props.getProperty(key)) return;
+
+  props.setProperty(key, stamp_());
+
+  try {
+    MailApp.sendEmail({
+      to: NOTIFY_EMAIL,
+      subject: '[BA Bridge] Second Squad payment: ' + cell_(found.values, 'name') + ' (' + cell_(found.values, 'reference') + ')',
+      body:
+        'Squad reports another successful payment for an enrolment that is already paid.\n\n' +
+        'Enrolment: ' + cell_(found.values, 'reference') + '\n' +
+        'Paid earlier with: ' + cell_(found.values, 'squad_ref') + '\n' +
+        'New payment: ' + ref + ' (' + tx.currency + ' ' + (tx.amount / 100) + ')\n\n' +
+        'Check the Squad dashboard and refund the extra payment if it was made by mistake.',
+      name: 'BA Bridge'
+    });
+  } catch (ignore) {}
+}
+
+function withLock_(fn) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    return fn();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/*
+ * Safety net. Apps Script cannot answer a webhook with an error status, so a
+ * webhook that arrives while Squad's API is briefly down would never be retried.
+ * This looks again at every enrolment still awaiting payment (last 7 days) and
+ * processes any that Squad says were paid. Run installSquadSweepTrigger() once.
+ */
+function sweepAwaitingSquadPayments() {
+  const sheet = getSheet_();
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
+  let checked = 0;
+  let paid = 0;
+  let failed = 0;
+
+  for (let row = sheet.getLastRow(); row >= 2; row--) {
+    const values = getRow_(sheet, row);
+    const reference = cell_(values, 'reference');
+
+    if (!/^BAB-/.test(reference)) continue;
+    if (cell_(values, 'verified') === 'Yes' || isSquadPaid_(values)) continue;
+    if (cell_(values, 'payment_status') !== 'Awaiting payment') continue;
+
+    const stamped = values[COL.timestamp - 1];
+    const created = stamped instanceof Date ? stamped : new Date(String(stamped).replace(' ', 'T'));
+    if (!isNaN(created.getTime()) && created.getTime() < cutoff) continue;
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      checked++;
+
+      let outcome;
+
+      try {
+        outcome = withLock_(() => processSquadPayment_(getSheet_(), reference + '-' + attempt, 'sweep'));
+      } catch (err) {
+        console.error('Squad sweep error for ' + reference + ':', err);
+        failed++;
+        break;
+      }
+
+      if (outcome.result === 'ok') {
+        paid++;
+        break;
+      }
+    }
+  }
+
+  const summary = 'Squad sweep complete. Checked: ' + checked + ' Newly paid: ' + paid + ' Errors: ' + failed;
+  Logger.log(summary);
+  return summary;
+}
+
+function installSquadSweepTrigger() {
+  removeSquadSweepTrigger();
+
+  ScriptApp
+    .newTrigger(SQUAD_SWEEP_HANDLER)
+    .timeBased()
+    .everyMinutes(30)
+    .create();
+
+  Logger.log('Squad sweep will run every 30 minutes.');
+}
+
+function removeSquadSweepTrigger() {
+  ScriptApp.getProjectTriggers().forEach(trigger => {
+    if (trigger.getHandlerFunction() === SQUAD_SWEEP_HANDLER) ScriptApp.deleteTrigger(trigger);
+  });
+}
+
+/*
+ * Run from the editor to see what Squad says about a reference, without
+ * changing the sheet. Paste a reference such as BAB-XXXX-XXX-1 below.
+ */
+function testSquadVerify() {
+  const ref = 'BAB-PASTE-REF-1';
+  const key = configuredSquadSecret_();
+  const tx = verifySquadTransaction_(ref);
+
+  const result =
+    'Mode: ' + (squadApiBase_(key) === SQUAD_SANDBOX_API ? 'sandbox' : 'live') + '\n' +
+    'Reference: ' + ref + '\n' +
+    'Result: ' + JSON.stringify(tx);
+
+  Logger.log(result);
+  return result;
+}
+
 // ==================== ADMIN PANEL ====================
 
 function adminPage_(sheet, data) {
@@ -567,7 +917,7 @@ function adminPage_(sheet, data) {
             <th>Email</th>
             <th>Reference</th>
             <th>Payment</th>
-            <th>Selar</th>
+            <th>Squad</th>
             <th>Verified</th>
             <th>Action</th>
           </tr>
@@ -584,7 +934,7 @@ function adminPage_(sheet, data) {
         <td>${esc_(cell_(v, 'email'))}</td>
         <td>${esc_(reference)}</td>
         <td>${esc_(cell_(v, 'payment_status'))}</td>
-        <td>${esc_(cell_(v, 'selar_status'))}</td>
+        <td>${esc_(cell_(v, 'squad_status') || cell_(v, 'selar_status'))}</td>
         <td>${esc_(cell_(v, 'verified'))}</td>
         <td>
           <form method="post" action="${escAttr_(webAppUrl_())}">
@@ -1259,11 +1609,13 @@ function sendReviewEmail_(sheet, found, options) {
   const amount = v[COL.amount - 1] || EXPECTED_AMOUNT;
   const paymentStatus = cell_(v, 'payment_status') || 'Not recorded';
   const squadStatus = cell_(v, 'squad_status') || 'Not recorded';
-  const selarStatus = cell_(v, 'selar_status') || 'Not recorded';
+  const squadRef = cell_(v, 'squad_ref') || 'Not recorded';
+  const amountPaid = cell_(v, 'amount_paid');
+  const selarStatus = cell_(v, 'selar_status');
 
   const reason =
     options.reason ||
-    'Review this enrolment and confirm payment only after checking the payment platform.';
+    'Review this enrolment and confirm payment only after checking the Squad dashboard.';
 
   try {
     if (!reference) throw new Error('Missing enrolment reference.');
@@ -1286,9 +1638,11 @@ function sendReviewEmail_(sheet, found, options) {
       `Reference: ${reference}\n` +
       `Expected amount: NGN ${amount}\n` +
       `Payment status: ${paymentStatus}\n` +
+      `Squad reference: ${squadRef}\n` +
       `Squad status: ${squadStatus}\n` +
-      `Selar status: ${selarStatus}\n\n` +
-      `${reason}\n\n` +
+      (amountPaid ? `Amount paid: NGN ${amountPaid}\n` : '') +
+      (selarStatus ? `Selar status: ${selarStatus}\n` : '') +
+      `\n${reason}\n\n` +
       `Review & confirm payment:\n${reviewUrl}`;
 
     const html = `
@@ -1299,8 +1653,10 @@ function sendReviewEmail_(sheet, found, options) {
         Reference: ${esc_(reference)}<br>
         Expected amount: ₦${esc_(amount)}<br>
         Payment status: ${esc_(paymentStatus)}<br>
+        Squad reference: ${esc_(squadRef)}<br>
         Squad status: ${esc_(squadStatus)}<br>
-        Selar status: ${esc_(selarStatus)}
+        ${amountPaid ? 'Amount paid: ₦' + esc_(amountPaid) + '<br>' : ''}
+        ${selarStatus ? 'Selar status: ' + esc_(selarStatus) : ''}
       </p>
       <p>${esc_(reason)}</p>
       <p><a class="button" href="${escAttr_(reviewUrl)}">Review &amp; confirm payment</a></p>
@@ -1353,9 +1709,11 @@ function reviewPage_(sheet, data) {
       ${detail_('WhatsApp', cell_(v, 'whatsapp'))}
       ${detail_('Expected amount (NGN)', v[COL.amount - 1])}
       ${detail_('Payment status', cell_(v, 'payment_status'))}
+      ${detail_('Squad reference', cell_(v, 'squad_ref'))}
       ${detail_('Squad status', cell_(v, 'squad_status'))}
-      ${detail_('Selar status', cell_(v, 'selar_status'))}
-      ${detail_('Selar sale reference', cell_(v, 'selar_sale_reference'))}
+      ${detail_('Amount paid (NGN)', cell_(v, 'amount_paid'))}
+      ${cell_(v, 'selar_status') ? detail_('Selar status', cell_(v, 'selar_status')) : ''}
+      ${cell_(v, 'selar_sale_reference') ? detail_('Selar sale reference', cell_(v, 'selar_sale_reference')) : ''}
     </dl>`;
 
   if (cell_(v, 'verified') === 'Yes') {
@@ -1379,7 +1737,7 @@ function reviewPage_(sheet, data) {
   return page_(
     'Review BA Bridge payment',
     details + `
-      <p>Check the completed payment in Selar, Squad or your bank before confirming.</p>
+      <p>Squad has confirmed this payment directly. Compare it with the Squad dashboard before confirming.</p>
 
       <form method="post" action="${escAttr_(webAppUrl_())}">
         ${hidden_('action', 'confirm')}
@@ -1387,10 +1745,10 @@ function reviewPage_(sheet, data) {
         ${hidden_('reference', data.reference)}
         ${hidden_('token', data.token)}
 
-        <label>
-          Selar sale reference (optional)
+        ${cell_(v, 'selar_sale_reference') ? `<label>
+          Selar sale reference
           <input name="selar_sale_reference" value="${escAttr_(cell_(v, 'selar_sale_reference'))}">
-        </label>
+        </label>` : ''}
 
         <label>
           Amount paid in NGN
@@ -1400,7 +1758,7 @@ function reviewPage_(sheet, data) {
         <button type="submit">Confirm payment</button>
       </form>
 
-      <p class="note">Only confirm after independently verifying the transaction.</p>
+      <p class="note">Confirming marks the enrolment paid and emails the student their welcome message.</p>
     `
   );
 }
@@ -1617,7 +1975,9 @@ function welcomeEmail_(name, reference, groupUrl) {
   };
 }
 
-// ==================== SELAR ====================
+// ==================== SELAR (legacy) ====================
+// Selar is no longer used for new payments. This stays only so a sale made
+// before the switch can still be matched if Selar's webhook fires.
 
 function handleSelarSale_(sheet, data) {
   requireSelarKey_(data.key);
@@ -1963,22 +2323,10 @@ function setupIntegrationSecrets() {
   const props = PropertiesService.getScriptProperties();
 
   let adminKey = props.getProperty(ADMIN_KEY_PROPERTY) || '';
-  let selarKey = props.getProperty(SELAR_KEY_PROPERTY) || '';
-  let product = props.getProperty(SELAR_PRODUCT_PROPERTY) || '';
 
   if (!adminKey) {
     adminKey = randomKey_();
     props.setProperty(ADMIN_KEY_PROPERTY, adminKey);
-  }
-
-  if (!selarKey) {
-    selarKey = randomKey_();
-    props.setProperty(SELAR_KEY_PROPERTY, selarKey);
-  }
-
-  if (!product) {
-    product = 'BA Bridge';
-    props.setProperty(SELAR_PRODUCT_PROPERTY, product);
   }
 
   getInviteSheet_();
@@ -1986,9 +2334,9 @@ function setupIntegrationSecrets() {
   const result =
     `Setup complete.\n\n` +
     `ADMIN PANEL URL:\n${adminUrl_(adminKey)}\n\n` +
-    `SELAR CALLBACK URL:\n` +
-    `${webAppUrl_()}?action=selar_sale&key=${encodeURIComponent(selarKey)}\n\n` +
-    `Keep both URLs private.`;
+    `SQUAD WEBHOOK URL (paste into the Squad dashboard):\n${webAppUrl_()}\n\n` +
+    `Also add ${SQUAD_SECRET_PROPERTY} under Project Settings → Script Properties.\n` +
+    `Keep the admin URL private.`;
 
   Logger.log(result);
   return result;
@@ -2000,14 +2348,19 @@ function getIntegrationUrls() {
   const adminKey = props.getProperty(ADMIN_KEY_PROPERTY) || '';
   const selarKey = props.getProperty(SELAR_KEY_PROPERTY) || '';
 
-  if (!adminKey || !selarKey) {
+  if (!adminKey) {
     throw new Error('Run setupIntegrationSecrets() first.');
   }
 
   const result =
     `ADMIN PANEL URL:\n${adminUrl_(adminKey)}\n\n` +
-    `SELAR CALLBACK URL:\n` +
-    `${webAppUrl_()}?action=selar_sale&key=${encodeURIComponent(selarKey)}`;
+    `SQUAD WEBHOOK URL:\n${webAppUrl_()}` +
+    (
+      selarKey
+        ? `\n\nSELAR CALLBACK URL (legacy, only for payments already made):\n` +
+          `${webAppUrl_()}?action=selar_sale&key=${encodeURIComponent(selarKey)}`
+        : ''
+    );
 
   Logger.log(result);
   return result;
@@ -2020,6 +2373,19 @@ function checkSetup() {
 
   configuredGroupUrl_();
 
+  let squad;
+
+  try {
+    const key = configuredSquadSecret_();
+    squad = (squadApiBase_(key) === SQUAD_SANDBOX_API ? 'sandbox' : 'live') + ' key configured';
+  } catch (err) {
+    squad = 'NOT CONFIGURED (' + SQUAD_SECRET_PROPERTY + ')';
+  }
+
+  const sweeping = ScriptApp
+    .getProjectTriggers()
+    .some(trigger => trigger.getHandlerFunction() === SQUAD_SWEEP_HANDLER);
+
   const result =
     `Setup OK.\n` +
     `Enrolment sheet: ${sheet.getName()}\n` +
@@ -2030,10 +2396,11 @@ function checkSetup() {
     `Waitlist and contact email: ${SITE_NOTIFY_EMAIL}\n` +
     `Welcome email CC: ${WELCOME_EMAIL_CC}\n` +
     `Remaining email quota: ${MailApp.getRemainingDailyQuota()}\n` +
-    `Web app URL: ${webAppUrl_()}\n` +
+    `Web app URL (also the Squad webhook URL): ${webAppUrl_()}\n` +
     `Admin key configured: ${!!props.getProperty(ADMIN_KEY_PROPERTY)}\n` +
-    `Selar callback key configured: ${!!props.getProperty(SELAR_KEY_PROPERTY)}\n` +
-    `Selar product match: ${configuredSelarProductMatch_()}`;
+    `Squad: ${squad}\n` +
+    `Squad sweep trigger installed: ${sweeping}\n` +
+    `Expected payment: NGN ${EXPECTED_AMOUNT}`;
 
   Logger.log(result);
   return result;

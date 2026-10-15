@@ -25,7 +25,7 @@ export function closeRegistration(page, template, closedCohort, nextCohort) {
   const nextSlug = `${nextCohort.slice(0, 3).toLowerCase()}-${nextCohort.slice(-4)}`;
   const storagePrefix = closedCohort === 'November 2026'
     ? 'uu-cohort-selar'
-    : `uu-cohort-selar-${closedCohort.toLowerCase().replace(' ', '-')}`;
+    : `uu-cohort-pay-${closedCohort.toLowerCase().replace(' ', '-')}`;
   const section = locate(template, SECTION_START, SECTION_END).text
     .replaceAll('{{CLOSED_COHORT}}', closedCohort)
     .replaceAll('{{CLOSED_STORAGE_PREFIX}}', storagePrefix)
@@ -37,7 +37,7 @@ export function closeRegistration(page, template, closedCohort, nextCohort) {
   let result = page.slice(0, pageSection.start) + section + page.slice(pageSection.end);
   result = result.replaceAll('href="#join"', 'href="#waitlist"')
     .replaceAll('href="/ba-training/#join"', 'href="/ba-training/#waitlist"');
-  if (/data-form="enrol"|data-selar-url|https:\/\/selar\.com\/|Continue to payment/.test(result)) {
+  if (/data-form="enrol"|data-squad|https:\/\/selar\.com\/|squadco\.com|Continue to payment/.test(result)) {
     throw new Error('A checkout path remains on the BA Training page; review it before closing registration.');
   }
   return result;
@@ -112,7 +112,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     }
     console.log(closed === page ? 'BA Training page is already using this waitlist flow.' : 'BA Training enrolment and checkout were replaced with the waitlist flow.');
     console.log('Header buttons say Join Waitlist, cohort links point to the waitlist, and the homepage promo is before the final CTA.');
-    console.log('Review other cohort copy, metadata and Selar product status before publishing.');
+    console.log('Review other cohort copy and metadata before publishing. Payments stop being possible once the enrolment form is gone; Squad itself needs no change.');
   } catch (error) {
     console.error(error.message);
     process.exitCode = 1;

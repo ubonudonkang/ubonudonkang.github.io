@@ -4,17 +4,17 @@ import vm from 'node:vm';
 
 const read = (file) => fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 const forms = read('js/forms.js');
-const site = read('js/site.js');
 const ENDPOINT = forms.match(/const ENDPOINT = '([^']+)'/)[1];
 
 assert.match(ENDPOINT, /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/);
 assert.equal((forms.match(/script\.google\.com/g) || []).length, 1, 'the endpoint is written once');
 assert.doesNotMatch(forms, /formspree/i);
 
-// selarCheckoutUrl comes from site.js, which loads before forms.js.
-const helperStart = site.indexOf('window.uuTrack');
-const helperEnd = site.indexOf('/* ── 1:1 session', helperStart);
-assert.ok(helperStart >= 0 && helperEnd > helperStart);
+// The committed file ships with no Squad key; payment tests run against a copy that has one.
+const SANDBOX_PUBLIC_KEY = 'sandbox_pk_testkey123';
+assert.match(forms, /const SQUAD_PUBLIC_KEY = '(sandbox_)?(pk_[A-Za-z0-9]+)?';/, 'the key is a plain pk_ value or still empty');
+const formsWithKey = forms.replace(/const SQUAD_PUBLIC_KEY = '[^']*';/, `const SQUAD_PUBLIC_KEY = '${SANDBOX_PUBLIC_KEY}';`);
+assert.notEqual(formsWithKey, forms);
 
 function element(props = {}) {
   const handlers = {};
@@ -32,10 +32,11 @@ function element(props = {}) {
   return el;
 }
 
-function run({ kind, dataset = {}, fields = [], search = '', storage = {}, fetchImpl, extra = {} }) {
+function run({ kind, dataset = {}, fields = [], search = '', storage = {}, fetchImpl, extra = {}, source = forms }) {
   const calls = [];
   const tracked = [];
   const assigned = [];
+  const widgets = [];
   const store = new Map(Object.entries(storage));
   const success = element({ style: { display: 'none' } });
   const failure = element({ style: { display: 'none' } });
@@ -68,12 +69,17 @@ function run({ kind, dataset = {}, fields = [], search = '', storage = {}, fetch
   };
   context.window = context;
   context.window.location.assign = (url) => assigned.push(url);
+  // Squad's checkout widget: records how it was set up and lets a test finish or close it.
+  context.squad = class {
+    constructor(options) { this.options = options; widgets.push(this); }
+    setup() { this.isSetup = true; }
+    open() { this.isOpen = true; }
+  };
   context.uuTrack = (name) => tracked.push(name);
   context.window.uuTrack = context.uuTrack;
   vm.createContext(context);
-  vm.runInContext(site.slice(site.indexOf('function selarCheckoutUrl'), helperEnd), context);
-  vm.runInContext(forms, context);
-  return { form, button, success, failure, byId, calls, tracked, assigned, store, replaced };
+  vm.runInContext(source, context);
+  return { form, button, success, failure, byId, calls, tracked, assigned, store, replaced, widgets };
 }
 
 const ok = () => Promise.resolve({ json: () => Promise.resolve({ result: 'ok' }) });
@@ -173,7 +179,7 @@ const earlier = (search, storage) => run({ kind: 'waitlist', dataset: { storageP
   const unmatched = earlier('?payment=selar');
   assert.equal(unmatched.byId['form-done'].hidden, true, 'a query parameter alone cannot show the earlier payment card');
   assert.deepEqual(unmatched.replaced, ['/page/']);
-  assert.match(unmatched.byId['payment-status'].textContent, /contact us with your Selar receipt/);
+  assert.match(unmatched.byId['payment-status'].textContent, /contact us with your payment receipt/);
   const matched = earlier('?payment=selar', { 'uu-cohort-selar-pending': JSON.stringify(earlierBuyer) });
   assert.equal(matched.byId['form-done'].hidden, false);
   assert.equal(matched.form.hidden, true);
@@ -187,12 +193,32 @@ const earlier = (search, storage) => run({ kind: 'waitlist', dataset: { storageP
   const waiting = earlier('', { 'uu-cohort-selar-pending': JSON.stringify(earlierBuyer) });
   assert.match(waiting.byId['payment-status'].textContent, /Registration is closed.*BAB-OLD-123/);
 }
+{
+  // A closed Squad cohort: the redirect brings ?reference=BAB-...-N, and the endpoint is told so it can verify.
+  const buyer = { product: 'ba-bridge-squad', cohort: 'February 2027', reference: 'BAB-SQ-ABC', name: 'Ada Example', email: 'ada@example.test' };
+  const closed = (search, storage) => run({ kind: 'waitlist', dataset: { storagePrefix: 'uu-cohort-pay-february-2027' }, search, storage, fetchImpl: ok });
+  const back = closed('?reference=BAB-SQ-ABC-2', { 'uu-cohort-pay-february-2027-pending': JSON.stringify(buyer) });
+  assert.equal(back.byId['form-done'].hidden, false);
+  assert.equal(back.byId['done-ref'].textContent, 'BAB-SQ-ABC');
+  assert.deepEqual(back.replaced, ['/page/'], 'the reference parameter is removed from the address');
+  assert.deepEqual(back.tracked, ['cohort-squad-paid']);
+  assert.deepEqual(back.calls.map((c) => c.body), [{ action: 'payment', squad_ref: 'BAB-SQ-ABC-2' }]);
+  // Someone else's reference does not show this browser's card, though it is still passed on for checking.
+  const stranger = closed('?reference=BAB-OTHER-XYZ-1', { 'uu-cohort-pay-february-2027-pending': JSON.stringify(buyer) });
+  assert.equal(stranger.byId['form-done'].hidden, true);
+  assert.equal(stranger.calls.length, 1);
+  // Not a reference at all: ignored.
+  const junk = closed('?reference=hello');
+  assert.equal(junk.byId['form-done'].hidden, true);
+  assert.equal(junk.calls.length, 0);
+}
 
-/* ── BA Bridge enrolment ─────────────────────────────────── */
+/* ── BA Bridge enrolment (Squad) ─────────────────────────── */
 const enrolDataset = {
-  cohort: 'February 2027', amount: '90000', selarUrl: 'https://selar.com/abc123',
-  storagePrefix: 'uu-cohort-selar-february-2027',
+  cohort: 'February 2027', amount: '90000', storagePrefix: 'uu-cohort-pay-february-2027',
 };
+const PENDING_KEY = 'uu-cohort-pay-february-2027-pending';
+const RETURNED_KEY = 'uu-cohort-pay-february-2027-returned';
 function enrolRun(overrides = {}) {
   const status = element(); const submit = element({ textContent: 'Continue to payment' }); const retry = element({ hidden: true });
   const required = [
@@ -200,7 +226,7 @@ function enrolRun(overrides = {}) {
     element({ type: 'checkbox', checked: true }),
   ];
   const t = run({
-    kind: 'enrol', dataset: enrolDataset,
+    kind: 'enrol', dataset: enrolDataset, source: formsWithKey,
     fields: [['name', 'Ada Example'], ['email', 'ada@example.test'], ['whatsapp', '+2341'], ['background', 'Other'], ['background_other', 'Teacher'],
       ['wants', 'Practical skills'], ['wants', 'Mentorship'], ['availability', 'Weekday evenings'], ['source', 'LinkedIn'], ['_gotcha', ''], ['consent', 'Yes']],
     fetchImpl: ok,
@@ -212,6 +238,7 @@ function enrolRun(overrides = {}) {
   });
   return { ...t, status, submit, retry, required };
 }
+const bodies = (t) => t.calls.map((c) => c.body);
 {
   const t = enrolRun();
   t.form.fire('submit');
@@ -226,24 +253,70 @@ function enrolRun(overrides = {}) {
   assert.equal(body.wants, 'Practical skills, Mentorship', 'checkbox groups join into one answer');
   assert.equal(body.background, 'Other: Teacher', 'Other text folds into its answer');
   assert.equal('background_other' in body, false);
-  const saved = JSON.parse(t.store.get('uu-cohort-selar-february-2027-pending'));
+  const saved = JSON.parse(t.store.get(PENDING_KEY));
   assert.equal(saved.reference, body.reference);
+  assert.equal(saved.product, 'ba-bridge-squad');
   assert.equal(saved.cohort, 'February 2027');
-  assert.equal(t.assigned.length, 1);
-  const checkout = new URL(t.assigned[0]);
-  assert.equal(checkout.origin + checkout.pathname, 'https://selar.com/abc123');
-  assert.equal(checkout.searchParams.get('add_to_cart'), '1');
-  assert.equal(checkout.searchParams.get('email'), 'ada@example.test');
-  assert.equal(checkout.searchParams.get('fullname'), 'Ada Example');
-  assert.equal(checkout.searchParams.get('mobile'), '+2341');
-  assert.deepEqual(t.tracked, ['cohort-enrolment-started', 'cohort-selar-checkout-opened']);
+  assert.equal(t.assigned.length, 0, 'there is no redirect away from the site');
+
+  // Squad checkout opens with the cohort price in kobo and a reference that names the attempt.
+  assert.equal(t.widgets.length, 1);
+  const widget = t.widgets[0];
+  assert.equal(widget.isSetup && widget.isOpen, true);
+  assert.equal(widget.options.key, SANDBOX_PUBLIC_KEY);
+  assert.equal(widget.options.amount, 9000000);
+  assert.equal(widget.options.currency_code, 'NGN');
+  assert.equal(widget.options.transaction_ref, body.reference + '-1');
+  assert.equal(widget.options.email, 'ada@example.test');
+  assert.equal(widget.options.customer_name, 'Ada Example');
+  assert.deepEqual({ ...widget.options.metadata }, { product: 'BA Bridge Cohort', reference: body.reference, cohort: 'February 2027', whatsapp: '+2341' });
+  assert.deepEqual(t.tracked, ['cohort-enrolment-started', 'cohort-squad-checkout-opened']);
   assert.equal(t.submit.hidden, true);
+
+  // Paying: the card appears, the endpoint is told to verify, and closing the window afterwards changes nothing.
+  widget.options.onSuccess({});
+  widget.options.onClose();
+  await flush();
+  assert.equal(t.byId['form-done'].hidden, false);
+  assert.equal(t.byId['done-ref'].textContent, body.reference);
+  assert.equal(t.form.hidden, true);
+  assert.equal(t.retry.hidden, true, 'a closed window after paying does not offer to pay again');
+  assert.ok(t.store.has(RETURNED_KEY));
+  assert.deepEqual(bodies(t)[1], { action: 'payment', squad_ref: body.reference + '-1' });
+  assert.deepEqual(t.tracked.slice(2), ['cohort-squad-paid']);
+}
+{
+  // Closing checkout without paying offers a retry, and each attempt gets a fresh Squad reference.
+  const t = enrolRun();
+  t.form.fire('submit');
+  await flush();
+  const reference = t.calls[0].body.reference;
+  t.widgets[0].options.onClose();
+  assert.equal(t.retry.hidden, false);
+  assert.match(t.status.textContent, /Payment wasn't completed/);
+  assert.equal(t.byId['form-done'].hidden, true);
+  t.retry.fire('click');
+  await flush();
+  assert.equal(t.widgets.length, 2);
+  assert.equal(t.widgets[1].options.transaction_ref, reference + '-2');
+  assert.equal(JSON.parse(t.store.get(PENDING_KEY)).attempt, 2, 'the attempt number survives a refresh');
+  assert.equal(t.calls.length, 1, 'nothing is verified until a payment is reported');
+}
+{
+  // Without a public key the application is still saved, and the visitor is told why they cannot pay.
+  const t = enrolRun({ source: forms.replace(/const SQUAD_PUBLIC_KEY = '[^']*';/, "const SQUAD_PUBLIC_KEY = '';") });
+  t.form.fire('submit');
+  await flush();
+  assert.equal(t.calls[0].body.action, 'signup');
+  assert.equal(t.widgets.length, 0);
+  assert.match(t.status.textContent, /Online payment is not switched on yet/);
+  assert.equal(t.retry.hidden, false);
 }
 {
   const t = enrolRun({ fetchImpl: rejected });
   t.form.fire('submit');
   await flush();
-  assert.equal(t.assigned.length, 0, 'checkout never opens when the application was not saved');
+  assert.equal(t.widgets.length, 0, 'checkout never opens when the application was not saved');
   assert.equal(t.store.size, 0);
   assert.equal(t.submit.disabled, false);
   assert.match(t.status.textContent, /did not go through/);
@@ -262,22 +335,37 @@ function enrolRun(overrides = {}) {
   assert.match(consent.status.textContent, /consent box/);
 }
 {
-  const buyer = { ...earlierBuyer, reference: 'BAB-NEW-123', cohort: 'February 2027' };
-  const key = 'uu-cohort-selar-february-2027-pending';
-  const back = enrolRun({ search: '?payment=selar', storage: { [key]: JSON.stringify(buyer) } });
+  const buyer = { product: 'ba-bridge-squad', reference: 'BAB-NEW-123', name: 'Ada Example', email: 'ada@example.test', cohort: 'February 2027' };
+  // Squad's redirect URL brings the buyer back with ?reference=BAB-...-N.
+  const back = enrolRun({ search: '?reference=BAB-NEW-123-1', storage: { [PENDING_KEY]: JSON.stringify(buyer) } });
   assert.equal(back.byId['form-done'].hidden, false);
   assert.equal(back.byId['done-ref'].textContent, 'BAB-NEW-123');
-  assert.ok(back.store.has('uu-cohort-selar-february-2027-returned'));
-  assert.deepEqual(back.tracked, ['cohort-selar-returned']);
-  const wrongCohort = enrolRun({ search: '?payment=selar', storage: { [key]: JSON.stringify({ ...buyer, cohort: 'November 2026' }) } });
-  assert.equal(wrongCohort.byId['form-done'].hidden, true, 'a saved enrolment from another cohort is not accepted');
-  const nov = enrolRun({ search: '?payment=selar', storage: { 'uu-cohort-selar-pending': JSON.stringify(earlierBuyer) } });
-  assert.equal(nov.byId['form-done'].hidden, false, 'an earlier cohort buyer still sees their reference');
-  const saved = enrolRun({ storage: { [key]: JSON.stringify(buyer) } });
+  assert.ok(back.store.has(RETURNED_KEY));
+  assert.deepEqual(back.replaced, ['/page/']);
+  assert.deepEqual(back.tracked, ['cohort-squad-paid']);
+  assert.deepEqual(bodies(back), [{ action: 'payment', squad_ref: 'BAB-NEW-123-1' }]);
+  // A reference that is not this browser's enrolment shows no card, but is still passed on for checking.
+  const other = enrolRun({ search: '?reference=BAB-ELSE-999-1', storage: { [PENDING_KEY]: JSON.stringify(buyer) } });
+  assert.equal(other.byId['form-done'].hidden, true);
+  assert.equal(other.calls.length, 1);
+  assert.match(other.status.textContent, /Squad confirms it to us automatically/);
+  // The earlier provider's query parameter no longer does anything on a new enrolment.
+  const selar = enrolRun({ search: '?payment=selar', storage: { [PENDING_KEY]: JSON.stringify(buyer) } });
+  assert.equal(selar.byId['form-done'].hidden, true);
+  assert.equal(selar.calls.length, 0);
+  // A saved enrolment from another cohort is not accepted.
+  const wrongCohort = enrolRun({ search: '?reference=BAB-NEW-123-1', storage: { [PENDING_KEY]: JSON.stringify({ ...buyer, cohort: 'November 2026' }) } });
+  assert.equal(wrongCohort.byId['form-done'].hidden, true);
+  // Refresh after paying, and a saved but unpaid enrolment.
+  const refreshed = enrolRun({ storage: { [RETURNED_KEY]: JSON.stringify(buyer) } });
+  assert.equal(refreshed.byId['form-done'].hidden, false);
+  const saved = enrolRun({ storage: { [PENDING_KEY]: JSON.stringify(buyer) } });
   assert.equal(saved.retry.hidden, false, 'a saved but unpaid enrolment offers the payment button');
   assert.equal(saved.submit.hidden, true);
   saved.retry.fire('click');
-  assert.equal(saved.assigned.length, 1);
+  await flush();
+  assert.equal(saved.widgets.length, 1);
+  assert.equal(saved.widgets[0].options.transaction_ref, 'BAB-NEW-123-1');
 }
 
-console.log('Form script checks passed (contact, waitlist, enrolment, Selar returns).');
+console.log('Form script checks passed (contact, waitlist, Squad enrolment and returns).');
