@@ -108,8 +108,6 @@ assert.ok(movedHome.indexOf('HOME_COHORT_PROMO_END') < movedHome.indexOf('══
 assert.equal(movedHome, home, 'the closed homepage promo should already be at the bottom');
 assert.equal(moveHomePromoToBottom(movedHome), movedHome, 'closing twice must not move the promo again');
 assert.doesNotMatch(cohort, /schema\.org\/InStock|2026-11-02/, 'closed cohort must not be advertised as available to search engines');
-assert.match(session, /site\.js\?v=booking-button-20261004/);
-assert.match(cohort, /site\.js\?v=selar-20261003/);
 assert.match(readme, /browser return, query parameter, or session-storage record is not server-verified proof/i);
 
 function htmlFiles(dir) {

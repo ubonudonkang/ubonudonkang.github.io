@@ -69,12 +69,23 @@ function stepSpring(s, dt) {
 })();
 
 /* ── Top bar edge fade ───────────────────────────────────────── */
+// Reading scrollY makes the browser finish laying out the whole page first, and a
+// scroll listener did that on every scroll event. Watching a thin marker at the top
+// of the page does the same job without touching layout.
 (function topbar() {
   const bar = document.getElementById('topbar');
   if (!bar) return;
-  const update = () => bar.classList.toggle('is-scrolled', scrollY > 8);
-  addEventListener('scroll', update, { passive: true });
-  requestAnimationFrame(update);
+  if (!('IntersectionObserver' in window)) {
+    const update = () => bar.classList.toggle('is-scrolled', scrollY > 8);
+    addEventListener('scroll', update, { passive: true });
+    update();
+    return;
+  }
+  const marker = document.createElement('div');
+  marker.setAttribute('aria-hidden', 'true');
+  marker.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:9px;pointer-events:none;visibility:hidden';
+  document.body.prepend(marker);
+  new IntersectionObserver(([entry]) => bar.classList.toggle('is-scrolled', !entry.isIntersecting)).observe(marker);
 })();
 
 /* ── Toast + email copy ──────────────────────────────────────── */
@@ -260,8 +271,12 @@ document.querySelectorAll('[data-copy-text]').forEach(el => el.addEventListener(
   const settles = [];
   const settleOnReveal = wide.matches && !reduceMotion.matches && 'IntersectionObserver' in window;
 
-  docs.forEach(el => {
-    const rot = getComputedStyle(el).getPropertyValue('--r').trim() || '0deg';
+  // read every paper's tilt before any of them is written to, so the browser
+  // recalculates styles once instead of once per paper
+  const tilts = docs.map(el => getComputedStyle(el).getPropertyValue('--r').trim() || '0deg');
+
+  docs.forEach((el, index) => {
+    const rot = tilts[index];
     const sx = makeSpring(0, { damping: 0.8, response: 0.45 });
     const sy = makeSpring(0, { damping: 0.8, response: 0.45 });
     const lift = makeSpring(1, { damping: 1, response: 0.25 });
