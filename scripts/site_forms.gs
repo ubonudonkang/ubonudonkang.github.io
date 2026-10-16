@@ -985,10 +985,21 @@ function adminApp_() {
     );
   }
 
-  return HtmlService
-    .createHtmlOutputFromFile('admin')
-    .setTitle('BA Bridge Admin')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  try {
+    return HtmlService
+      .createHtmlOutputFromFile('admin')
+      .setTitle('BA Bridge Admin')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  } catch (err) {
+    console.error('Dashboard page could not be loaded:', err);
+
+    return page_(
+      'Dashboard page missing',
+      '<p>This deployment has no HTML file named <strong>admin</strong>. In the Apps Script editor choose ' +
+      'Files + &gt; HTML, name it exactly <strong>admin</strong> (the editor adds .html itself), paste ' +
+      'scripts/admin.html.txt into it, save, then edit this deployment and choose New version.</p>'
+    );
+  }
 }
 
 // The only function the dashboard page calls.

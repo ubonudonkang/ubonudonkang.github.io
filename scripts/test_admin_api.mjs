@@ -80,6 +80,12 @@ function seeded(options = {}) {
   assert.match(page.meta.viewport, /width=device-width/);
   assert.equal(owner.context.doGet({ parameter: { action: 'app' } }).file, 'admin');
 
+  // If the HTML file was never added to the project, the owner is told what to do instead of seeing a bare Google error.
+  const missingFile = seeded();
+  missingFile.context.HtmlService.createHtmlOutputFromFile = () => { throw new Error('No HTML file named admin was found.'); };
+  assert.match(missingFile.context.doGet({ parameter: { action: 'app' } }).html, /no HTML file named <strong>admin<\/strong>/);
+  assert.match(missingFile.context.doGet({ parameter: {} }).html, /Dashboard page missing/, 'the same on the deployment root');
+
   // Functions that return secrets or email every student cannot be run by a stranger, from a page or anywhere else.
   for (const fn of ['setupIntegrationSecrets', 'getIntegrationUrls', 'previewPaidCohortWelcomeReminder', 'sendPaidCohortWelcomeReminder', 'resetPaidCohortWelcomeReminderLog']) {
     assert.throws(() => anon.context[fn](), /Only the site owner/, fn);

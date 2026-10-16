@@ -87,6 +87,17 @@ Every form on the site is handled by one browser script, `js/forms.js`, and one 
 
 **Safe by construction:** the public deployment never serves the dashboard to a stranger. Even on the public address, every `adminApi` call checks that the signed-in Google account is the script owner, so a stranger who finds the page code still gets nothing. If Google ever shows the script no address, the check refuses. To let a second person in (untested; Google may hide their address from the script), list their address in the script property `BA_BRIDGE_ADMIN_EMAILS` (comma separated) and widen the dashboard deployment's access.
 
+**If the dashboard address does not show the dashboard:** open the dashboard deployment's address followed by `?action=app`, then match what you see.
+
+| You see | Cause | Fix |
+| --- | --- | --- |
+| `{"result":"error","message":"Unsupported action."}` | The deployment still runs an older version of the code | *Deploy → Manage deployments*, pencil on the dashboard deployment, *Version: New version*, *Deploy* |
+| `Dashboard page missing` | There is no HTML file called `admin` in the project | *Files +* → *HTML*, name it `admin`, paste `scripts/admin.html.txt`, then deploy a new version |
+| `Not authorised` and "Google did not tell the script which account" | The deployment is not set to *Execute as: Me* | Edit the deployment, set *Execute as: Me* and *Who has access: Only myself* |
+| `Not authorised` and "You are signed in as …" | The browser is using another Google account | Open the address in a private window, signed in only as the owner |
+| Google's "unable to open the file" page | Wrong Google account, or a deployment that was deleted | As above; copy the address again from *Manage deployments* |
+| The plain `BA Bridge endpoint is online.` message without `?action=app` | Normal on the public deployment; on the dashboard deployment it means Google gave the script no account | Use the `?action=app` address to see which case applies |
+
 **After every later change** to either file, both deployments need *New version* (the public one for the website, the dashboard one for the owner), because each deployment keeps its own version.
 
 **Notes:**
