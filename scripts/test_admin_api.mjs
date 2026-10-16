@@ -234,6 +234,8 @@ function seeded(options = {}) {
   const items = Object.fromEntries(d.sections.flatMap((s) => s.items.map((i) => [i.label, i])));
   assert.deepEqual(items.Email, { label: 'Email', value: 'ada@example.test', kind: 'email' });
   assert.equal(items.WhatsApp.kind, 'phone');
+  assert.equal(items.WhatsApp.value, '+234 800 000 0001', "the ' that guards a number starting with + is not shown");
+  assert.equal(d.summary.whatsapp, '+234 800 000 0001');
   assert.equal(items.Reference.kind, 'mono');
   assert.equal(items['Squad reference'].value, '', 'known payment fields are listed even when empty');
   assert.equal(items['Biggest blocker'].value, '<img src=x onerror=alert(1)>', 'values are passed through untouched; the page renders them as text');

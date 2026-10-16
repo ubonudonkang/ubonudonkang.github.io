@@ -1046,9 +1046,12 @@ function timeOf_(value) {
   return isNaN(time) ? 0 : time;
 }
 
+// A cell as the dashboard shows it. Text that starts like a formula was saved with a leading ' (see safeCellText_); the quote is not part of the text.
 function text_(values, key) {
   const value = values[COL[key] - 1];
-  return value instanceof Date ? dateText_(value) : String(value == null ? '' : value).trim();
+  return value instanceof Date
+    ? dateText_(value)
+    : String(value == null ? '' : value).trim().replace(/^'(?=[=+\-@])/, '');
 }
 
 function adminReadEnrolments_(sheet) {
@@ -1069,9 +1072,9 @@ function adminSummary_(r) {
 
   return {
     reference: cell_(v, 'reference'),
-    name: cell_(v, 'name'),
-    email: cell_(v, 'email'),
-    whatsapp: cell_(v, 'whatsapp'),
+    name: text_(v, 'name'),
+    email: text_(v, 'email'),
+    whatsapp: text_(v, 'whatsapp'),
     status: enrolmentStatus_(v),
     paymentStatus: cell_(v, 'payment_status'),
     squadStatus: cell_(v, 'squad_status'),
