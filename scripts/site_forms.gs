@@ -4,11 +4,13 @@
  *
  *   BA Training (gid 0)  action=signup               BA Bridge enrolment, Squad payments, payment review, welcome emails
  *   BA Bridge Invites    admin panel                 private one-time registration links
+ *   (dashboard)          doGet / adminApi            owner-only single-page dashboard: scripts/admin.html.txt, file name "admin"
  *   Sessions             Squad webhook / action=payment  1:1 Career Clarity session payments
  *   Waitlist             form_name=ba-waitlist-*     cohort waitlist signups
  *   Contact              form_name=contact           contact page enquiries
  *
- * Keep this as the ONLY file in the Apps Script project. A second file that
+ * Keep this as the ONLY .gs file in the Apps Script project (the dashboard's page is an
+ * HTML file named "admin", which is fine). A second file that
  * declares the same top-level names (for example NOTIFY_EMAIL) stops the whole
  * project compiling, and every form then fails silently.
  *
@@ -58,6 +60,7 @@ const SQUAD_SANDBOX_API = 'https://sandbox-api-d.squadco.com';
 // Squad needs a fresh transaction reference for every checkout attempt.
 const SQUAD_REF_PATTERN = /^(BAB-[A-Z0-9]+-[A-Z0-9]{3})-(\d{1,3})$/;
 const SQUAD_SWEEP_HANDLER = 'sweepAwaitingSquadPayments';
+const SQUAD_LAST_WEBHOOK_PROPERTY = 'SQUAD_LAST_WEBHOOK';
 
 // 1:1 Career Clarity session. The price is also shown on the session page (data-amount).
 const SESSION_AMOUNT = 15000;
@@ -110,7 +113,8 @@ const FIELDS = [
   ['selar_currency', 'Selar currency'],
   ['selar_status', 'Selar status'],
   ['selar_product', 'Selar product'],
-  ['selar_webhook_received_at', 'Selar webhook received at']
+  ['selar_webhook_received_at', 'Selar webhook received at'],
+  ['admin_notes', 'Admin notes']
 ];
 
 const INVITE_HEADERS = [
@@ -229,8 +233,12 @@ function doGet(e) {
   const action = String(data.action || '').trim();
 
   if (!action) {
+    // On the owner-only dashboard deployment the root URL is the dashboard itself.
+    if (currentAdminEmail_()) return adminApp_();
     return json_({ result: 'ok', message: 'BA Bridge endpoint is online.' });
   }
+
+  if (action === 'app') return adminApp_();
 
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -497,19 +505,35 @@ function isSquadWebhook_(data) {
 function handleSquadWebhook_(data) {
   return withLock_(() => {
     try {
+      let out;
+
       if (String(data.Event).toLowerCase() !== 'charge_successful') {
-        return json_({ result: 'ignored', reason: 'Not a successful charge.' });
+        out = { result: 'ignored', reason: 'Not a successful charge.' };
+      } else {
+        const squadRef = squadRefFromWebhook_(data);
+        out = squadRef
+          ? processSquadPayment_(getSheet_(), squadRef, 'webhook')
+          : { result: 'ignored', reason: 'Not a BA Bridge payment.' };
       }
 
-      const squadRef = squadRefFromWebhook_(data);
-      if (!squadRef) return json_({ result: 'ignored', reason: 'Not a BA Bridge payment.' });
-
-      return json_(processSquadPayment_(getSheet_(), squadRef, 'webhook'));
+      rememberWebhook_(data.Event, out.result);
+      return json_(out);
     } catch (err) {
       console.error('Squad webhook error:', err);
+      rememberWebhook_(data.Event, 'error');
       return json_({ result: 'error', message: String(err) });
     }
   });
+}
+
+// The dashboard shows when Squad last reached this script, so a broken webhook URL is easy to spot.
+function rememberWebhook_(event, result) {
+  try {
+    PropertiesService.getScriptProperties().setProperty(
+      SQUAD_LAST_WEBHOOK_PROPERTY,
+      JSON.stringify({ at: Date.now(), event: String(event || ''), result: String(result || '') })
+    );
+  } catch (ignore) {}
 }
 
 function squadRefFromWebhook_(data) {
@@ -889,6 +913,509 @@ function testSquadVerify() {
 
   Logger.log(result);
   return result;
+}
+
+// ==================== ADMIN DASHBOARD ====================
+
+/*
+ * The owner-only dashboard (scripts/admin.html.txt, an HTML file named "admin"
+ * in this project). It talks to the server through ONE function, adminApi,
+ * which checks who is signed in before doing anything.
+ *
+ * Access: deploy this project a second time as a web app, "Execute as: Me" and
+ * "Who has access: Only myself", and open that deployment's URL. Only the signed-in
+ * owner passes currentAdminEmail_; on the public deployment visitors are
+ * anonymous, so the dashboard and its API refuse them. Other Google accounts can be
+ * allowed with a comma-separated BA_BRIDGE_ADMIN_EMAILS script property, but only
+ * where Google shows this script the visitor's address (it does not for many
+ * consumer accounts), so the owner is the supported user.
+ *
+ * Every method returns plain data (strings, numbers, booleans): Apps Script cannot
+ * pass Date objects to a page.
+ */
+const ADMIN_EMAILS_PROPERTY = 'BA_BRIDGE_ADMIN_EMAILS';
+const ADMIN_PAGE_SIZE = 25;
+const ADMIN_NOTE_MAX_LENGTH = 2000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function currentAdminEmail_() {
+  let active = '';
+  let effective = '';
+
+  try { active = normalizeEmail_(Session.getActiveUser().getEmail()); } catch (ignore) {}
+  try { effective = normalizeEmail_(Session.getEffectiveUser().getEmail()); } catch (ignore) {}
+
+  // An anonymous visitor has no address, so an empty match never counts.
+  if (!active) return '';
+
+  const allowed = String(
+    PropertiesService.getScriptProperties().getProperty(ADMIN_EMAILS_PROPERTY) || ''
+  ).split(',').map(normalizeEmail_).filter(Boolean);
+
+  return active === effective || allowed.indexOf(active) !== -1 ? active : '';
+}
+
+function requireAdmin_() {
+  const email = currentAdminEmail_();
+
+  if (!email) {
+    throw new Error('Only the site owner can do this. Open the dashboard deployment while signed in to your Google account.');
+  }
+
+  return email;
+}
+
+function adminApp_() {
+  if (!currentAdminEmail_()) {
+    // Say what the script can see, so the owner can tell a wrong account from a wrongly set up deployment.
+    // Only the visitor's own address is ever shown, never the owner's.
+    let seen = '';
+    try { seen = normalizeEmail_(Session.getActiveUser().getEmail()); } catch (ignore) {}
+
+    return page_(
+      'Not authorised',
+      '<p>The dashboard opens only for the site owner, signed in to their Google account, ' +
+      'on the dashboard deployment (Execute as: Me, Who has access: Only myself).</p>' +
+      (
+        seen
+          ? '<p>You are signed in as <strong>' + esc_(seen) + '</strong>, which is not the owner\'s account.</p>'
+          : '<p>Google did not tell the script which account you are using. If you are the owner, open ' +
+            'Deploy &gt; Manage deployments and check that this deployment is set to Execute as: Me.</p>'
+      )
+    );
+  }
+
+  return HtmlService
+    .createHtmlOutputFromFile('admin')
+    .setTitle('BA Bridge Admin')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+// The only function the dashboard page calls.
+function adminApi(method, params) {
+  try {
+    const user = requireAdmin_();
+    const spec = ADMIN_METHODS_[String(method)];
+
+    if (!spec) throw new Error('Unknown request.');
+
+    const data = spec.write
+      ? withLock_(() => spec.run(params || {}, user))
+      : spec.run(params || {}, user);
+
+    return { ok: true, user, data };
+  } catch (err) {
+    console.error('Admin API error (' + method + '):', err);
+    return { ok: false, error: String(err && err.message ? err.message : err) };
+  }
+}
+
+const ADMIN_METHODS_ = {
+  overview: { run: adminOverview_ },
+  enrolments: { run: adminEnrolments_ },
+  enrolment: { run: adminEnrolment_ },
+  sendReview: { run: adminSendReviewApi_, write: true },
+  confirmPayment: { run: adminConfirmApi_, write: true },
+  resendWelcome: { run: adminResendWelcomeApi_, write: true },
+  saveNote: { run: adminSaveNote_, write: true }
+};
+
+// ---------- reading ----------
+
+function enrolmentStatus_(values) {
+  const payment = cell_(values, 'payment_status');
+
+  if (cell_(values, 'verified') === 'Yes' || /manually confirmed/i.test(payment)) return 'confirmed';
+  if (/^paid/i.test(payment) || /amount needs review/i.test(payment)) return 'review';
+
+  return 'awaiting';
+}
+
+function dateText_(value) {
+  if (value instanceof Date) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
+  }
+
+  return String(value == null ? '' : value).trim().slice(0, 16);
+}
+
+function timeOf_(value) {
+  if (value instanceof Date) return value.getTime();
+
+  const time = new Date(String(value || '').trim().replace(' ', 'T')).getTime();
+  return isNaN(time) ? 0 : time;
+}
+
+function text_(values, key) {
+  const value = values[COL[key] - 1];
+  return value instanceof Date ? dateText_(value) : String(value == null ? '' : value).trim();
+}
+
+function adminReadEnrolments_(sheet) {
+  const last = sheet.getLastRow();
+
+  if (last < 2) return [];
+
+  return sheet
+    .getRange(2, 1, last - 1, FIELDS.length)
+    .getValues()
+    .map((values, i) => ({ row: i + 2, values }))
+    .filter(r => cell_(r.values, 'reference'));
+}
+
+function adminSummary_(r) {
+  const v = r.values;
+  const paid = Number(v[COL.amount_paid - 1]);
+
+  return {
+    reference: cell_(v, 'reference'),
+    name: cell_(v, 'name'),
+    email: cell_(v, 'email'),
+    whatsapp: cell_(v, 'whatsapp'),
+    status: enrolmentStatus_(v),
+    paymentStatus: cell_(v, 'payment_status'),
+    squadStatus: cell_(v, 'squad_status'),
+    amountPaid: v[COL.amount_paid - 1] !== '' && isFinite(paid) ? paid : null,
+    createdAt: text_(v, 'timestamp'),
+    createdMs: timeOf_(v[COL.timestamp - 1]),
+    paidAt: text_(v, 'paid_at'),
+    welcomeSent: !!v[COL.welcome_email_sent_at - 1],
+    hasError: !!(cell_(v, 'welcome_email_error') || cell_(v, 'review_email_error'))
+  };
+}
+
+// Rows of one of the website's other tabs, without creating the tab when it does not exist yet.
+function adminTabRows_(def) {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(def.tab);
+
+  if (!sheet || sheet.getLastRow() < 2) return { header: [], rows: [] };
+
+  const header = sheet
+    .getRange(1, 1, 1, sheet.getLastColumn())
+    .getValues()[0]
+    .map(v => String(v).trim());
+
+  return {
+    header,
+    rows: sheet.getRange(2, 1, sheet.getLastRow() - 1, header.length).getValues()
+  };
+}
+
+function adminHealth_() {
+  const props = PropertiesService.getScriptProperties();
+  let squad = 'missing';
+
+  try {
+    squad = squadApiBase_(configuredSquadSecret_()) === SQUAD_SANDBOX_API ? 'sandbox' : 'live';
+  } catch (ignore) {}
+
+  let last = null;
+
+  try {
+    last = JSON.parse(props.getProperty(SQUAD_LAST_WEBHOOK_PROPERTY) || 'null');
+  } catch (ignore) {}
+
+  return {
+    squad,
+    sweepInstalled: ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === SQUAD_SWEEP_HANDLER),
+    lastWebhook: last,
+    emailQuota: MailApp.getRemainingDailyQuota(),
+    whatsappGroupSet: !!props.getProperty(BA_GROUP_PROPERTY),
+    adminKeySet: !!props.getProperty(ADMIN_KEY_PROPERTY)
+  };
+}
+
+function adminOverview_() {
+  const rows = adminReadEnrolments_(getSheet_());
+  const now = Date.now();
+  const counts = { all: rows.length, awaiting: 0, review: 0, confirmed: 0 };
+  const revenue = { confirmed: 0, awaitingConfirmation: 0 };
+  const attention = [];
+  const events = [];
+
+  rows.forEach(r => {
+    const v = r.values;
+    const status = enrolmentStatus_(v);
+    const reference = cell_(v, 'reference');
+    const name = cell_(v, 'name') || reference;
+    const payment = cell_(v, 'payment_status');
+    const paid = Number(v[COL.amount_paid - 1]);
+    const created = timeOf_(v[COL.timestamp - 1]);
+    const confirmedAt = timeOf_(v[COL.confirmed_at - 1]);
+    const paidAt = timeOf_(v[COL.paid_at - 1]);
+
+    counts[status]++;
+
+    if (v[COL.amount_paid - 1] !== '' && isFinite(paid)) {
+      if (status === 'confirmed') revenue.confirmed += paid;
+      else if (status === 'review') revenue.awaitingConfirmation += paid;
+    }
+
+    const flag = (severity, type, title, detail) =>
+      attention.push({ severity, type, reference, name, title, detail });
+
+    if (status === 'review') {
+      if (/amount needs review/i.test(payment)) {
+        flag('high', 'amount', 'Amount needs review',
+          'Squad reports NGN ' + (isFinite(paid) ? paid : '?') + ', not the expected NGN ' + EXPECTED_AMOUNT + '.');
+      } else {
+        flag('medium', 'confirm', 'Paid, waiting for your confirmation', payment);
+      }
+
+      if (cell_(v, 'review_email_error')) {
+        flag('medium', 'review_email', 'Review email failed', cell_(v, 'review_email_error'));
+      }
+    }
+
+    // Older cohorts were confirmed before welcome emails were tracked, so only recent confirmations are checked.
+    if (
+      status === 'confirmed' &&
+      (cell_(v, 'welcome_email_error') ||
+        (!v[COL.welcome_email_sent_at - 1] && confirmedAt && now - confirmedAt < 7 * DAY_MS))
+    ) {
+      flag('high', 'welcome', 'Welcome email not delivered', cell_(v, 'welcome_email_error') || 'Not sent yet.');
+    }
+
+    // Unpaid for a while, but not so long ago that it is simply an abandoned older cohort.
+    if (status === 'awaiting' && created && now - created > 2 * DAY_MS && now - created < 14 * DAY_MS) {
+      flag('low', 'stale', 'Awaiting payment for ' + Math.floor((now - created) / DAY_MS) + ' days', 'No payment from Squad yet.');
+    }
+
+    if (created) events.push({ at: created, type: 'enrolled', reference, name, text: name + ' enrolled' });
+    if (paidAt && (isSquadPaid_(v) || status !== 'awaiting')) {
+      events.push({ at: paidAt, type: 'paid', reference, name, text: name + ' paid' });
+    }
+    if (confirmedAt) events.push({ at: confirmedAt, type: 'confirmed', reference, name, text: name + ' confirmed' });
+  });
+
+  const rank = { high: 0, medium: 1, low: 2 };
+  attention.sort((a, b) => rank[a.severity] - rank[b.severity]);
+  events.sort((a, b) => b.at - a.at);
+
+  const waitlist = adminTabRows_(FORM_TABS.waitlist);
+  const cohortAt = waitlist.header.indexOf('cohort');
+  const byCohort = {};
+
+  waitlist.rows.forEach(row => {
+    const cohort = String(cohortAt > -1 ? row[cohortAt] : '').trim() || 'Not given';
+    byCohort[cohort] = (byCohort[cohort] || 0) + 1;
+  });
+
+  const sessions = adminTabRows_(FORM_TABS.sessions);
+  const statusAt = sessions.header.indexOf('Status');
+  const amountAt = sessions.header.indexOf('Amount paid (NGN)');
+  const sessionStats = { total: sessions.rows.length, paid: 0, review: 0, revenue: 0 };
+
+  sessions.rows.forEach(row => {
+    const status = String(statusAt > -1 ? row[statusAt] : '').trim();
+
+    if (status === 'Paid') {
+      sessionStats.paid++;
+      sessionStats.revenue += Number(amountAt > -1 ? row[amountAt] : 0) || 0;
+    } else if (/review/i.test(status)) {
+      sessionStats.review++;
+    }
+  });
+
+  if (sessionStats.review) {
+    attention.push({
+      severity: 'high', type: 'session', reference: '', name: '1:1 sessions',
+      title: sessionStats.review + ' session payment' + (sessionStats.review > 1 ? 's' : '') + ' with an unexpected amount',
+      detail: 'Check the Sessions tab and the Squad dashboard.'
+    });
+  }
+
+  return {
+    counts,
+    revenue,
+    expectedAmount: EXPECTED_AMOUNT,
+    waitlist: { total: waitlist.rows.length, byCohort },
+    enquiries: { total: adminTabRows_(FORM_TABS.contact).rows.length },
+    sessions: sessionStats,
+    attentionTotal: attention.length,
+    attention: attention.slice(0, 12),
+    activity: events.slice(0, 10),
+    health: adminHealth_(),
+    generatedAt: now
+  };
+}
+
+function adminEnrolments_(params) {
+  const q = String(params.q || '').trim().toLowerCase();
+  const digits = q.replace(/\D/g, '');
+  const wanted = ['awaiting', 'review', 'confirmed'].indexOf(params.status) !== -1 ? params.status : '';
+
+  const matches = adminReadEnrolments_(getSheet_()).reverse().filter(r => {
+    if (!q) return true;
+
+    const v = r.values;
+    const haystack = (cell_(v, 'name') + ' ' + cell_(v, 'email') + ' ' + cell_(v, 'reference')).toLowerCase();
+
+    return haystack.indexOf(q) !== -1 ||
+      (digits.length >= 4 && cell_(v, 'whatsapp').replace(/\D/g, '').indexOf(digits) !== -1);
+  });
+
+  const counts = { all: matches.length, awaiting: 0, review: 0, confirmed: 0 };
+  matches.forEach(r => counts[enrolmentStatus_(r.values)]++);
+
+  const filtered = wanted ? matches.filter(r => enrolmentStatus_(r.values) === wanted) : matches;
+  const pages = Math.max(1, Math.ceil(filtered.length / ADMIN_PAGE_SIZE));
+  const page = Math.min(Math.max(1, parseInt(params.page, 10) || 1), pages);
+  const start = (page - 1) * ADMIN_PAGE_SIZE;
+
+  return {
+    items: filtered.slice(start, start + ADMIN_PAGE_SIZE).map(adminSummary_),
+    total: filtered.length,
+    page,
+    pages,
+    pageSize: ADMIN_PAGE_SIZE,
+    counts
+  };
+}
+
+function adminFindEnrolment_(sheet, reference) {
+  const found = findByReference_(sheet, String(reference || '').trim());
+
+  if (!found) throw new Error('That enrolment was not found.');
+
+  return found;
+}
+
+function adminEnrolment_(params) {
+  const found = adminFindEnrolment_(getSheet_(), params.reference);
+  const v = found.values;
+  const status = enrolmentStatus_(v);
+
+  // kind tells the page how to show a value: a mail link, a phone link, or plain text.
+  const item = (label, key, kind, always) => {
+    const value = text_(v, key);
+    return value || always ? { label, value, kind: kind || 'text' } : null;
+  };
+  const section = (title, items) => ({ title, items: items.filter(Boolean) });
+
+  return {
+    summary: adminSummary_(found),
+    status,
+    sections: [
+      section('Contact', [
+        item('Email', 'email', 'email', true),
+        item('WhatsApp', 'whatsapp', 'phone', true),
+        item('City and country', 'location')
+      ]),
+      section('About them', [
+        item('Background', 'background'),
+        item('Years of experience', 'experience'),
+        item('Stage of transition', 'stage'),
+        item('Wants most', 'wants'),
+        item('Availability', 'availability'),
+        item('Heard about it via', 'source'),
+        item('Biggest blocker', 'blocker'),
+        item('Preferred format', 'format'),
+        item('Can start', 'can_start')
+      ]),
+      section('Payment', [
+        item('Expected amount (NGN)', 'amount', 'text', true),
+        item('Payment status', 'payment_status', 'text', true),
+        item('Squad reference', 'squad_ref', 'mono', true),
+        item('Squad status', 'squad_status', 'text', true),
+        item('Amount paid (NGN)', 'amount_paid', 'text', true),
+        item('Paid at', 'paid_at'),
+        item('Confirmed at', 'confirmed_at'),
+        item('Confirmed by', 'confirmed_by'),
+        item('Selar status (earlier cohorts)', 'selar_status'),
+        item('Selar sale reference (earlier cohorts)', 'selar_sale_reference', 'mono')
+      ]),
+      section('Emails', [
+        item('Review email sent', 'review_email_sent_at', 'text', true),
+        item('Review email error', 'review_email_error'),
+        item('Welcome email sent', 'welcome_email_sent_at', 'text', true),
+        item('Welcome email error', 'welcome_email_error')
+      ]),
+      section('Enrolment', [
+        item('Reference', 'reference', 'mono', true),
+        item('Submitted', 'timestamp', 'text', true),
+        item('Consent given', 'consent')
+      ])
+    ].filter(sec => sec.items.length),
+    notes: text_(v, 'admin_notes'),
+    notesMax: ADMIN_NOTE_MAX_LENGTH,
+    expectedAmount: EXPECTED_AMOUNT,
+    defaultAmount: text_(v, 'amount_paid') || String(EXPECTED_AMOUNT),
+    reviewTo: NOTIFY_EMAIL,
+    welcomeCc: WELCOME_EMAIL_CC,
+    canConfirm: status !== 'confirmed',
+    canResend: status === 'confirmed'
+  };
+}
+
+// ---------- actions ----------
+
+function adminSendReviewApi_(params) {
+  const sheet = getSheet_();
+  const found = ensureConfirmToken_(sheet, adminFindEnrolment_(sheet, params.reference));
+  const delivery = sendReviewEmail_(sheet, found, {
+    force: true,
+    reason: 'Review requested from the dashboard.'
+  });
+
+  return { sent: !!delivery.sent, error: delivery.error || '', to: NOTIFY_EMAIL };
+}
+
+function adminConfirmApi_(params, user) {
+  const sheet = getSheet_();
+  const found = adminFindEnrolment_(sheet, params.reference);
+
+  if (cell_(found.values, 'verified') === 'Yes') {
+    throw new Error('This enrolment is already confirmed.');
+  }
+
+  const amountPaid = String(params.amountPaid == null ? '' : params.amountPaid).trim();
+
+  if (amountPaid && !/^\d+(?:\.\d{1,2})?$/.test(amountPaid)) {
+    throw new Error('Enter the amount paid as a number, for example 80000.');
+  }
+
+  const confirmed = confirmEnrolment_(sheet, found, { amountPaid, by: user });
+  const delivery = confirmed.delivery;
+
+  return {
+    welcome: delivery.sent ? 'sent' : delivery.alreadySent ? 'already' : 'failed',
+    error: delivery.error || '',
+    to: cell_(confirmed.refreshed.values, 'email'),
+    cc: WELCOME_EMAIL_CC
+  };
+}
+
+function adminResendWelcomeApi_(params) {
+  const sheet = getSheet_();
+  const found = adminFindEnrolment_(sheet, params.reference);
+
+  if (enrolmentStatus_(found.values) !== 'confirmed') {
+    throw new Error('Confirm the payment before sending the welcome email.');
+  }
+
+  const delivery = sendWelcomeEmail_(sheet, found, { force: true });
+
+  return {
+    welcome: delivery.sent ? 'sent' : 'failed',
+    error: delivery.error || '',
+    to: cell_(found.values, 'email'),
+    cc: WELCOME_EMAIL_CC
+  };
+}
+
+function adminSaveNote_(params) {
+  const sheet = getSheet_();
+  const found = adminFindEnrolment_(sheet, params.reference);
+  const note = String(params.note == null ? '' : params.note).trim();
+
+  if (note.length > ADMIN_NOTE_MAX_LENGTH) {
+    throw new Error('Notes can be up to ' + ADMIN_NOTE_MAX_LENGTH + ' characters.');
+  }
+
+  setRowValue_(sheet, found.row, 'admin_notes', safeCellText_(note));
+
+  return { saved: true };
 }
 
 // ==================== ADMIN PANEL ====================
@@ -1911,25 +2438,11 @@ function confirmPayment_(sheet, data) {
     );
   }
 
-  setRowValue_(sheet, found.row, 'payment_status', 'Paid — manually confirmed');
-  setRowValue_(sheet, found.row, 'verified', 'Yes');
-  setRowValue_(sheet, found.row, 'confirmed_at', stamp_());
-  setRowValue_(sheet, found.row, 'confirmed_by', NOTIFY_EMAIL);
-
   const selarRef = String(data.selar_sale_reference || '').trim();
 
-  if (selarRef) {
-    setRowValue_(sheet, found.row, 'selar_sale_reference', safeCellText_(selarRef));
-  }
-
-  if (amountPaid) {
-    setRowValue_(sheet, found.row, 'amount_paid', Number(amountPaid));
-  }
-
-  SpreadsheetApp.flush();
-
-  const refreshed = findByReference_(sheet, data.reference);
-  const delivery = sendWelcomeEmail_(sheet, refreshed);
+  const confirmed = confirmEnrolment_(sheet, found, { amountPaid, selarRef });
+  const refreshed = confirmed.refreshed;
+  const delivery = confirmed.delivery;
 
   let message =
     `<p>${esc_(data.reference)} is now marked as paid.</p>`;
@@ -1949,12 +2462,41 @@ function confirmPayment_(sheet, data) {
   return page_('Payment confirmed', message);
 }
 
+/*
+ * Marks an enrolment paid and sends the student's welcome email. Shared by the
+ * emailed review link and the dashboard. Callers hold the script lock and have
+ * already checked the enrolment is not confirmed yet.
+ */
+function confirmEnrolment_(sheet, found, options) {
+  options = options || {};
+  const reference = cell_(found.values, 'reference');
+
+  setRowValue_(sheet, found.row, 'payment_status', 'Paid — manually confirmed');
+  setRowValue_(sheet, found.row, 'verified', 'Yes');
+  setRowValue_(sheet, found.row, 'confirmed_at', stamp_());
+  setRowValue_(sheet, found.row, 'confirmed_by', options.by || NOTIFY_EMAIL);
+
+  if (options.selarRef) {
+    setRowValue_(sheet, found.row, 'selar_sale_reference', safeCellText_(options.selarRef));
+  }
+
+  if (options.amountPaid) {
+    setRowValue_(sheet, found.row, 'amount_paid', Number(options.amountPaid));
+  }
+
+  SpreadsheetApp.flush();
+
+  const refreshed = findByReference_(sheet, reference);
+
+  return { refreshed, delivery: sendWelcomeEmail_(sheet, refreshed) };
+}
+
 // ==================== WELCOME EMAIL ====================
 
-function sendWelcomeEmail_(sheet, found) {
+function sendWelcomeEmail_(sheet, found, options) {
   if (!found) return { sent: false, error: 'Enrolment not found.' };
 
-  if (found.values[COL.welcome_email_sent_at - 1]) {
+  if (!(options && options.force) && found.values[COL.welcome_email_sent_at - 1]) {
     return { alreadySent: true };
   }
 
@@ -2428,6 +2970,8 @@ function retryMissingReviewEmails() {
 // ==================== SETUP ====================
 
 function setupIntegrationSecrets() {
+  requireAdmin_();
+
   const props = PropertiesService.getScriptProperties();
 
   let adminKey = props.getProperty(ADMIN_KEY_PROPERTY) || '';
@@ -2451,6 +2995,8 @@ function setupIntegrationSecrets() {
 }
 
 function getIntegrationUrls() {
+  requireAdmin_();
+
   const props = PropertiesService.getScriptProperties();
 
   const adminKey = props.getProperty(ADMIN_KEY_PROPERTY) || '';
@@ -3106,6 +3652,8 @@ function page_(title, body) {
 // ==================== PAID COHORT WELCOME REMINDER ====================
 
 function previewPaidCohortWelcomeReminder() {
+  requireAdmin_();
+
   const sheet = getSheet_();
   const recipients = [];
   const seen = {};
@@ -3150,6 +3698,8 @@ function previewPaidCohortWelcomeReminder() {
 
 
 function sendPaidCohortWelcomeReminder() {
+  requireAdmin_();
+
   const sheet = getSheet_();
   const groupUrl = configuredGroupUrl_();
 
@@ -3502,6 +4052,8 @@ function sendPaidCohortWelcomeReminder() {
  * to everyone in future.
  */
 function resetPaidCohortWelcomeReminderLog() {
+  requireAdmin_();
+
   PropertiesService
     .getScriptProperties()
     .deleteProperty(

@@ -1,106 +1,5 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import vm from 'node:vm';
-
-const source = fs.readFileSync(new URL('site_forms.gs', import.meta.url), 'utf8');
-const BOOK_ID = '1y5frsyZV52ciQ9AXP2_GKhnnCtXb5SrnfwBWV-4U2Sk';
-const enrolmentHeaders = [
-  'Timestamp', 'Reference', 'Full name', 'Email', 'WhatsApp', 'City and country',
-  'Background', 'Years experience', 'Stage of transition', 'What they want most',
-  'Biggest blocker', 'Preferred format', 'Availability', 'Can start',
-  'Heard about it via', 'Consent given', 'Amount', 'Payment status',
-  'Sender name', 'Transfer ref', 'Declared at', 'Verified by you',
-  'Squad transaction ref', 'Amount paid (NGN)', 'Paid at', 'Squad status'
-];
-// The live Waitlist tab, exactly as the earlier waitlist script created it.
-const liveWaitlistHeaders = ['Timestamp', 'Form', 'name', 'email', 'cohort', 'consent', 'type'];
-
-function makeSheet(name, headers) {
-  const rows = headers ? [headers.slice()] : [];
-  let columns = Math.max(26, headers ? headers.length : 0);
-  return {
-    name, rows,
-    get columns() { return columns; },
-    getName: () => name,
-    getLastRow: () => rows.length,
-    getLastColumn: () => (rows[0] ? rows[0].length : 0),
-    getMaxColumns: () => columns,
-    insertColumnsAfter(position, count) { assert.equal(position, columns); columns += count; },
-    setFrozenRows() {},
-    appendRow(row) { rows.push(row.slice()); },
-    getRange(row, column, height = 1, width = 1) {
-      assert.ok(column + width - 1 <= columns, 'write must fit available columns');
-      return {
-        getValues: () => Array.from({ length: height }, (_, r) =>
-          Array.from({ length: width }, (_, c) => rows[row + r - 1]?.[column + c - 1] ?? '')),
-        setValue(value) { rows[row - 1] ??= []; rows[row - 1][column - 1] = value; },
-        setValues(values) {
-          values.forEach((valuesRow, r) => {
-            rows[row + r - 1] ??= [];
-            valuesRow.forEach((value, c) => { rows[row + r - 1][column + c - 1] = value; });
-          });
-        }
-      };
-    }
-  };
-}
-
-function makeHarness({ enrolment = enrolmentHeaders, tabs = {}, squad = null } = {}) {
-  const emails = [];
-  const fetches = [];
-  const triggers = [];
-  const cacheStore = new Map();
-  const enrolmentSheet = makeSheet('BA Training', enrolment);
-  const named = { ...tabs };
-  const book = {
-    getSheetById(gid) { assert.equal(gid, 0); return enrolmentSheet; },
-    getSheetByName: (name) => named[name] || null,
-    insertSheet(name) { named[name] = makeSheet(name, null); return named[name]; }
-  };
-  const properties = { BA_BRIDGE_WHATSAPP_GROUP_URL: 'https://chat.whatsapp.com/TestGroup123' };
-  if (squad) properties.SQUAD_SECRET_KEY = squad.key;
-  let uuid = 0;
-  const context = {
-    SpreadsheetApp: { openById(id) { assert.equal(id, BOOK_ID); return book; }, flush() {} },
-    LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
-    Utilities: { getUuid: () => (uuid++ === 0 ? 'test-token' : `uuid-${uuid}`), formatDate: (date) => date.toISOString().slice(0, 19).replace('T', ' ') },
-    Session: { getScriptTimeZone: () => 'Africa/Lagos' },
-    PropertiesService: { getScriptProperties: () => ({
-      getProperty: (key) => properties[key] ?? null,
-      setProperty: (key, value) => { properties[key] = value; },
-    }) },
-    UrlFetchApp: {
-      fetch(url, options) {
-        fetches.push({ url, options });
-        const answer = squad.respond(url);
-        return { getResponseCode: () => answer.code, getContentText: () => JSON.stringify(answer.body ?? {}) };
-      }
-    },
-    CacheService: { getScriptCache: () => ({ get: (k) => cacheStore.get(k) ?? null, put: (k, v) => { cacheStore.set(k, v); } }) },
-    ScriptApp: {
-      getProjectTriggers: () => triggers,
-      deleteTrigger(t) { triggers.splice(triggers.indexOf(t), 1); },
-      newTrigger: (handler) => ({ timeBased: () => ({ everyMinutes: (n) => ({ create() { triggers.push({ getHandlerFunction: () => handler, every: n }); } }) }) }),
-    },
-    MailApp: {
-      getRemainingDailyQuota: () => 100,
-      // Supports both call styles used by the script: (to, subject, body) and ({...}).
-      sendEmail(...args) {
-        emails.push(args.length === 1 ? args[0] : { to: args[0], subject: args[1], body: args[2] });
-      }
-    },
-    ContentService: { MimeType: { JSON: 'json' }, createTextOutput: (text) => ({ text, setMimeType() { return this; } }) },
-    HtmlService: { createHtmlOutput: (html) => ({ html, setTitle() { return this; } }) },
-    console: { error() {}, log() {} },
-    Logger: { log() {} },
-    Date, JSON, String, Number, Array, Object, Math, RegExp, Error, encodeURIComponent, isNaN
-  };
-  vm.createContext(context);
-  vm.runInContext(source, context);
-  const post = (parameter) => context.doPost({ parameter });
-  const result = (output) => JSON.parse(output.text).result;
-  return { context, post, result, emails, enrolmentSheet, named, fetches, triggers, properties, cacheStore };
-}
+import { enrolmentHeaders, liveWaitlistHeaders, makeHarness, makeSheet } from './gas_harness.mjs';
 
 /* ── Waitlist: writes to the existing Waitlist tab, matched by heading ── */
 const liveRow = [new Date('2026-10-01'), 'ba-waitlist-feb-2027', 'Earlier Person', 'earlier@example.test', 'February 2027', 'Yes', 'BA Bridge February 2027 waitlist'];
@@ -186,8 +85,8 @@ const enrol = {
 };
 assert.equal(h.result(h.post(enrol)), 'ok');
 const sheet = h.enrolmentSheet;
-assert.equal(sheet.columns, 39);
-assert.equal(sheet.rows[0].length, 39);
+assert.equal(sheet.columns, 40);
+assert.equal(sheet.rows[0].length, 40);
 assert.deepEqual(sheet.rows[0].slice(0, 26), enrolmentHeaders);
 const row = sheet.rows[1];
 assert.equal(row[1], enrol.reference);

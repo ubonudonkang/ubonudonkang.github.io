@@ -71,7 +71,31 @@ Every form on the site is handled by one browser script, `js/forms.js`, and one 
 - `js/forms.js` reads the script's JSON answer when the browser allows it, so a rejected save shows the error message. If the browser blocks the answer (Apps Script's redirect can lack CORS headers) it resends once with `no-cors`; that send cannot be confirmed, so check the sheet after any deployment change.
 - Keep `scripts/site_forms.gs` as the **only** file in the Apps Script project. A second file declaring the same top-level names (for example `NOTIFY_EMAIL`) stops the whole project compiling, and the forms then fail without any visible error.
 
-**Deploying a change to the script:** paste `scripts/site_forms.gs` over the project's code, delete any other `.gs` files, run `checkSetup()` once, then *Deploy → Manage deployments → edit the existing deployment → New version* so the `/exec` URL does not change. Then submit one test form of each kind and confirm a row (and a notification email) arrives. The script's own secrets (admin key, Selar key, WhatsApp group link) stay in Script Properties, not in this repository.
+**Deploying a change to the script:** paste `scripts/site_forms.gs` over the project's code, delete any other `.gs` files (the dashboard's `admin` HTML file is the one exception; see Admin dashboard below), run `checkSetup()` once, then *Deploy → Manage deployments → edit the existing deployment → New version* so the `/exec` URL does not change. Then submit one test form of each kind and confirm a row (and a notification email) arrives. The script's own secrets (admin key, Selar key, WhatsApp group link) stay in Script Properties, not in this repository.
+
+## Admin dashboard
+
+`scripts/admin.html.txt` is a responsive dashboard for the owner: a sidebar on laptops, a bottom tab bar on phones, and pages for the overview (what needs attention, key figures, system health) and every enrolment (search, filters, a detail panel with notes, review email, payment confirmation and welcome-email resend). It is the second half of `scripts/site_forms.gs`: the page is an HTML file in the Apps Script project, and it calls one server function, `adminApi`. The older admin page that opens with a key in its address still works until the dashboard is accepted.
+
+**First deployment (about ten minutes):**
+
+1. In the Apps Script project, paste the new `scripts/site_forms.gs` over `Code.gs` (still the only `.gs` file).
+2. Add the page: *Files +* → *HTML*, name it exactly `admin`, and paste all of `scripts/admin.html.txt` into it.
+3. Run `checkSetup()` once and accept any new permission prompt.
+4. *Deploy → Manage deployments → edit the existing deployment → New version*. This keeps the `/exec` address that the website and Squad use, and adds the new `Admin notes` column to the BA Training sheet the first time it is needed.
+5. *Deploy → New deployment → Web app*, **Execute as: Me**, **Who has access: Only myself**. Copy its URL; that is the dashboard. Open it signed in as `ubonudonkang@gmail.com` (bookmark it, or *Add to Home Screen* on a phone).
+
+**Safe by construction:** the public deployment never serves the dashboard to a stranger. Even on the public address, every `adminApi` call checks that the signed-in Google account is the script owner, so a stranger who finds the page code still gets nothing. If Google ever shows the script no address, the check refuses. To let a second person in (untested; Google may hide their address from the script), list their address in the script property `BA_BRIDGE_ADMIN_EMAILS` (comma separated) and widen the dashboard deployment's access.
+
+**After every later change** to either file, both deployments need *New version* (the public one for the website, the dashboard one for the owner), because each deployment keeps its own version.
+
+**Notes:**
+
+- The page builds everything with `textContent`, never `innerHTML`, because names, emails and notes are typed by strangers. `scripts/test_admin_ui.mjs` includes a name written as an `<img onerror>` tag and checks that it shows as text.
+- Inside Apps Script the page runs in a frame, so its links (`#/enrolments/BAB-…`) work for navigation and the Back button but cannot be pasted as deep links into the dashboard's address.
+- The `Admin notes` column holds your notes about a person. Nothing reads it except the dashboard.
+- Dashboard buttons call the same code as the review-email link (confirming a payment sends the same welcome email, copied to the same addresses), so both can be used side by side.
+- Tests: `node scripts/test_admin_api.mjs` covers access, figures, filters, detail and actions against the Apps Script stand-in (`scripts/gas_harness.mjs`). `node scripts/test_admin_ui.mjs` drives the page in Chromium against the same code (layouts at six widths, keyboard use, focus handling, dark mode, accessibility with axe when `axe-core` is available) and skips itself when Playwright is missing.
 
 ## Reopening BA Bridge registration
 
