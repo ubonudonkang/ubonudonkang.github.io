@@ -85,7 +85,7 @@ Every form on the site is handled by one browser script, `js/forms.js`, and one 
 4. *Deploy → Manage deployments → edit the existing deployment → New version*. This keeps the `/exec` address that the website and Squad use, and adds the new `Admin notes` column to the BA Training sheet the first time it is needed.
 5. *Deploy → New deployment → Web app*, **Execute as: Me**, **Who has access: Only myself**. Copy its URL; that is the dashboard. Open it signed in as `ubonudonkang@gmail.com` (bookmark it, or *Add to Home Screen* on a phone).
 
-**Safe by construction:** the public deployment never serves the dashboard to a stranger. Even on the public address, every `adminApi` call checks that the signed-in Google account is the script owner, so a stranger who finds the page code still gets nothing. If Google ever shows the script no address, the check refuses. To let a second person in (untested; Google may hide their address from the script), list their address in the script property `BA_BRIDGE_ADMIN_EMAILS` (comma separated) and widen the dashboard deployment's access.
+**Safe by construction:** the public deployment never serves the dashboard to a stranger. Even on the public address, every `adminApi` call checks that the signed-in Google account is the account the script runs as, or one of the two addresses already set as `NOTIFY_EMAIL` and `SITE_NOTIFY_EMAIL` in the script, so a stranger who finds the page code still gets nothing. Google, not the page, says who is signed in. If Google ever shows the script no address, the check refuses. To let another account in (untested; Google may hide other people's addresses from the script), list it in the script property `BA_BRIDGE_ADMIN_EMAILS` (comma separated) and widen the dashboard deployment's access.
 
 **If the dashboard address does not show the dashboard:** open the dashboard deployment's address followed by `?action=app`, then match what you see.
 
@@ -94,7 +94,7 @@ Every form on the site is handled by one browser script, `js/forms.js`, and one 
 | `{"result":"error","message":"Unsupported action."}` | The deployment still runs an older version of the code | *Deploy → Manage deployments*, pencil on the dashboard deployment, *Version: New version*, *Deploy* |
 | `Dashboard page missing` | There is no HTML file called `admin` in the project | *Files +* → *HTML*, name it `admin`, paste `scripts/admin.html.txt`, then deploy a new version |
 | `Not authorised` and "Google did not tell the script which account" | The deployment is not set to *Execute as: Me* | Edit the deployment, set *Execute as: Me* and *Who has access: Only myself* |
-| `Not authorised` and "You are signed in as …" | The browser is using another Google account | Open the address in a private window, signed in only as the owner |
+| `Not authorised` and "You are signed in as …" | Google gave the script an address that is not the account it runs as and not one of the two owner addresses | If it is your account, add it to the script property `BA_BRIDGE_ADMIN_EMAILS` and reload; otherwise open the address in a private window signed in only as the owner |
 | Google's "unable to open the file" page | Wrong Google account, or a deployment that was deleted | As above; copy the address again from *Manage deployments* |
 | The plain `BA Bridge endpoint is online.` message without `?action=app` | Normal on the public deployment; on the dashboard deployment it means Google gave the script no account | Use the `?action=app` address to see which case applies |
 

@@ -57,6 +57,7 @@ function seeded(options = {}) {
   assert.match(anon.context.doGet({ parameter: { action: 'app' } }).html, /did not tell the script which account/, 'a missing address is explained');
   const wrongAccount = seeded({ user: { active: 'Stranger@Example.test' } }).context.doGet({ parameter: { action: 'app' } }).html;
   assert.match(wrongAccount, /signed in as <strong>stranger@example\.test<\/strong>/, 'a visitor is told which account they used');
+  assert.match(wrongAccount, /BA_BRIDGE_ADMIN_EMAILS/, 'and how the owner adds an account');
   assert.doesNotMatch(wrongAccount, /owner@example\.test/, 'and never who the owner is');
   const scripted = seeded({ user: { active: '<script>alert(1)</script>' } }).context.doGet({ parameter: { action: 'app' } }).html;
   assert.doesNotMatch(scripted, /<script>alert/, 'an address is shown as text, never as markup');
@@ -65,6 +66,19 @@ function seeded(options = {}) {
   const blind = seeded({ user: { active: '', effective: '' } });
   assert.equal(blind.api('overview').ok, false);
   assert.match(blind.context.doGet({ parameter: { action: 'app' } }).html, /Not authorised/);
+
+  // The owner may open the dashboard with another of their own addresses than the one the script runs as
+  // (the two already configured as NOTIFY_EMAIL and SITE_NOTIFY_EMAIL), but nobody else's.
+  for (const mine of ['ubonudonkang@gmail.com', 'UbonAnalyst@gmail.com']) {
+    const own = seeded({ user: { active: mine, effective: 'someone-else@example.test' } });
+    assert.equal(own.api('overview').ok, true, mine);
+    assert.equal(own.api('overview').user, mine.toLowerCase());
+    assert.notEqual(own.context.doGet({ parameter: {} }).file, undefined, 'the root opens the dashboard for them');
+  }
+  const lookalike = seeded({ user: { active: 'ubonudonkang@gmail.com.evil.test', effective: 'someone-else@example.test' } });
+  assert.equal(lookalike.api('overview').ok, false, 'a look-alike address is not the owner');
+  const blank = seeded({ user: { active: '', effective: 'ubonudonkang@gmail.com' } });
+  assert.equal(blank.api('overview').ok, false, 'an anonymous visitor never matches, even when the script runs as the owner');
 
   // Another Google account is refused unless the owner lists it.
   const visitor = seeded({ user: { active: 'Visitor@Example.test' } });

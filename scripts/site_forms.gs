@@ -925,10 +925,12 @@ function testSquadVerify() {
  * Access: deploy this project a second time as a web app, "Execute as: Me" and
  * "Who has access: Only myself", and open that deployment's URL. Only the signed-in
  * owner passes currentAdminEmail_; on the public deployment visitors are
- * anonymous, so the dashboard and its API refuse them. Other Google accounts can be
- * allowed with a comma-separated BA_BRIDGE_ADMIN_EMAILS script property, but only
- * where Google shows this script the visitor's address (it does not for many
- * consumer accounts), so the owner is the supported user.
+ * anonymous, so the dashboard and its API refuse them. The owner's own addresses
+ * are also accepted when Google reports them as the signed-in account: the two
+ * already configured above (NOTIFY_EMAIL, SITE_NOTIFY_EMAIL), because the account
+ * the script runs as is not always the one the owner opens the dashboard with.
+ * More accounts can be allowed with a comma-separated BA_BRIDGE_ADMIN_EMAILS
+ * script property, but only where Google shows this script the visitor's address.
  *
  * Every method returns plain data (strings, numbers, booleans): Apps Script cannot
  * pass Date objects to a page.
@@ -948,11 +950,16 @@ function currentAdminEmail_() {
   // An anonymous visitor has no address, so an empty match never counts.
   if (!active) return '';
 
-  const allowed = String(
-    PropertiesService.getScriptProperties().getProperty(ADMIN_EMAILS_PROPERTY) || ''
-  ).split(',').map(normalizeEmail_).filter(Boolean);
+  return active === effective || adminEmails_().indexOf(active) !== -1 ? active : '';
+}
 
-  return active === effective || allowed.indexOf(active) !== -1 ? active : '';
+// Addresses allowed in besides the account the script runs as. Google tells the script
+// who is signed in, so a visitor cannot claim one of these without being that account.
+function adminEmails_() {
+  return [NOTIFY_EMAIL, SITE_NOTIFY_EMAIL]
+    .concat(String(PropertiesService.getScriptProperties().getProperty(ADMIN_EMAILS_PROPERTY) || '').split(','))
+    .map(normalizeEmail_)
+    .filter(Boolean);
 }
 
 function requireAdmin_() {
@@ -978,7 +985,9 @@ function adminApp_() {
       'on the dashboard deployment (Execute as: Me, Who has access: Only myself).</p>' +
       (
         seen
-          ? '<p>You are signed in as <strong>' + esc_(seen) + '</strong>, which is not the owner\'s account.</p>'
+          ? '<p>You are signed in as <strong>' + esc_(seen) + '</strong>, which is not on the dashboard\'s list of owners. ' +
+            'If this is your account, add it to the script property BA_BRIDGE_ADMIN_EMAILS (Project Settings &gt; ' +
+            'Script Properties), then reload.</p>'
           : '<p>Google did not tell the script which account you are using. If you are the owner, open ' +
             'Deploy &gt; Manage deployments and check that this deployment is set to Execute as: Me.</p>'
       )
