@@ -315,22 +315,27 @@ function h(tag, props, ...kids) {
 }
 const $ = (id) => document.getElementById(id);
 const SVG = 'http://www.w3.org/2000/svg';
+// Icons are drawn from these shapes with createElementNS. Nothing here is ever turned into markup from a string:
+// Google's page frame can refuse that (Trusted Types), and a refused assignment left the whole dashboard blank.
 const ICONS = {
-  grid: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>',
-  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5"/><path d="M16 4.7a3.5 3.5 0 0 1 0 6.6M18.5 14.9c1.7.8 2.8 2.5 3 5.1"/>',
-  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
-  copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
-  close: '<path d="M6 6l12 12M18 6 6 18"/>',
-  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
-  moon: '<path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/>',
+  grid: [['rect', { x: 3.5, y: 3.5, width: 7, height: 7, rx: 1.5 }], ['rect', { x: 13.5, y: 3.5, width: 7, height: 7, rx: 1.5 }], ['rect', { x: 3.5, y: 13.5, width: 7, height: 7, rx: 1.5 }], ['rect', { x: 13.5, y: 13.5, width: 7, height: 7, rx: 1.5 }]],
+  users: [['circle', { cx: 9, cy: 8, r: 3.5 }], ['path', { d: 'M2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5' }], ['path', { d: 'M16 4.7a3.5 3.5 0 0 1 0 6.6M18.5 14.9c1.7.8 2.8 2.5 3 5.1' }]],
+  search: [['circle', { cx: 11, cy: 11, r: 7 }], ['path', { d: 'm20 20-3.5-3.5' }]],
+  copy: [['rect', { x: 9, y: 9, width: 11, height: 11, rx: 2 }], ['path', { d: 'M5 15V6a2 2 0 0 1 2-2h9' }]],
+  close: [['path', { d: 'M6 6l12 12M18 6 6 18' }]],
+  sun: [['circle', { cx: 12, cy: 12, r: 4 }], ['path', { d: 'M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4' }]],
+  moon: [['path', { d: 'M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z' }]],
 };
 function icon(name) {
   const svg = document.createElementNS(SVG, 'svg');
   svg.setAttribute('class', 'ico');
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('aria-hidden', 'true');
-  // The paths above are constants in this file, never data.
-  svg.innerHTML = ICONS[name] || '';
+  for (const [tag, attrs] of ICONS[name] || []) {
+    const shape = document.createElementNS(SVG, tag);
+    for (const [key, value] of Object.entries(attrs)) shape.setAttribute(key, String(value));
+    svg.append(shape);
+  }
   return svg;
 }
 const naira = (n) => '₦' + Number(n || 0).toLocaleString('en-NG');
@@ -366,6 +371,17 @@ function api(method, params) {
       .adminApi(method, params || {});
   });
 }
+
+/* ── Errors that would otherwise leave a blank page ──────── */
+function showFatal(err) {
+  const text = (err && err.message) || String(err || 'Something went wrong.');
+  const main = $('main');
+  if (!main || main.querySelector('.banner--fatal')) return;
+  const banner = h('div', { class: 'banner banner--fatal', role: 'alert' }, h('span', { text: `The dashboard hit a problem and stopped: ${text}` }), h('button', { class: 'btn btn--sm', type: 'button', onclick: () => location.reload(), text: 'Reload' }));
+  main.prepend(banner);
+}
+window.addEventListener('error', (event) => showFatal(event.error || event.message));
+window.addEventListener('unhandledrejection', (event) => showFatal(event.reason));
 
 /* ── State, theme, feedback ──────────────────────────────── */
 const state = { user: '', route: null, nonce: 0, overview: null, attention: 0, list: null, opener: null };
@@ -426,8 +442,10 @@ function hashFor(page, { ref, params } = {}) {
 }
 function go(page, options = {}) {
   const target = hashFor(page, options);
-  if (options.replace) history.replaceState(null, '', target); else location.hash = target;
-  if (options.replace) route();
+  if (!options.replace) { location.hash = target; return; }
+  // Changing filters or pages replaces the address instead of adding to Back history. If a frame refuses replaceState, location.replace does the same and fires hashchange.
+  try { history.replaceState(null, '', target); } catch (err) { location.replace(target); return; }
+  route();
 }
 const sameParams = (a, b) => JSON.stringify(Object.entries(a || {}).sort()) === JSON.stringify(Object.entries(b || {}).sort());
 
@@ -808,7 +826,7 @@ function boot() {
   const waitForUser = setInterval(() => { if (state.user) { $('user').textContent = state.user; clearInterval(waitForUser); } }, 300);
   setTimeout(() => clearInterval(waitForUser), 15000);
 }
-boot();
+try { boot(); } catch (err) { showFatal(err); }
 })();
 </script>
 </body>

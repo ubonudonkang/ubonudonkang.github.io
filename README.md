@@ -102,7 +102,7 @@ Every form on the site is handled by one browser script, `js/forms.js`, and one 
 
 **Notes:**
 
-- The page builds everything with `textContent`, never `innerHTML`, because names, emails and notes are typed by strangers. `scripts/test_admin_ui.mjs` includes a name written as an `<img onerror>` tag and checks that it shows as text.
+- The page builds everything with `textContent` and `createElementNS`, never `innerHTML`, because names, emails and notes are typed by strangers, and because Google's page frame can refuse string-to-HTML assignments (an earlier version drew its icons that way and showed a blank page). The test serves the page under that same rule. If a script error ever does happen, the page says so on screen instead of staying blank. `scripts/test_admin_ui.mjs` includes a name written as an `<img onerror>` tag and checks that it shows as text.
 - Inside Apps Script the page runs in a frame, so its links (`#/enrolments/BAB-…`) work for navigation and the Back button but cannot be pasted as deep links into the dashboard's address.
 - The `Admin notes` column holds your notes about a person. Nothing reads it except the dashboard.
 - Dashboard buttons call the same code as the review-email link (confirming a payment sends the same welcome email, copied to the same addresses), so both can be used side by side.

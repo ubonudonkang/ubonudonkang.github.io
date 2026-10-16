@@ -73,14 +73,15 @@ function populate(h) {
 function serve(html) {
   const server = http.createServer((req, res) => {
     if (req.url.startsWith('/fonts/')) { res.writeHead(404); res.end(); return; }
-    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    // Google's frame can refuse string-to-HTML assignments (innerHTML and friends); serving the page under the same rule keeps it honest.
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'content-security-policy': "require-trusted-types-for 'script'" });
     res.end(html);
   });
   return new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve({ server, url: `http://127.0.0.1:${server.address().port}/` })));
 }
 
 // Stands in for google.script.run. Calls go to `backend`, a harness.
-async function open(browser, backend, { width = 1280, height = 900, scheme = 'light', url, failures = {}, delays = {} } = {}) {
+async function open(browser, backend, { width = 1280, height = 900, scheme = 'light', url, failures = {}, delays = {}, before = null } = {}) {
   const context = await browser.newContext({ viewport: { width, height }, colorScheme: scheme, reducedMotion: 'reduce', permissions: [] });
   await context.route('**/*', (route) => (route.request().url().startsWith('http://127.0.0.1') ? route.continue() : route.abort()));
   const page = await context.newPage();
@@ -108,6 +109,7 @@ async function open(browser, backend, { width = 1280, height = 900, scheme = 'li
     });
     window.google = { script: { run: make() } };
   });
+  if (before) await page.addInitScript(before);
   await page.goto(url);
   return { page, context, calls, errors };
 }
@@ -401,6 +403,29 @@ try {
     }
   } else {
     console.log('axe-core is not installed here; skipping the accessibility checks.');
+  }
+
+  /* ── A frame that refuses history.replaceState: filters and search still work ── */
+  {
+    const { page, errors } = await open(browser, owner, { url, before: () => { history.replaceState = () => { throw new DOMException('refused', 'SecurityError'); }; } });
+    await page.evaluate(() => { location.hash = '#/enrolments'; });
+    await page.waitForSelector('tbody tr');
+    await page.locator('.seg button', { hasText: 'Needs confirmation' }).click();
+    await page.waitForFunction(() => document.querySelectorAll('tbody tr').length === 2);
+    assert.match(page.url(), /status=review/);
+    assert.deepEqual(errors, []);
+    await page.context().close();
+  }
+
+  /* ── A script error is shown on the page, not left as a blank screen ── */
+  {
+    const { page } = await open(browser, owner, { url });
+    await page.waitForSelector('.kpi');
+    await page.evaluate(() => { setTimeout(() => { throw new Error('boom from the test'); }); });
+    await page.waitForSelector('.banner--fatal');
+    assert.match(await page.locator('.banner--fatal').textContent(), /The dashboard hit a problem and stopped: boom from the test/);
+    assert.equal(await page.locator('.banner--fatal').count(), 1);
+    await page.context().close();
   }
 
   /* ── Errors: a failing server, and a visitor who is not the owner ── */
