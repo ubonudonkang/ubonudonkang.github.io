@@ -408,6 +408,20 @@ function getFormTab_(def) {
   return { sheet, header };
 }
 
+// A cohort such as "February 2027" is turned into a date by Google Sheets when it is typed or imported, so read it back as the same words.
+function cohortText_(value) {
+  if (value instanceof Date) {
+    // The cell holds the first of that month at midnight in the sheet's time zone; noon keeps a small time-zone difference from landing on the month before.
+    return Utilities.formatDate(
+      new Date(value.getTime() + 12 * 60 * 60 * 1000),
+      Session.getScriptTimeZone(),
+      'MMMM yyyy'
+    );
+  }
+
+  return String(value == null ? '' : value).replace(/^'/, '').trim();
+}
+
 function formRowExists_(tab, def, key) {
   if (tab.sheet.getLastRow() < 2) return false;
 
@@ -423,7 +437,9 @@ function formRowExists_(tab, def, key) {
     .some(row => {
       const probe = {};
       def.dedupeFields.forEach(name => {
-        probe[name] = String(row[index[name]] == null ? '' : row[index[name]]).replace(/^'/, '');
+        probe[name] = name === 'cohort'
+          ? cohortText_(row[index[name]])
+          : String(row[index[name]] == null ? '' : row[index[name]]).replace(/^'/, '');
       });
       return def.dedupeKey(probe) === key;
     });
@@ -1220,7 +1236,7 @@ function adminOverview_() {
   const byCohort = {};
 
   waitlist.rows.forEach(row => {
-    const cohort = String(cohortAt > -1 ? row[cohortAt] : '').trim() || 'Not given';
+    const cohort = (cohortAt > -1 ? cohortText_(row[cohortAt]) : '') || 'Not given';
     byCohort[cohort] = (byCohort[cohort] || 0) + 1;
   });
 

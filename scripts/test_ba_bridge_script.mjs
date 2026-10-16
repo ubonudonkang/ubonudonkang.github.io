@@ -25,6 +25,14 @@ assert.equal(waitlistTab.rows.length, 3);
 assert.equal(w.emails.length, 1);
 assert.equal(w.result(w.post({ ...signup, email: 'earlier@example.test' })), 'ok', 'a signup already in the sheet is skipped');
 assert.equal(waitlistTab.rows.length, 3);
+// Google Sheets turns "February 2027", typed or imported, into a date. A repeat must still be recognised.
+const february = new Date('2027-01-31T23:00:00Z'); // 1 February 2027, midnight in Lagos
+waitlistTab.rows[1][4] = february;
+waitlistTab.rows[2][4] = february;
+assert.equal(w.result(w.post({ ...signup, email: 'ada@example.test' })), 'ok');
+assert.equal(w.result(w.post({ ...signup, email: 'earlier@example.test' })), 'ok');
+assert.equal(waitlistTab.rows.length, 3, 'a signup whose cohort the sheet turned into a date is still a repeat');
+assert.equal(w.emails.length, 1, 'and is not announced again');
 // The same person can join a later cohort's waitlist.
 assert.equal(w.result(w.post({ ...signup, form_name: 'ba-waitlist-may-2027', cohort: 'May 2027' })), 'ok');
 assert.equal(waitlistTab.rows.length, 4);

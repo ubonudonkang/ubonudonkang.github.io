@@ -196,6 +196,11 @@ function seeded(options = {}) {
   postJson(h, webhook('UU1-SESS0001')); postJson(h, webhook('UU1-SESS0002'));
   o = h.data('overview');
   assert.deepEqual(o.waitlist, { total: 3, byCohort: { 'February 2027': 2, 'May 2027': 1 } });
+  // Google Sheets turns a typed or imported "February 2027" into a date; the overview must still call it February 2027.
+  const cohortColumn = h.named.Waitlist.rows[0].indexOf('cohort');
+  h.named.Waitlist.rows[1][cohortColumn] = new Date('2027-01-31T23:00:00Z'); // 1 February 2027, midnight in Lagos
+  h.named.Waitlist.rows[3][cohortColumn] = new Date('2027-04-30T23:00:00Z'); // 1 May 2027
+  assert.deepEqual(h.data('overview').waitlist, { total: 3, byCohort: { 'February 2027': 2, 'May 2027': 1 } });
   assert.equal(o.enquiries.total, 1);
   assert.deepEqual(o.sessions, { total: 2, paid: 1, review: 1, revenue: 15000 });
   assert.ok(o.attention.some((a) => a.type === 'session'));

@@ -79,7 +79,13 @@ export function makeHarness({ enrolment = enrolmentHeaders, tabs = {}, squad = n
   const context = {
     SpreadsheetApp: { openById(id) { assert.equal(id, BOOK_ID); return book; }, flush() {} },
     LockService: { getScriptLock: () => ({ waitLock() { locks.count++; }, releaseLock() {} }) },
-    Utilities: { getUuid: () => (uuid++ === 0 ? 'test-token' : `uuid-${uuid}`), formatDate: (date) => date.toISOString().slice(0, 19).replace('T', ' ') },
+    Utilities: {
+      getUuid: () => (uuid++ === 0 ? 'test-token' : `uuid-${uuid}`),
+      // 'MMMM yyyy' is the month and year in words; any other pattern gets an ISO-style stamp.
+      formatDate: (date, zone, pattern) => (pattern === 'MMMM yyyy'
+        ? new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: zone }).format(date)
+        : date.toISOString().slice(0, 19).replace('T', ' ')),
+    },
     Session: {
       getScriptTimeZone: () => 'Africa/Lagos',
       getActiveUser: () => ({ getEmail: () => who.active }),
