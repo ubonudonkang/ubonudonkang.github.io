@@ -32,10 +32,11 @@ resources/index.html           Paid and free resources
 contact/index.html             Contact details and enquiry form
 ba-training/index.html         BA Bridge Cohort: page-specific styles and February 2027 waitlist
 css/site.css                   Design system shared by every page (starts with the @font-face rules)
-fonts/                         Self-hosted Inter, Instrument Serif and JetBrains Mono (latin + latin-ext woff2)
+fonts/                         Self-hosted Inter, Instrument Serif and JetBrains Mono (latin + latin-ext woff2), plus inter-naira.woff2: the naira sign on its own (1 KB)
 js/site.js                     Dock, WAT clock, email copy (press C), scroll reveals, testimonials, draggable case file, PDF viewer
 js/forms.js                    The one script for the contact, waitlist and BA enrolment forms (and the Apps Script endpoint they post to)
 scripts/site_forms.gs          The one Apps Script web app behind those forms: enrolment, waitlist and contact tabs in one workbook
+scripts/build_assets.mjs        The build step: inlines css/site.css into every page and stamps script versions (run it after editing css/site.css, js/site.js or js/forms.js)
 img/ubon-udonkang.jpg          Portrait used on the home and About pages
 favicon.ico                    Favicon (16, 32, 48 px); browsers and Google request /favicon.ico
 img/icon-192.png, icon-512.png Larger icons, listed in site.webmanifest
@@ -82,7 +83,7 @@ node scripts/open_ba_registration.mjs --cohort "February 2027" --start 2027-02-0
 
 The values above show the syntax; the dates and amount are **examples**, not confirmed February settings. The command validates them and lists the files it would change. Add `--apply` after checking the preview. It edits local files only. It restores the enrolment form, sets the price, cohort and browser session keys on the form, updates the BA Training copy and structured data, updates sitewide buttons and cohort cards, moves the homepage card below the hero, updates the Apps Script source's expected price, and refreshes sitemap dates. Without `--apps-script` the form uses the endpoint in `js/forms.js`; pass it only to point this cohort at a different deployment.
 
-**Before publishing:** deploy the updated `scripts/site_forms.gs` as a new version of the Apps Script web app (the command sets its `EXPECTED_AMOUNT`); put the live public key in `js/forms.js`; check Squad's webhook and redirect URLs (below); and make one sandbox payment end to end. Run `node scripts/test_open_registration.mjs`, `node scripts/test_selar_flows.mjs`, `node scripts/test_forms.mjs` and `node scripts/test_ba_bridge_script.mjs`, review the diff, then publish the website. No command here deploys Apps Script, changes Squad, or publishes the site. Squad's payment report makes the Apps Script verify the payment and email you the review link; compare it with the Squad dashboard before pressing Confirm.
+**Before publishing:** deploy the updated `scripts/site_forms.gs` as a new version of the Apps Script web app (the command sets its `EXPECTED_AMOUNT`); put the live public key in `js/forms.js`; check Squad's webhook and redirect URLs (below); and make one sandbox payment end to end. Run `node scripts/test_open_registration.mjs`, `node scripts/test_selar_flows.mjs`, `node scripts/test_forms.mjs`, `node scripts/test_assets.mjs` and `node scripts/test_ba_bridge_script.mjs`, review the diff, then publish the website. No command here deploys Apps Script, changes Squad, or publishes the site. Squad's payment report makes the Apps Script verify the payment and email you the review link; compare it with the Squad dashboard before pressing Confirm.
 
 ## Closing BA Bridge registration again
 
@@ -114,8 +115,10 @@ BA Bridge enrolments and the 1:1 session are paid through Squad by GTCO (card, b
 - **`sitemap.xml`** lists every public page. Add new pages to it and submit it in Google Search Console. **`robots.txt`** points to the sitemap and keeps `/docs/` out of search.
 - **`404.html`** is the page GitHub Pages shows for missing URLs.
 - **Share image:** `img/og-card.jpg` (1200×630, about 80 KB). **Home-screen icon:** `img/apple-touch-icon.png`.
-- **Stylesheet:** `css/site.css` is the file to edit, but pages don't link to it: the build step (`seo.py`) copies it, lightly minified, into a `<style data-inline="site.css">` block in every page. GitHub Pages only lets browsers cache files for 10 minutes, so a separate stylesheet saved little and held up the first paint. After changing `css/site.css`, re-run the build so every page picks it up.
-- **Cache busting:** pages load `/js/site.js?v=…`; the build sets `v=` from the file's contents, so browsers never pair a new page with an old cached script.
+- **Stylesheet:** `css/site.css` is the file to edit, but pages don't link to it: `node scripts/build_assets.mjs` copies it, lightly minified, into a `<style data-inline="site.css">` block in every page. GitHub Pages only lets browsers cache files for 10 minutes, so a separate stylesheet saved little and held up the first paint. After changing `css/site.css`, run the build so every page picks it up (`node scripts/build_assets.mjs --check` lists pages that are out of date, and `node scripts/test_assets.mjs` fails if any are). The BA Workbench is a self-contained tool with its own styles and is not touched.
+- **Cache busting:** pages load `/js/site.js?v=…` and `/js/forms.js?v=…`; the same build sets each `v=` from the file's contents, so browsers never pair a new page with an old cached script.
+- **Fonts:** the naira sign (₦) is the only character the site uses from the latin-ext range, and the 85 KB Inter latin-ext file used to download on every page that showed a price just to draw it. It now comes from `fonts/inter-naira.woff2`, and the big latin-ext faces no longer claim U+20A6 (the other latin-ext characters, for example accented names, still load them). To rebuild the small file: `pyftsubset fonts/inter-latin-ext.woff2 --unicodes=U+20A6 --flavor=woff2 --layout-features='' --output-file=fonts/inter-naira.woff2` (needs `pip install fonttools brotli`).
+- **Accessibility and speed checks:** after larger changes, run an axe scan and Lighthouse against a local server (`python3 -m http.server`). The last scan found no violations on 11 pages in both themes at phone and desktop widths, and the home page scored 96 for performance on Lighthouse's simulated mobile profile. `test_assets.mjs` keeps the text colours fixed in that scan above 4.5 : 1.
 
 ## Design notes
 
