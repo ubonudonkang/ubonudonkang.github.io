@@ -96,6 +96,9 @@ Every form on the site is handled by one browser script, `js/forms.js`, and one 
 | `Not authorised` and "Google did not tell the script which account" | The deployment is not set to *Execute as: Me* | Edit the deployment, set *Execute as: Me* and *Who has access: Only myself* |
 | `Not authorised` and "You are signed in as …" | Google gave the script an address that is not the account it runs as and not one of the two owner addresses | If it is your account, add it to the script property `BA_BRIDGE_ADMIN_EMAILS` and reload; otherwise open the address in a private window signed in only as the owner |
 | Google's "unable to open the file" page | Wrong Google account, or a deployment that was deleted | As above; copy the address again from *Manage deployments* |
+| The dashboard frame is there but empty, with no "Build 3" label in the sidebar corner | The `admin` file in the project, or the deployment's version, is older than `scripts/admin.html.txt` | Paste the current file into `admin`, save it (Ctrl+S), then edit the dashboard deployment to *New version* |
+| "Starting the dashboard..." that never goes away | The page's script was blocked or never ran | Reload in a private window; send a screenshot |
+| A red line starting "The dashboard could not start" or "The dashboard hit a problem and stopped" | The page's script failed; the line says why (a half-pasted file shows as a syntax error with a line number) | Paste the whole file again; if it persists, send the line |
 | The plain `BA Bridge endpoint is online.` message without `?action=app` | Normal on the public deployment; on the dashboard deployment it means Google gave the script no account | Use the `?action=app` address to see which case applies |
 
 **After every later change** to either file, both deployments need *New version* (the public one for the website, the dashboard one for the owner), because each deployment keeps its own version.

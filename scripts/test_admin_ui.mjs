@@ -70,11 +70,11 @@ function populate(h) {
 }
 
 // A tiny server for the page. The page is whatever doGet returns, as the live deployment would serve it.
-function serve(html) {
+function serve(html, policy = "require-trusted-types-for 'script'") {
   const server = http.createServer((req, res) => {
     if (req.url.startsWith('/fonts/')) { res.writeHead(404); res.end(); return; }
     // Google's frame can refuse string-to-HTML assignments (innerHTML and friends); serving the page under the same rule keeps it honest.
-    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'content-security-policy': "require-trusted-types-for 'script'" });
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'content-security-policy': policy });
     res.end(html);
   });
   return new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve({ server, url: `http://127.0.0.1:${server.address().port}/` })));
@@ -415,6 +415,37 @@ try {
     assert.match(page.url(), /status=review/);
     assert.deepEqual(errors, []);
     await page.context().close();
+  }
+
+  /* ── The page says what is wrong when its own script cannot run, and which build it is ── */
+  {
+    const good = await open(browser, owner, { url });
+    await good.page.waitForSelector('.kpi');
+    assert.equal(await good.page.locator('#boot').count(), 0, 'the startup line goes away once the dashboard is drawn');
+    assert.equal(await good.page.locator('.side__build').textContent(), 'Build 3');
+    await good.context.close();
+
+    // The dashboard script has a syntax error (for example a file that was pasted incompletely).
+    const broken = await serve(html.replace("'use strict';", "'use strict'; const = ;"));
+    const syntax = await open(browser, owner, { url: broken.url });
+    await syntax.page.waitForFunction(() => /could not start/.test(document.getElementById('boot').textContent));
+    assert.match(await syntax.page.locator('#boot').textContent(), /The dashboard could not start: .*SyntaxError.*\(line \d+\)/);
+    assert.equal(await syntax.page.locator('.side__build').textContent(), 'Build 3', 'the build stamp is static, so it shows even then');
+    await syntax.context.close();
+    broken.server.close();
+
+    // The page's security rule lets the first small script run but blocks the dashboard script.
+    const { createHash } = await import('node:crypto');
+    const early = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+    const sealed = await serve(html, `script-src 'sha256-${createHash('sha256').update(early).digest('base64')}'`);
+    const blocked = await open(browser, owner, { url: sealed.url });
+    await blocked.page.waitForFunction(() => /blocked by a security rule/.test(document.getElementById('boot').textContent));
+    assert.match(await blocked.page.locator('#boot').textContent(), /script-src/);
+    await blocked.context.close();
+    sealed.server.close();
+
+    // The old page (no startup line, no build stamp) is what a stale deployment would still serve; this one never shows blank.
+    assert.match(html, /Starting the dashboard/);
   }
 
   /* ── A script error is shown on the page, not left as a blank screen ── */
