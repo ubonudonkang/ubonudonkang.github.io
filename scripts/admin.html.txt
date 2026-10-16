@@ -70,7 +70,7 @@ a { color: var(--accent-text); }
 .skip { position: absolute; left: 12px; top: -60px; z-index: 100; padding: 10px 14px; background: var(--accent); color: var(--on-accent); border-radius: 8px; }
 .skip:focus { top: 12px; }
 
-/* ── Shell ───────────────────────────────────────────────── */
+/* -- Shell ------------------------------------------------- */
 .app { display: grid; grid-template-columns: 244px minmax(0, 1fr); min-height: 100vh; min-height: 100dvh; }
 .side { position: sticky; top: 0; height: 100vh; height: 100dvh; display: flex; flex-direction: column; gap: 22px; padding: 22px 14px 16px; background: var(--surface); border-right: 1px solid var(--line); }
 .brand { display: flex; align-items: center; gap: 10px; padding: 0 10px; }
@@ -87,6 +87,7 @@ a { color: var(--accent-text); }
 .side__build { font-size: 12px; }
 .boot { padding: 24px 0; color: var(--ink-3); }
 .boot--bad { color: var(--bad-fg); font-weight: 500; }
+.boot__src { margin: 10px 0 0; font: 400 12px/1.4 var(--mono); color: var(--ink-3); white-space: pre-wrap; overflow-wrap: anywhere; }
 .ico { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 .top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 14px; padding: 16px 32px; background: var(--bg); border-bottom: 1px solid transparent; }
@@ -112,7 +113,7 @@ main { padding: 6px 32px 64px; max-width: 1240px; outline: none; }
   .tabbar .nav__count { position: absolute; top: 2px; left: calc(50% + 6px); margin: 0; }
 }
 
-/* ── Controls ────────────────────────────────────────────── */
+/* -- Controls ---------------------------------------------- */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); color: var(--ink); font-weight: 500; cursor: pointer; text-decoration: none; }
 .btn:hover { background: var(--surface-2); }
 .btn[disabled] { opacity: 0.55; cursor: progress; }
@@ -137,7 +138,7 @@ main { padding: 6px 32px 64px; max-width: 1240px; outline: none; }
 .empty { padding: 28px 20px; text-align: center; color: var(--ink-3); }
 .banner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 12px 0; padding: 12px 16px; border-radius: 12px; background: var(--bad-bg); color: var(--bad-fg); font-weight: 500; }
 
-/* ── Overview ────────────────────────────────────────────── */
+/* -- Overview ---------------------------------------------- */
 /* Four main figures, then three smaller ones; two columns once there is less room. */
 .kpis { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; margin: 8px 0 20px; }
 .kpi { grid-column: span 3; display: block; padding: 16px 18px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); color: inherit; text-decoration: none; }
@@ -176,7 +177,7 @@ a.kpi:hover { border-color: var(--line-2); transform: translateY(-1px); }
 .pill--warn { background: var(--await-bg); color: var(--await-fg); }
 .pill--bad { background: var(--bad-bg); color: var(--bad-fg); }
 
-/* ── Lists ───────────────────────────────────────────────── */
+/* -- Lists ------------------------------------------------- */
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 6px 0 16px; }
 .toolbar .search { width: min(360px, 100%); }
 .toolbar .search input { height: 42px; }
@@ -216,7 +217,7 @@ td.cell-main { position: relative; }
   td.num { text-align: left; }
 }
 
-/* ── Drawer and dialogs ──────────────────────────────────── */
+/* -- Drawer and dialogs ------------------------------------ */
 .scrim { position: fixed; inset: 0; z-index: 40; background: rgba(8, 8, 10, 0.45); }
 .drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 41; display: flex; flex-direction: column; width: min(560px, 100vw); background: var(--surface); border-left: 1px solid var(--line); box-shadow: -20px 0 50px -20px rgba(0, 0, 0, 0.35); outline: none; animation: slide 200ms ease-out both; }
 .drawer__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 20px 22px 14px; border-bottom: 1px solid var(--line); }
@@ -272,7 +273,21 @@ td.cell-main { position: relative; }
     box.className = 'boot boot--bad';
     box.textContent = text;
   }
-  window.addEventListener('error', function (e) { say('The dashboard could not start: ' + (e.message || 'script error') + (e.lineno ? ' (line ' + e.lineno + ')' : '')); });
+  window.addEventListener('error', function (e) {
+    say('The dashboard could not start: ' + (e.message || 'script error') + (e.lineno ? ' (line ' + e.lineno + ', column ' + (e.colno || '?') + ')' : ''));
+    // Show the text of that line exactly as this page received it; a copy that was altered on the way shows up here.
+    try {
+      var box = document.getElementById('boot'), main = '';
+      for (var i = 0; i < document.scripts.length; i++) if (document.scripts[i].text.length > main.length) main = document.scripts[i].text;
+      var line = main.split('\n')[(e.lineno || 0) - 1], col = e.colno || 1;
+      if (box && line) {
+        var src = document.createElement('pre');
+        src.className = 'boot__src';
+        src.textContent = 'Received, line ' + e.lineno + ': ' + line.slice(Math.max(0, col - 70), col + 90);
+        box.appendChild(src);
+      }
+    } catch (ignore) { /* the message above is still shown */ }
+  });
   document.addEventListener('securitypolicyviolation', function (e) { say('The page was blocked by a security rule: ' + e.violatedDirective + ' (' + (e.blockedURI || 'inline') + ')'); });
 })();
 </script>
@@ -285,7 +300,7 @@ td.cell-main { position: relative; }
     <nav class="nav" id="nav" aria-label="Main"></nav>
     <div class="side__foot">
       <span class="side__user" id="user"></span>
-      <span class="side__build">Build 3</span>
+      <span class="side__build">Build 4</span>
       <button class="btn btn--sm" type="button" id="theme-side"></button>
     </div>
   </aside>
@@ -313,7 +328,7 @@ td.cell-main { position: relative; }
 (() => {
 'use strict';
 
-/* ── Helpers ─────────────────────────────────────────────── */
+/* -- Helpers ----------------------------------------------- */
 // Builds DOM from data. Text always goes in as a text node, so nothing a visitor typed can become markup.
 function h(tag, props, ...kids) {
   const el = document.createElement(tag);
@@ -356,15 +371,15 @@ function icon(name) {
   }
   return svg;
 }
-const naira = (n) => '₦' + Number(n || 0).toLocaleString('en-NG');
-const plural = (n, one, many) => `${n} ${n === 1 ? one : many || one + 's'}`;
+const naira = (n) => '\u20A6' + Number(n || 0).toLocaleString('en-NG');
+const plural = (n, one, many) => ('' + (n) + ' ' + (n === 1 ? one : many || one + 's'));
 function ago(ms, fallback) {
   if (!ms) return fallback || '';
   const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
   if (s < 60) return 'just now';
-  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
-  if (s < 86400 * 14) return `${Math.floor(s / 86400)} d ago`;
+  if (s < 3600) return ('' + (Math.floor(s / 60)) + ' min ago');
+  if (s < 86400) return ('' + (Math.floor(s / 3600)) + ' h ago');
+  if (s < 86400 * 14) return ('' + (Math.floor(s / 86400)) + ' d ago');
   return fallback || new Date(ms).toISOString().slice(0, 10);
 }
 const when = (ms, text) => h('time', { datetime: ms ? new Date(ms).toISOString() : null, title: text || null, text: ago(ms, text) });
@@ -373,7 +388,7 @@ const stash = {
   set: (key, value) => { try { localStorage.setItem(key, value); } catch (e) { /* storage can be blocked in a framed page */ } },
 };
 
-/* ── Server calls ────────────────────────────────────────── */
+/* -- Server calls ------------------------------------------ */
 function api(method, params) {
   return new Promise((resolve, reject) => {
     if (!window.google || !google.script || !google.script.run) {
@@ -390,18 +405,18 @@ function api(method, params) {
   });
 }
 
-/* ── Errors that would otherwise leave a blank page ──────── */
+/* -- Errors that would otherwise leave a blank page -------- */
 function showFatal(err) {
   const text = (err && err.message) || String(err || 'Something went wrong.');
   const main = $('main');
   if (!main || main.querySelector('.banner--fatal')) return;
-  const banner = h('div', { class: 'banner banner--fatal', role: 'alert' }, h('span', { text: `The dashboard hit a problem and stopped: ${text}` }), h('button', { class: 'btn btn--sm', type: 'button', onclick: () => location.reload(), text: 'Reload' }));
+  const banner = h('div', { class: 'banner banner--fatal', role: 'alert' }, h('span', { text: ('The dashboard hit a problem and stopped: ' + (text)) }), h('button', { class: 'btn btn--sm', type: 'button', onclick: () => location.reload(), text: 'Reload' }));
   main.prepend(banner);
 }
 window.addEventListener('error', (event) => showFatal(event.error || event.message));
 window.addEventListener('unhandledrejection', (event) => showFatal(event.reason));
 
-/* ── State, theme, feedback ──────────────────────────────── */
+/* -- State, theme, feedback -------------------------------- */
 const state = { user: '', route: null, nonce: 0, overview: null, attention: 0, list: null, opener: null };
 
 function applyTheme(theme) {
@@ -438,11 +453,11 @@ async function copy(text, label) {
     try { document.execCommand('copy'); } catch (err) { toast('Could not copy. Select the text and copy it.', true); field.remove(); return; }
     field.remove();
   }
-  toast(`${label || 'Text'} copied`);
+  toast(('' + (label || 'Text') + ' copied'));
 }
-const copyButton = (text, label) => h('button', { class: 'icon-btn copy', type: 'button', 'aria-label': `Copy ${label}`, onclick: () => copy(text, label) }, icon('copy'));
+const copyButton = (text, label) => h('button', { class: 'icon-btn copy', type: 'button', 'aria-label': ('Copy ' + (label)), onclick: () => copy(text, label) }, icon('copy'));
 
-/* ── Routing: the address after the # decides what is shown ── */
+/* -- Routing: the address after the # decides what is shown -- */
 const NAV = [
   { id: 'overview', label: 'Overview', icon: 'grid' },
   { id: 'enrolments', label: 'Enrolments', icon: 'users' },
@@ -456,7 +471,7 @@ function parseRoute() {
 }
 function hashFor(page, { ref, params } = {}) {
   const query = new URLSearchParams(Object.entries(params || {}).filter(([, v]) => v !== '' && v != null && v !== 'all')).toString();
-  return `#/${page}${ref ? '/' + encodeURIComponent(ref) : ''}${query ? '?' + query : ''}`;
+  return ('#/' + (page) + (ref ? '/' + encodeURIComponent(ref) : '') + (query ? '?' + query : ''));
 }
 function go(page, options = {}) {
   const target = hashFor(page, options);
@@ -469,12 +484,12 @@ const sameParams = (a, b) => JSON.stringify(Object.entries(a || {}).sort()) === 
 
 function renderNav() {
   const link = (item, extra) => h('a', { href: hashFor(item.id), 'aria-current': state.route && state.route.page === item.id ? 'page' : null }, icon(item.icon), item.label,
-    item.id === 'enrolments' && state.attention ? h('span', { class: 'nav__count', 'aria-label': `${plural(state.attention, 'item')} need attention`, text: String(state.attention) }) : null);
+    item.id === 'enrolments' && state.attention ? h('span', { class: 'nav__count', 'aria-label': ('' + (plural(state.attention, 'item')) + ' need attention'), text: String(state.attention) }) : null);
   $('nav').replaceChildren(...NAV.map((n) => link(n)));
   $('tabbar').replaceChildren(...NAV.map((n) => link(n)));
 }
 
-/* ── Pieces shared by the pages ──────────────────────────── */
+/* -- Pieces shared by the pages ---------------------------- */
 const STATUS = {
   awaiting: { label: 'Awaiting payment', cls: 'awaiting' },
   review: { label: 'Needs confirmation', cls: 'review' },
@@ -483,11 +498,11 @@ const STATUS = {
 function statusBadge(item) {
   if (item.status === 'review' && /amount needs review/i.test(item.paymentStatus || '')) return h('span', { class: 'badge badge--bad', text: 'Check the amount' });
   const s = STATUS[item.status] || STATUS.awaiting;
-  return h('span', { class: `badge badge--${s.cls}`, text: s.label });
+  return h('span', { class: ('badge badge--' + (s.cls)), text: s.label });
 }
 function skeleton(lines) {
   return h('div', { 'aria-hidden': 'true', style: 'display:grid;gap:12px;padding:8px 0' },
-    Array.from({ length: lines }, (_, i) => h('div', { class: 'skeleton', style: `height:${i === 0 ? 96 : 20}px;width:${i === 0 ? '100' : 90 - (i % 3) * 18}%` })));
+    Array.from({ length: lines }, (_, i) => h('div', { class: 'skeleton', style: ('height:' + (i === 0 ? 96 : 20) + 'px;width:' + (i === 0 ? '100' : 90 - (i % 3) * 18) + '%') })));
 }
 function errorBanner(err, retry) {
   return h('div', { class: 'banner', role: 'alert' }, h('span', { text: err.message || String(err) }), retry ? h('button', { class: 'btn btn--sm', type: 'button', onclick: retry, text: 'Try again' }) : null);
@@ -495,11 +510,11 @@ function errorBanner(err, retry) {
 const mount = (...nodes) => $('main').replaceChildren(...nodes);
 function setTitle(text) {
   $('title').textContent = text;
-  document.title = `${text} · BA Bridge Admin`;
-  $('announce').textContent = `${text} page`;
+  document.title = ('' + (text) + ' \u00B7 BA Bridge Admin');
+  $('announce').textContent = ('' + (text) + ' page');
 }
 
-/* ── Overview ────────────────────────────────────────────── */
+/* -- Overview ---------------------------------------------- */
 function renderOverview(data) {
   const c = data.counts;
   const kpi = (label, value, hint, href, alert) => h(href ? 'a' : 'div', { class: 'kpi' + (alert ? ' kpi--alert' : ''), href }, h('span', { class: 'kpi__label', text: label }), h('span', { class: 'kpi__value', text: value }), hint ? h('span', { class: 'kpi__hint', text: hint }) : null);
@@ -507,8 +522,8 @@ function renderOverview(data) {
   const attention = data.attention.length
     ? h('ul', { class: 'attn' }, data.attention.map((a) => h('li', { class: 'attn__item' },
         h('span', { class: 'badge ' + (a.severity === 'high' ? 'badge--bad' : a.severity === 'medium' ? 'badge--review' : 'badge--awaiting'), text: a.severity === 'high' ? 'Urgent' : a.severity === 'medium' ? 'Soon' : 'Later' }),
-        h('div', {}, h('div', { class: 'attn__title', text: a.title }), h('div', { class: 'attn__meta', text: [a.name, a.detail].filter(Boolean).join(' · ') })),
-        a.reference ? h('a', { class: 'btn btn--sm', href: hashFor('enrolments', { ref: a.reference }), 'aria-label': `Open ${a.name}`, text: 'Open' }) : null)))
+        h('div', {}, h('div', { class: 'attn__title', text: a.title }), h('div', { class: 'attn__meta', text: [a.name, a.detail].filter(Boolean).join(' \u00B7 ') })),
+        a.reference ? h('a', { class: 'btn btn--sm', href: hashFor('enrolments', { ref: a.reference }), 'aria-label': ('Open ' + (a.name)), text: 'Open' }) : null)))
     : h('p', { class: 'empty', text: 'Nothing needs your attention.' });
 
   const feed = data.activity.length
@@ -517,28 +532,28 @@ function renderOverview(data) {
     : h('p', { class: 'empty', text: 'No activity yet.' });
 
   const hl = data.health;
-  const state_ = (cls, text) => h('span', { class: 'health__state' }, h('span', { class: `pill pill--${cls}`, text }));
+  const state_ = (cls, text) => h('span', { class: 'health__state' }, h('span', { class: ('pill pill--' + (cls)), text }));
   const last = hl.lastWebhook;
   const health = h('ul', { class: 'health' },
     h('li', {}, h('span', { text: 'Squad key' }), hl.squad === 'live' ? state_('ok', 'Live') : hl.squad === 'sandbox' ? state_('warn', 'Sandbox') : state_('bad', 'Not set')),
-    h('li', {}, h('span', { text: 'Last report from Squad' }), last ? state_(last.result === 'error' ? 'bad' : 'ok', `${ago(last.at)} · ${last.result}`) : state_('warn', 'None yet')),
+    h('li', {}, h('span', { text: 'Last report from Squad' }), last ? state_(last.result === 'error' ? 'bad' : 'ok', ('' + (ago(last.at)) + ' \u00B7 ' + (last.result))) : state_('warn', 'None yet')),
     h('li', {}, h('span', { text: 'Automatic payment check' }), hl.sweepInstalled ? state_('ok', 'On') : state_('warn', 'Off')),
     h('li', {}, h('span', { text: 'Email sends left today' }), state_(hl.emailQuota < 20 ? 'bad' : 'ok', String(hl.emailQuota))),
     h('li', {}, h('span', { text: 'WhatsApp group link' }), hl.whatsappGroupSet ? state_('ok', 'Set') : state_('bad', 'Missing')));
 
-  const cohorts = Object.entries(data.waitlist.byCohort).map(([k, v]) => `${k}: ${v}`).join(' · ');
+  const cohorts = Object.entries(data.waitlist.byCohort).map(([k, v]) => ('' + (k) + ': ' + (v))).join(' \u00B7 ');
   mount(
     h('section', { class: 'kpis', 'aria-label': 'Key figures' },
-      kpi('Enrolments', String(c.all), `${c.confirmed} confirmed`, hashFor('enrolments')),
+      kpi('Enrolments', String(c.all), ('' + (c.confirmed) + ' confirmed'), hashFor('enrolments')),
       kpi('Awaiting payment', String(c.awaiting), 'Not paid yet', hashFor('enrolments', { params: { status: 'awaiting' } })),
       kpi('Needs confirmation', String(c.review), c.review ? 'Paid, waiting for you' : 'All caught up', hashFor('enrolments', { params: { status: 'review' } }), c.review > 0),
-      kpi('Confirmed revenue', naira(data.revenue.confirmed), data.revenue.awaitingConfirmation ? `${naira(data.revenue.awaitingConfirmation)} awaiting confirmation` : 'Nothing pending'),
+      kpi('Confirmed revenue', naira(data.revenue.confirmed), data.revenue.awaitingConfirmation ? ('' + (naira(data.revenue.awaitingConfirmation)) + ' awaiting confirmation') : 'Nothing pending'),
       kpi('Waitlist', String(data.waitlist.total), cohorts || 'No signups yet'),
-      kpi('1:1 sessions', String(data.sessions.paid), data.sessions.revenue ? `${naira(data.sessions.revenue)} paid` : 'None paid yet'),
+      kpi('1:1 sessions', String(data.sessions.paid), data.sessions.revenue ? ('' + (naira(data.sessions.revenue)) + ' paid') : 'None paid yet'),
       kpi('Enquiries', String(data.enquiries.total), 'From the contact page')),
     h('div', { class: 'grid-2' },
       h('div', { class: 'stack' },
-        h('section', { class: 'card', 'aria-labelledby': 'h-attn' }, h('div', { class: 'card__head' }, h('h2', { id: 'h-attn', text: 'Needs your attention' }), data.attentionTotal > data.attention.length ? h('span', { class: 'muted', text: `Showing ${data.attention.length} of ${data.attentionTotal}` }) : null), h('div', { class: 'card__body' }, attention)),
+        h('section', { class: 'card', 'aria-labelledby': 'h-attn' }, h('div', { class: 'card__head' }, h('h2', { id: 'h-attn', text: 'Needs your attention' }), data.attentionTotal > data.attention.length ? h('span', { class: 'muted', text: ('Showing ' + (data.attention.length) + ' of ' + (data.attentionTotal)) }) : null), h('div', { class: 'card__body' }, attention)),
         h('section', { class: 'card', 'aria-labelledby': 'h-feed' }, h('div', { class: 'card__head' }, h('h2', { id: 'h-feed', text: 'Recent activity' })), h('div', { class: 'card__body' }, feed))),
       h('section', { class: 'card', 'aria-labelledby': 'h-health' }, h('div', { class: 'card__head' }, h('h2', { id: 'h-health', text: 'System' })), h('div', { class: 'card__body' }, health))));
   state.attention = data.attentionTotal;
@@ -556,11 +571,11 @@ function showOverview(force) {
   }).catch((err) => {
     if (nonce !== state.nonce) return;
     if (!state.overview) mount(errorBanner(err, () => showOverview(true)));
-    else toast(`Could not refresh: ${err.message}`, true);
+    else toast(('Could not refresh: ' + (err.message)), true);
   });
 }
 
-/* ── Enrolments ──────────────────────────────────────────── */
+/* -- Enrolments -------------------------------------------- */
 const enrol = { mounted: false, input: null, seg: null, results: null, params: {} };
 
 function mountEnrolments() {
@@ -597,7 +612,7 @@ function renderList(data) {
     h('td', { class: 'cell-main' }, h('a', { class: 'rowlink', href: hashFor('enrolments', { ref: item.reference, params: enrol.params }), text: item.name || item.reference }), h('span', { class: 'sub', text: item.email })),
     h('td', { class: 'cell-ref mono', 'data-label': 'Reference', text: item.reference }),
     h('td', { class: 'cell-status' }, statusBadge(item), item.hasError ? h('span', { class: 'sub', text: 'Email problem' }) : null),
-    h('td', { class: 'cell-paid num', 'data-label': 'Paid', text: item.amountPaid != null ? naira(item.amountPaid) : '—' }),
+    h('td', { class: 'cell-paid num', 'data-label': 'Paid', text: item.amountPaid != null ? naira(item.amountPaid) : '\u2014' }),
     h('td', { class: 'cell-date', 'data-label': 'Enrolled' }, when(item.createdMs, item.createdAt))));
   const table = h('div', { class: 'card tablewrap' }, h('table', {},
     h('caption', { class: 'sr-only', text: 'Enrolments, newest first' }),
@@ -605,7 +620,7 @@ function renderList(data) {
     h('tbody', {}, rows)));
   const from = (data.page - 1) * data.pageSize + 1;
   const pager = h('nav', { class: 'pager', 'aria-label': 'Pages' },
-    h('span', { text: `${from}–${from + data.items.length - 1} of ${data.total}` }),
+    h('span', { text: ('' + (from) + '\u2013' + (from + data.items.length - 1) + ' of ' + (data.total)) }),
     data.pages > 1 ? h('div', {},
       h('button', { class: 'btn btn--sm', type: 'button', disabled: data.page <= 1, onclick: () => go('enrolments', { params: { ...enrol.params, page: data.page - 1 }, replace: true }), text: 'Previous' }),
       h('button', { class: 'btn btn--sm', type: 'button', disabled: data.page >= data.pages, onclick: () => go('enrolments', { params: { ...enrol.params, page: data.page + 1 }, replace: true }), text: 'Next' })) : null);
@@ -644,7 +659,7 @@ function refreshData() {
   api('overview').then((data) => { state.overview = data; state.attention = data.attentionTotal; renderNav(); }).catch(() => {});
 }
 
-/* ── Enrolment detail drawer ─────────────────────────────── */
+/* -- Enrolment detail drawer ------------------------------- */
 const drawer = { ref: '', node: null, scrim: null, token: 0, draft: null };
 
 function trapFocus(container, event) {
@@ -681,7 +696,7 @@ function openDrawer(ref) {
   }
   drawer.ref = ref;
   document.querySelectorAll('tr.is-open').forEach((tr) => tr.classList.remove('is-open'));
-  const row = document.querySelector(`tr[data-ref="${CSS.escape(ref)}"]`);
+  const row = document.querySelector(('tr[data-ref="' + (CSS.escape(ref)) + '"]'));
   if (row) row.classList.add('is-open');
   drawer.node.replaceChildren(
     h('div', { class: 'drawer__head' }, h('div', { class: 'skeleton', style: 'height:24px;width:60%' }), closeButton()),
@@ -711,7 +726,7 @@ function renderDrawer(data) {
     finally { btn.disabled = false; }
   };
   const actions = h('div', { class: 'actions' },
-    h('button', { class: 'btn', type: 'button', onclick: act(() => api('sendReview', { reference: s.reference }), (r) => toast(r.sent ? `Review email sent to ${r.to}` : `Review email not sent: ${r.error}`, !r.sent)), text: 'Send review email' }),
+    h('button', { class: 'btn', type: 'button', onclick: act(() => api('sendReview', { reference: s.reference }), (r) => toast(r.sent ? ('Review email sent to ' + (r.to)) : ('Review email not sent: ' + (r.error)), !r.sent)), text: 'Send review email' }),
     data.canConfirm ? h('button', { class: 'btn btn--primary', type: 'button', onclick: () => confirmDialog(data), text: 'Confirm payment' }) : null,
     data.canResend ? h('button', { class: 'btn', type: 'button', onclick: () => resendDialog(data), text: 'Resend welcome email' }) : null);
 
@@ -721,8 +736,8 @@ function renderDrawer(data) {
   const note = h('textarea', { id: 'note', maxlength: String(data.notesMax), 'aria-label': 'Admin notes', placeholder: 'Only you can see these notes.' });
   // The drawer is redrawn after every action; whatever is typed in the note and not yet saved must survive that.
   note.value = drawer.draft && drawer.draft.ref === s.reference ? drawer.draft.value : data.notes || '';
-  const counter = h('span', { text: `${note.value.length}/${data.notesMax}` });
-  note.addEventListener('input', () => { counter.textContent = `${note.value.length}/${data.notesMax}`; drawer.draft = { ref: s.reference, value: note.value }; });
+  const counter = h('span', { text: ('' + (note.value.length) + '/' + (data.notesMax)) });
+  note.addEventListener('input', () => { counter.textContent = ('' + (note.value.length) + '/' + (data.notesMax)); drawer.draft = { ref: s.reference, value: note.value }; });
   const save = h('button', { class: 'btn btn--sm', type: 'button', text: 'Save note', onclick: async (e) => {
     const btn = e.currentTarget; // currentTarget is cleared once the handler has awaited
     btn.disabled = true;
@@ -731,7 +746,7 @@ function renderDrawer(data) {
     finally { btn.disabled = false; }
   } });
 
-  drawer.node.setAttribute('aria-label', `Enrolment: ${s.name || s.reference}`);
+  drawer.node.setAttribute('aria-label', ('Enrolment: ' + (s.name || s.reference)));
   drawer.node.replaceChildren(
     h('div', { class: 'drawer__head' }, h('div', {}, h('h2', { text: s.name || s.reference }), h('p', { class: 'muted mono', text: s.reference })), closeButton()),
     h('div', { class: 'drawer__body' },
@@ -742,17 +757,17 @@ function renderDrawer(data) {
 }
 
 function valueNode(item) {
-  if (!item.value) return h('span', { class: 'muted', text: '—' });
-  if (item.kind === 'email') return h('a', { href: `mailto:${item.value}`, text: item.value });
+  if (!item.value) return h('span', { class: 'muted', text: '\u2014' });
+  if (item.kind === 'email') return h('a', { href: ('mailto:' + (item.value)), text: item.value });
   if (item.kind === 'phone') {
     const digits = item.value.replace(/\D/g, '');
-    return h('span', {}, item.value, digits.length >= 7 ? [' ', h('a', { href: `https://wa.me/${digits}`, target: '_blank', rel: 'noopener', text: 'Open in WhatsApp' })] : null);
+    return h('span', {}, item.value, digits.length >= 7 ? [' ', h('a', { href: ('https://wa.me/' + (digits)), target: '_blank', rel: 'noopener', text: 'Open in WhatsApp' })] : null);
   }
   if (item.kind === 'mono') return h('span', { class: 'mono', text: item.value });
   return h('span', { text: item.value });
 }
 
-/* ── Dialogs ─────────────────────────────────────────────── */
+/* -- Dialogs ----------------------------------------------- */
 function dialog({ title, body, confirm, onConfirm, field }) {
   const opener = document.activeElement;
   const scrim = h('div', { class: 'scrim scrim--dialog' });
@@ -781,12 +796,12 @@ function confirmDialog(data) {
   const s = data.summary;
   dialog({
     title: 'Confirm payment',
-    body: `This marks ${s.name || s.reference} as paid and emails them the welcome message with the WhatsApp group link, copied to ${data.welcomeCc.split(',').join(' and ')}. Compare the payment with the Squad dashboard first.`,
+    body: ('This marks ' + (s.name || s.reference) + ' as paid and emails them the welcome message with the WhatsApp group link, copied to ' + (data.welcomeCc.split(',').join(' and ')) + '. Compare the payment with the Squad dashboard first.'),
     field: { label: 'Amount paid (NGN)', value: data.defaultAmount },
     confirm: 'Confirm and send welcome email',
     onConfirm: async (amount) => {
       const r = await api('confirmPayment', { reference: s.reference, amountPaid: amount });
-      toast(r.welcome === 'failed' ? `Confirmed, but the welcome email failed: ${r.error}` : `Confirmed. Welcome email sent to ${r.to}`, r.welcome === 'failed');
+      toast(r.welcome === 'failed' ? ('Confirmed, but the welcome email failed: ' + (r.error)) : ('Confirmed. Welcome email sent to ' + (r.to)), r.welcome === 'failed');
       refreshData(); loadDrawer(s.reference, drawer.token);
     },
   });
@@ -795,17 +810,17 @@ function resendDialog(data) {
   const s = data.summary;
   dialog({
     title: 'Send the welcome email again?',
-    body: `${s.name || s.reference} already has one. This sends it again to ${s.email}, copied to ${data.welcomeCc.split(',').join(' and ')}.`,
+    body: ('' + (s.name || s.reference) + ' already has one. This sends it again to ' + (s.email) + ', copied to ' + (data.welcomeCc.split(',').join(' and ')) + '.'),
     confirm: 'Send again',
     onConfirm: async () => {
       const r = await api('resendWelcome', { reference: s.reference });
-      toast(r.welcome === 'sent' ? `Welcome email sent to ${r.to}` : `Not sent: ${r.error}`, r.welcome !== 'sent');
+      toast(r.welcome === 'sent' ? ('Welcome email sent to ' + (r.to)) : ('Not sent: ' + (r.error)), r.welcome !== 'sent');
       refreshData(); loadDrawer(s.reference, drawer.token);
     },
   });
 }
 
-/* ── Putting it together ─────────────────────────────────── */
+/* -- Putting it together ----------------------------------- */
 function route() {
   const next = parseRoute();
   const prev = state.route;

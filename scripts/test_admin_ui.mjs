@@ -417,21 +417,39 @@ try {
     await page.context().close();
   }
 
+  /* ── The file survives being carried through Google's pages: plain ASCII, and no template strings ── */
+  {
+    // A real deployment failed with a syntax error at the start of a template string that Chromium accepts when the file is served directly.
+    // Whatever Google changes on the way, plain quotes and ASCII text are the least likely to be touched.
+    assert.equal(/[^\x00-\x7F]/.test(html), false, 'the page is ASCII only; write symbols as \\u escapes');
+    assert.equal(html.includes('`'), false, 'no template strings in the page');
+    assert.equal(html.includes('${'), false);
+  }
+
   /* ── The page says what is wrong when its own script cannot run, and which build it is ── */
   {
     const good = await open(browser, owner, { url });
     await good.page.waitForSelector('.kpi');
     assert.equal(await good.page.locator('#boot').count(), 0, 'the startup line goes away once the dashboard is drawn');
-    assert.equal(await good.page.locator('.side__build').textContent(), 'Build 3');
+    assert.equal(await good.page.locator('.side__build').textContent(), 'Build 4');
     await good.context.close();
 
-    // The dashboard script has a syntax error (for example a file that was pasted incompletely).
-    const broken = await serve(html.replace("'use strict';", "'use strict'; const = ;"));
-    const syntax = await open(browser, owner, { url: broken.url });
-    await syntax.page.waitForFunction(() => /could not start/.test(document.getElementById('boot').textContent));
-    assert.match(await syntax.page.locator('#boot').textContent(), /The dashboard could not start: .*SyntaxError.*\(line \d+\)/);
-    assert.equal(await syntax.page.locator('.side__build').textContent(), 'Build 3', 'the build stamp is static, so it shows even then');
-    await syntax.context.close();
+    // The dashboard script has a syntax error (a half-pasted file, or a copy altered on the way). Google writes the page into its frame
+    // with document.write, which reports the error in its own words and counts lines from the start of the script, so test that route.
+    const wrapped = (page) => `<!doctype html><meta charset=utf-8><iframe id="f" style="width:900px;height:500px"></iframe><script>
+      const html = ${JSON.stringify(page).replace(/<\//g, '<\\/')};
+      const d = document.getElementById('f').contentDocument; d.open(); d.write(html); d.close();
+    </script>`;
+    const broken = await serve(wrapped(html.replace("'use strict';", "'use strict';\nconst = ;")), '');
+    const brokenPage = await (await browser.newContext()).newPage();
+    await brokenPage.goto(broken.url);
+    const inner = () => brokenPage.frames().find((f) => f !== brokenPage.mainFrame());
+    await brokenPage.waitForFunction(() => { const f = document.getElementById('f'); const b = f.contentDocument.getElementById('boot'); return b && /could not start/.test(b.textContent); });
+    const shown = await inner().locator('#boot').textContent();
+    assert.match(shown, /The dashboard could not start: .*SyntaxError.*\(line \d+, column \d+\)/);
+    assert.match(await inner().locator('.boot__src').textContent(), /Received, line 4: const = ;/, 'the line is shown as the page received it');
+    assert.equal(await inner().locator('.side__build').textContent(), 'Build 4', 'the build stamp is static, so it shows even then');
+    await brokenPage.context().close();
     broken.server.close();
 
     // The page's security rule lets the first small script run but blocks the dashboard script.
