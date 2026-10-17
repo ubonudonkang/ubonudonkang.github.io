@@ -108,8 +108,8 @@ main { padding: 6px 32px 64px; max-width: 1240px; outline: none; }
   .top .search { display: none; }
   main { padding: 4px 16px 112px; }
   .tabbar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--line); }
-  .tabbar a { flex: 1; display: grid; justify-items: center; gap: 2px; padding: 8px 4px; border-radius: 12px; color: var(--ink-3); text-decoration: none; font-size: 12px; font-weight: 500; position: relative; }
-  .tabbar a[aria-current="page"] { color: var(--accent-text); background: var(--accent-soft); }
+  .tabbar a, .tabbar button { flex: 1; min-width: 0; display: grid; justify-items: center; gap: 2px; padding: 8px 2px; border: 0; border-radius: 12px; background: transparent; color: var(--ink-3); text-decoration: none; font-size: 12px; font-weight: 500; position: relative; cursor: pointer; }
+  .tabbar a[aria-current="page"], .tabbar button[aria-current="true"] { color: var(--accent-text); background: var(--accent-soft); }
   .tabbar .nav__count { position: absolute; top: 2px; left: calc(50% + 6px); margin: 0; }
 }
 
@@ -211,9 +211,11 @@ td.cell-main { position: relative; }
   td { display: block; padding: 0; border: 0; }
   td.cell-main { grid-column: 1; }
   td.cell-status { grid-column: 2; grid-row: 1; justify-self: end; }
-  td.cell-ref, td.cell-paid, td.cell-date { grid-column: 1 / -1; color: var(--ink-3); font-size: 13.5px; }
+  td.cell-ref, td.cell-paid, td.cell-date, td.cell-sub { grid-column: 1 / -1; color: var(--ink-3); font-size: 13.5px; }
   td[data-label]::before { content: attr(data-label) ': '; color: var(--ink-3); }
   td.cell-main::before, td.cell-status::before { content: none; }
+  td:empty { display: none; }
+  td.cell-act { grid-column: 1 / -1; padding-top: 6px; }
   td.num { text-align: left; }
 }
 
@@ -235,6 +237,39 @@ td.cell-main { position: relative; }
 .note textarea { width: 100%; min-height: 96px; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); resize: vertical; }
 .note__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; color: var(--ink-3); font-size: 13.5px; }
 .skeleton { border-radius: 8px; background: linear-gradient(90deg, var(--line) 25%, var(--surface-2) 50%, var(--line) 75%); background-size: 200% 100%; animation: shimmer 1.3s linear infinite; }
+/* -- Pages added in phase 2 ---------------------------------- */
+.quick { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 4px; }
+.toolbar__extra { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 899px) { .toolbar__extra { margin-left: 0; width: 100%; } .toolbar__extra .btn { flex: 1; } }
+.rowname { font-weight: 600; }
+.summary { margin: 0 0 12px; color: var(--ink-2); }
+.callout { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 14px; padding: 12px 16px; border-radius: 12px; background: var(--review-bg); color: var(--review-fg); font-weight: 500; }
+.callout--warn { background: var(--await-bg); color: var(--await-fg); }
+.callout--ok { background: var(--ok-bg); color: var(--ok-fg); }
+.callout a { color: inherit; }
+.callout .btn { color: var(--ink); }
+.form { display: grid; gap: 16px; max-width: 720px; }
+.field { display: grid; gap: 6px; }
+.field__label { font-weight: 500; }
+.field input, .field select { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); }
+fieldset { min-width: 0; margin: 0; padding: 12px 16px 8px; border: 1px solid var(--line-2); border-radius: 12px; }
+legend { padding: 0 6px; font-weight: 600; }
+.check { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; cursor: pointer; }
+.check input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--accent); }
+.hint { color: var(--ink-3); font-size: 13.5px; }
+.err-line { min-height: 1.4em; color: var(--bad-fg); font-weight: 500; }
+.formgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 719px) { .formgrid { grid-template-columns: minmax(0, 1fr); } .field input, .field select { height: 46px; font-size: 16px; } }
+.invite-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+@media (max-width: 719px) { .invite-form { grid-template-columns: minmax(0, 1fr); } }
+.linkbox { display: flex; gap: 8px; margin-top: 8px; }
+.linkbox input { flex: 1; min-width: 0; height: 42px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); font: 400 13px var(--mono); }
+.msg { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 61; padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); background: var(--surface); border: 1px solid var(--line); border-radius: 18px 18px 0 0; box-shadow: 0 -20px 50px -20px rgba(0, 0, 0, 0.4); outline: none; }
+.sheet h2 { padding: 0 10px 6px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); }
+.sheet a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 10px; border-radius: 10px; color: var(--ink); text-decoration: none; font-weight: 500; }
+.sheet a:hover { background: var(--surface-2); }
+.nav__count--soft { background: var(--review-bg); color: var(--review-fg); }
 @keyframes shimmer { to { background-position: -200% 0; } }
 @keyframes slide { from { transform: translateX(24px); opacity: 0; } }
 @keyframes rise { from { transform: translateY(24px); opacity: 0; } }
@@ -300,7 +335,7 @@ td.cell-main { position: relative; }
     <nav class="nav" id="nav" aria-label="Main"></nav>
     <div class="side__foot">
       <span class="side__user" id="user"></span>
-      <span class="side__build">Build 4</span>
+      <span class="side__build">Build 5</span>
       <button class="btn btn--sm" type="button" id="theme-side"></button>
     </div>
   </aside>
@@ -336,6 +371,7 @@ function h(tag, props, ...kids) {
     if (value == null || value === false) continue;
     if (key === 'class') el.className = value;
     else if (key === 'text') el.textContent = value;
+    else if (key === 'dataset') Object.assign(el.dataset, value);
     else if (key.startsWith('on')) el.addEventListener(key.slice(2), value);
     else if (value === true) el.setAttribute(key, '');
     else el.setAttribute(key, value);
@@ -356,6 +392,13 @@ const ICONS = {
   search: [['circle', { cx: 11, cy: 11, r: 7 }], ['path', { d: 'm20 20-3.5-3.5' }]],
   copy: [['rect', { x: 9, y: 9, width: 11, height: 11, rx: 2 }], ['path', { d: 'M5 15V6a2 2 0 0 1 2-2h9' }]],
   close: [['path', { d: 'M6 6l12 12M18 6 6 18' }]],
+  list: [['path', { d: 'M8 6h12M8 12h12M8 18h12' }], ['path', { d: 'M4 6h.01M4 12h.01M4 18h.01' }]],
+  mail: [['rect', { x: 3, y: 5, width: 18, height: 14, rx: 2 }], ['path', { d: 'm3.5 7 8.5 6 8.5-6' }]],
+  clock: [['circle', { cx: 12, cy: 12, r: 9 }], ['path', { d: 'M12 7v5l3 2' }]],
+  link: [['path', { d: 'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1' }], ['path', { d: 'M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1' }]],
+  plus: [['path', { d: 'M12 5v14M5 12h14' }]],
+  more: [['circle', { cx: 5, cy: 12, r: 1.5 }], ['circle', { cx: 12, cy: 12, r: 1.5 }], ['circle', { cx: 19, cy: 12, r: 1.5 }]],
+  download: [['path', { d: 'M12 4v11M7 11l5 5 5-5' }], ['path', { d: 'M5 20h14' }]],
   sun: [['circle', { cx: 12, cy: 12, r: 4 }], ['path', { d: 'M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4' }]],
   moon: [['path', { d: 'M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z' }]],
 };
@@ -417,7 +460,7 @@ window.addEventListener('error', (event) => showFatal(event.error || event.messa
 window.addEventListener('unhandledrejection', (event) => showFatal(event.reason));
 
 /* -- State, theme, feedback -------------------------------- */
-const state = { user: '', route: null, nonce: 0, overview: null, attention: 0, list: null, opener: null };
+const state = { user: '', route: null, nonce: 0, overview: null, attention: 0, list: null, opener: null, pages: {}, form: null, openEnquiries: 0 };
 
 function applyTheme(theme) {
   if (theme) document.documentElement.dataset.theme = theme;
@@ -458,16 +501,23 @@ async function copy(text, label) {
 const copyButton = (text, label) => h('button', { class: 'icon-btn copy', type: 'button', 'aria-label': ('Copy ' + (label)), onclick: () => copy(text, label) }, icon('copy'));
 
 /* -- Routing: the address after the # decides what is shown -- */
+// mobile: shown in the bottom bar; the rest sit behind its "More" button
 const NAV = [
-  { id: 'overview', label: 'Overview', icon: 'grid' },
-  { id: 'enrolments', label: 'Enrolments', icon: 'users' },
+  { id: 'overview', label: 'Overview', icon: 'grid', mobile: true },
+  { id: 'enrolments', label: 'Enrolments', icon: 'users', mobile: true },
+  { id: 'waitlist', label: 'Waitlist', icon: 'list', mobile: true },
+  { id: 'enquiries', label: 'Enquiries', icon: 'mail', mobile: true },
+  { id: 'sessions', label: '1:1 sessions', icon: 'clock' },
+  { id: 'invites', label: 'Invites', icon: 'link' },
 ];
+const OTHER_PAGES = ['new'];
+const HAS_PANEL = ['enrolments', 'enquiries'];
 function parseRoute() {
   const raw = location.hash.replace(/^#\/?/, '');
   const [path, query = ''] = raw.split('?');
   const parts = path.split('/').filter(Boolean).map((p) => { try { return decodeURIComponent(p); } catch (e) { return p; } });
-  const page = NAV.some((n) => n.id === parts[0]) ? parts[0] : 'overview';
-  return { page, ref: page === 'enrolments' ? parts[1] || '' : '', params: Object.fromEntries(new URLSearchParams(query)) };
+  const page = NAV.some((n) => n.id === parts[0]) || OTHER_PAGES.indexOf(parts[0]) !== -1 ? parts[0] : 'overview';
+  return { page, ref: HAS_PANEL.indexOf(page) !== -1 ? parts[1] || '' : '', params: Object.fromEntries(new URLSearchParams(query)) };
 }
 function hashFor(page, { ref, params } = {}) {
   const query = new URLSearchParams(Object.entries(params || {}).filter(([, v]) => v !== '' && v != null && v !== 'all')).toString();
@@ -482,11 +532,21 @@ function go(page, options = {}) {
 }
 const sameParams = (a, b) => JSON.stringify(Object.entries(a || {}).sort()) === JSON.stringify(Object.entries(b || {}).sort());
 
+function navCount(id) {
+  if (id === 'enrolments' && state.attention) return { n: state.attention, text: plural(state.attention, 'item') + ' need attention', soft: false };
+  if (id === 'enquiries' && state.openEnquiries) return { n: state.openEnquiries, text: state.openEnquiries + ' not handled', soft: true };
+  return null;
+}
 function renderNav() {
-  const link = (item, extra) => h('a', { href: hashFor(item.id), 'aria-current': state.route && state.route.page === item.id ? 'page' : null }, icon(item.icon), item.label,
-    item.id === 'enrolments' && state.attention ? h('span', { class: 'nav__count', 'aria-label': ('' + (plural(state.attention, 'item')) + ' need attention'), text: String(state.attention) }) : null);
-  $('nav').replaceChildren(...NAV.map((n) => link(n)));
-  $('tabbar').replaceChildren(...NAV.map((n) => link(n)));
+  const link = (item) => {
+    const badge = navCount(item.id);
+    return h('a', { href: hashFor(item.id), 'aria-current': state.route && state.route.page === item.id ? 'page' : null }, icon(item.icon), item.label,
+      badge ? h('span', { class: 'nav__count' + (badge.soft ? ' nav__count--soft' : ''), 'aria-label': badge.text, text: String(badge.n) }) : null);
+  };
+  const hiddenNow = state.route && !NAV.slice(0, 4).some((n) => n.id === state.route.page);
+  $('nav').replaceChildren(...NAV.map(link));
+  $('tabbar').replaceChildren(...NAV.filter((n) => n.mobile).map(link),
+    h('button', { type: 'button', id: 'more-btn', 'aria-haspopup': 'dialog', 'aria-current': hiddenNow ? 'true' : null, onclick: openMore }, icon('more'), 'More'));
 }
 
 /* -- Pieces shared by the pages ---------------------------- */
@@ -507,7 +567,8 @@ function skeleton(lines) {
 function errorBanner(err, retry) {
   return h('div', { class: 'banner', role: 'alert' }, h('span', { text: err.message || String(err) }), retry ? h('button', { class: 'btn btn--sm', type: 'button', onclick: retry, text: 'Try again' }) : null);
 }
-const mount = (...nodes) => $('main').replaceChildren(...nodes);
+// replaceChildren turns null into the text "null", so empty slots are dropped first.
+const mount = (...nodes) => $('main').replaceChildren(...nodes.filter(Boolean));
 function setTitle(text) {
   $('title').textContent = text;
   document.title = ('' + (text) + ' \u00B7 BA Bridge Admin');
@@ -542,15 +603,19 @@ function renderOverview(data) {
     h('li', {}, h('span', { text: 'WhatsApp group link' }), hl.whatsappGroupSet ? state_('ok', 'Set') : state_('bad', 'Missing')));
 
   const cohorts = Object.entries(data.waitlist.byCohort).map(([k, v]) => ('' + (k) + ': ' + (v))).join(' \u00B7 ');
+  state.openEnquiries = data.enquiries.open;
   mount(
+    h('div', { class: 'quick' },
+      h('a', { class: 'btn btn--primary', href: hashFor('new') }, icon('plus'), 'Add enrolment'),
+      h('a', { class: 'btn', href: hashFor('invites') }, icon('link'), 'Create invite')),
     h('section', { class: 'kpis', 'aria-label': 'Key figures' },
       kpi('Enrolments', String(c.all), ('' + (c.confirmed) + ' confirmed'), hashFor('enrolments')),
       kpi('Awaiting payment', String(c.awaiting), 'Not paid yet', hashFor('enrolments', { params: { status: 'awaiting' } })),
       kpi('Needs confirmation', String(c.review), c.review ? 'Paid, waiting for you' : 'All caught up', hashFor('enrolments', { params: { status: 'review' } }), c.review > 0),
       kpi('Confirmed revenue', naira(data.revenue.confirmed), data.revenue.awaitingConfirmation ? ('' + (naira(data.revenue.awaitingConfirmation)) + ' awaiting confirmation') : 'Nothing pending'),
-      kpi('Waitlist', String(data.waitlist.total), cohorts || 'No signups yet'),
-      kpi('1:1 sessions', String(data.sessions.paid), data.sessions.revenue ? ('' + (naira(data.sessions.revenue)) + ' paid') : 'None paid yet'),
-      kpi('Enquiries', String(data.enquiries.total), 'From the contact page')),
+      kpi('Waitlist', String(data.waitlist.total), cohorts || 'No signups yet', hashFor('waitlist')),
+      kpi('1:1 sessions', String(data.sessions.paid), data.sessions.revenue ? ('' + (naira(data.sessions.revenue)) + ' paid') : 'None paid yet', hashFor('sessions')),
+      kpi('Enquiries', String(data.enquiries.total), data.enquiries.open ? data.enquiries.open + ' not handled' : 'All handled', hashFor('enquiries', { params: data.enquiries.open ? { f: 'open' } : {} }))),
     h('div', { class: 'grid-2' },
       h('div', { class: 'stack' },
         h('section', { class: 'card', 'aria-labelledby': 'h-attn' }, h('div', { class: 'card__head' }, h('h2', { id: 'h-attn', text: 'Needs your attention' }), data.attentionTotal > data.attention.length ? h('span', { class: 'muted', text: ('Showing ' + (data.attention.length) + ' of ' + (data.attentionTotal)) }) : null), h('div', { class: 'card__body' }, attention)),
@@ -567,7 +632,7 @@ function showOverview(force) {
   return api('overview').then((data) => {
     state.overview = data;
     if (nonce === state.nonce && state.route.page === 'overview') renderOverview(data);
-    else { state.attention = data.attentionTotal; renderNav(); }
+    else { state.attention = data.attentionTotal; state.openEnquiries = data.enquiries.open; renderNav(); }
   }).catch((err) => {
     if (nonce !== state.nonce) return;
     if (!state.overview) mount(errorBanner(err, () => showOverview(true)));
@@ -656,11 +721,12 @@ function refreshData() {
   state.overview = null;
   state.list = null;
   if (state.route.page === 'enrolments') showEnrolments(true);
-  api('overview').then((data) => { state.overview = data; state.attention = data.attentionTotal; renderNav(); }).catch(() => {});
+  state.pages = {};
+  api('overview').then((data) => { state.overview = data; state.attention = data.attentionTotal; state.openEnquiries = data.enquiries.open; renderNav(); }).catch(() => {});
 }
 
 /* -- Enrolment detail drawer ------------------------------- */
-const drawer = { ref: '', node: null, scrim: null, token: 0, draft: null };
+const drawer = { ref: '', kind: '', node: null, scrim: null, token: 0, draft: null };
 
 function trapFocus(container, event) {
   if (event.key !== 'Tab') return;
@@ -673,28 +739,33 @@ function trapFocus(container, event) {
 
 function closeDrawerNode() {
   if (!drawer.node) return;
+  const ref = drawer.ref;
   drawer.node.remove(); drawer.scrim.remove();
-  drawer.node = drawer.scrim = null; drawer.ref = '';
+  drawer.node = drawer.scrim = null; drawer.ref = ''; drawer.kind = '';
   document.querySelectorAll('tr.is-open').forEach((tr) => tr.classList.remove('is-open'));
-  const back = state.opener && document.body.contains(state.opener) ? state.opener : document.querySelector('.rowlink');
+  // The list is redrawn after an action, so the link that opened the panel may be a new element: find its row again.
+  const back = state.opener && document.body.contains(state.opener) ? state.opener
+    : document.querySelector('tr[data-ref="' + CSS.escape(ref) + '"] .rowlink') || document.querySelector('.rowlink');
   state.opener = null;
   if (back) back.focus({ preventScroll: true });
 }
 function closeDrawer() {
   if (!drawer.node) return;
-  go('enrolments', { params: state.route.params });
+  go(state.route.page, { params: state.route.params });
 }
 
 function openDrawer(ref) {
-  if (drawer.ref === ref && drawer.node) return;
+  const kind = state.route.page;
+  if (drawer.ref === ref && drawer.kind === kind && drawer.node) return;
   const token = ++drawer.token;
   if (!drawer.node) {
     state.opener = document.activeElement;
     drawer.scrim = h('div', { class: 'scrim', onclick: closeDrawer });
-    drawer.node = h('div', { class: 'drawer', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Enrolment details', tabindex: '-1', onkeydown: (e) => trapFocus(drawer.node, e) });
+    drawer.node = h('div', { class: 'drawer', role: 'dialog', 'aria-modal': 'true', 'aria-label': kind === 'enquiries' ? 'Enquiry details' : 'Enrolment details', tabindex: '-1', onkeydown: (e) => trapFocus(drawer.node, e) });
     $('layer').append(drawer.scrim, drawer.node);
   }
   drawer.ref = ref;
+  drawer.kind = kind;
   document.querySelectorAll('tr.is-open').forEach((tr) => tr.classList.remove('is-open'));
   const row = document.querySelector(('tr[data-ref="' + (CSS.escape(ref)) + '"]'));
   if (row) row.classList.add('is-open');
@@ -702,7 +773,7 @@ function openDrawer(ref) {
     h('div', { class: 'drawer__head' }, h('div', { class: 'skeleton', style: 'height:24px;width:60%' }), closeButton()),
     h('div', { class: 'drawer__body' }, skeleton(5)));
   drawer.node.focus({ preventScroll: true });
-  loadDrawer(ref, token);
+  if (kind === 'enquiries') loadEnquiryDrawer(ref, token); else loadDrawer(ref, token);
 }
 const closeButton = () => h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close details', onclick: closeDrawer }, icon('close'));
 
@@ -820,6 +891,383 @@ function resendDialog(data) {
   });
 }
 
+/* -- Helpers for the list pages ---------------------------- */
+const PAGE_SIZE = 25;
+const clip = (text, n) => { text = String(text || ''); return text.length > n ? text.slice(0, n - 1) + '\u2026' : text; };
+const dash = '\u2014';
+const textHas = (item, query, keys) => {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  return keys.some((key) => String(item[key] == null ? '' : item[key]).toLowerCase().indexOf(q) !== -1);
+};
+function fillSeg(seg, items, current, onPick) {
+  seg.replaceChildren(...items.map((it) => h('button', { type: 'button', 'aria-pressed': String(current === it[0]), onclick: () => onPick(it[0]) }, it[1], h('span', { class: 'seg__n', text: String(it[2]) }))));
+}
+function pagerNode(total, page, size, onPage) {
+  const pages = Math.max(1, Math.ceil(total / size));
+  const from = total ? (page - 1) * size + 1 : 0;
+  const to = Math.min(total, page * size);
+  return h('nav', { class: 'pager', 'aria-label': 'Pages' },
+    h('span', { text: from + '\u2013' + to + ' of ' + total }),
+    pages > 1 ? h('div', {},
+      h('button', { class: 'btn btn--sm', type: 'button', disabled: page <= 1, onclick: () => onPage(page - 1), text: 'Previous' }),
+      h('button', { class: 'btn btn--sm', type: 'button', disabled: page >= pages, onclick: () => onPage(page + 1), text: 'Next' })) : null);
+}
+// cols: { label, cls, num, mobile (label shown on phones), cell(item) }
+function dataTable(caption, cols, items, rowOptions) {
+  return h('div', { class: 'card tablewrap' }, h('table', {},
+    h('caption', { class: 'sr-only', text: caption }),
+    h('thead', {}, h('tr', {}, cols.map((c) => h('th', { scope: 'col', class: c.num ? 'num' : null, text: c.label })))),
+    h('tbody', {}, items.map((item) => {
+      const opts = rowOptions ? rowOptions(item) : {};
+      return h('tr', { class: opts.open ? 'is-open' : null, dataset: opts.ref != null ? { ref: String(opts.ref) } : null },
+        cols.map((c) => h('td', { class: c.cls + (c.num ? ' num' : ''), 'data-label': c.mobile || null }, c.cell(item))));
+    }))));
+}
+// Spreadsheet programs run text that starts with = + - or @ as a formula, so such text is made plain before it goes in a file.
+function csvCell(value) {
+  let text = value == null ? '' : String(value);
+  if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
+  return /[",\n\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+function toCsv(headers, rows) {
+  return [headers].concat(rows).map((row) => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+}
+function downloadCsv(name, text) {
+  try {
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + text], { type: 'text/csv;charset=utf-8' }));
+    const a = h('a', { href: url, download: name });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast('Downloading ' + name + '. If nothing arrives, the page may block downloads: use Copy instead.');
+  } catch (err) {
+    copy(text, 'The CSV');
+  }
+}
+const todayStamp = () => new Date().toISOString().slice(0, 10);
+
+/* -- List pages: waitlist, enquiries, 1:1 sessions, invites -- */
+const LISTS = {};
+const PAGES = {
+  waitlist: {
+    title: 'Waitlist', method: 'waitlist', searchLabel: 'Search the waitlist', searchHint: 'Search name or email', searchKeys: ['name', 'email', 'cohort'],
+    caption: 'Waitlist signups, newest first', empty: 'No one is on the waitlist yet.',
+    segments: (d) => [['all', 'All', d.total]].concat(d.cohorts.map((c) => [c.name, c.name, c.count])).concat(d.duplicates ? [['repeats', 'Repeats', d.duplicates]] : []),
+    matchSeg: (item, f) => f === 'all' || (f === 'repeats' ? item.duplicate : item.cohort === f),
+    head: (d) => (d.duplicates ? h('p', { class: 'callout callout--warn', role: 'status' }, d.duplicates + (d.duplicates === 1 ? ' signup repeats' : ' signups repeat') + ' an earlier one (same email and cohort). The Repeats filter shows them; Copy emails lists each address once.') : null),
+    extra: (d, items) => {
+      const emails = [...new Set(items.map((i) => i.email).filter(Boolean))];
+      return [
+        h('button', { class: 'btn', type: 'button', disabled: !emails.length, onclick: () => copy(emails.join(', '), emails.length + ' email' + (emails.length === 1 ? '' : 's')) }, icon('copy'), 'Copy ' + emails.length + ' email' + (emails.length === 1 ? '' : 's')),
+        h('button', { class: 'btn', type: 'button', disabled: !items.length, onclick: () => downloadCsv('waitlist-' + todayStamp() + '.csv', toCsv(['Name', 'Email', 'Cohort', 'Signed up', 'Repeat'], items.map((i) => [i.name, i.email, i.cohort, i.joinedAt, i.duplicate ? 'Yes' : '']))) }, icon('download'), 'Download CSV'),
+      ];
+    },
+    columns: () => [
+      { label: 'Name', cls: 'cell-main', cell: (i) => [h('span', { class: 'rowname', text: i.name || i.email }), h('span', { class: 'sub', text: i.email })] },
+      { label: 'Cohort', cls: 'cell-sub', mobile: 'Cohort', cell: (i) => i.cohort },
+      { label: 'Signed up', cls: 'cell-date', mobile: 'Signed up', cell: (i) => when(i.joinedMs, i.joinedAt) },
+      { label: 'Note', cls: 'cell-status', cell: (i) => (i.duplicate ? h('span', { class: 'badge badge--review', text: 'Repeat signup' }) : null) },
+    ],
+  },
+  enquiries: {
+    title: 'Enquiries', method: 'enquiries', searchLabel: 'Search enquiries', searchHint: 'Search name, email or message', searchKeys: ['name', 'email', 'company', 'type', 'message'],
+    caption: 'Contact enquiries, newest first', empty: 'No enquiries yet.',
+    segments: (d) => [['all', 'All', d.counts.all], ['open', 'Not handled', d.counts.open], ['handled', 'Handled', d.counts.handled]],
+    matchSeg: (item, f) => f === 'all' || (f === 'open' ? !item.handled : item.handled),
+    rowOptions: (item) => ({ ref: item.row, open: String(item.row) === state.route.ref }),
+    columns: () => [
+      { label: 'From', cls: 'cell-main', cell: (i) => [h('a', { class: 'rowlink', href: hashFor('enquiries', { ref: i.row, params: state.route.params }), text: i.name || i.email }), h('span', { class: 'sub', text: clip(i.message, 90) })] },
+      { label: 'Topic', cls: 'cell-sub', mobile: 'Topic', cell: (i) => i.type || dash },
+      { label: 'Received', cls: 'cell-date', mobile: 'Received', cell: (i) => when(i.atMs, i.at) },
+      { label: 'Status', cls: 'cell-status', cell: (i) => h('span', { class: 'badge ' + (i.handled ? 'badge--confirmed' : 'badge--review'), text: i.handled ? 'Handled' : 'New' }) },
+    ],
+  },
+  sessions: {
+    title: '1:1 sessions', method: 'sessions', searchLabel: 'Search 1:1 sessions', searchHint: 'Search name, email or reference', searchKeys: ['name', 'email', 'reference'],
+    caption: '1:1 session payments, newest first', empty: 'No 1:1 session payments yet.',
+    segments: (d) => [['all', 'All', d.counts.all], ['paid', 'Paid', d.counts.paid], ['review', 'Needs a check', d.counts.review]],
+    matchSeg: (item, f) => f === 'all' || (f === 'paid' ? item.paid : !item.paid),
+    head: (d) => h('p', { class: 'summary' }, d.counts.paid + ' paid (' + naira(d.revenue) + '). Honour a booking only if its notes quote a reference listed here as Paid. A session is ' + naira(d.expectedAmount) + '.'),
+    columns: () => [
+      { label: 'Name', cls: 'cell-main', cell: (i) => [h('span', { class: 'rowname', text: i.name || i.email || dash }), h('span', { class: 'sub', text: i.email })] },
+      { label: 'Reference', cls: 'cell-sub mono', mobile: 'Reference', cell: (i) => i.reference },
+      { label: 'Amount', cls: 'cell-paid', num: true, mobile: 'Amount', cell: (i) => (i.amount != null ? naira(i.amount) : dash) },
+      { label: 'Date', cls: 'cell-date', mobile: 'Date', cell: (i) => when(i.atMs, i.at) },
+      { label: 'Status', cls: 'cell-status', cell: (i) => h('span', { class: 'badge ' + (i.paid ? 'badge--confirmed' : 'badge--bad'), text: i.paid ? 'Paid' : 'Check the amount' }) },
+    ],
+  },
+  invites: {
+    title: 'Invites', method: 'invites', searchLabel: 'Search invites', searchHint: 'Search name or email', searchKeys: ['name', 'email'],
+    caption: 'Registration invites, newest first', empty: 'No invites yet. Create one above.',
+    segments: (d) => [['all', 'All', d.counts.all], ['Unused', 'Not used yet', d.counts.unused], ['Used', 'Used', d.counts.used]],
+    matchSeg: (item, f) => f === 'all' || item.status === f,
+    intro: () => inviteForm(),
+    columns: () => [
+      { label: 'Name', cls: 'cell-main', cell: (i) => [h('span', { class: 'rowname', text: i.name || i.email }), h('span', { class: 'sub', text: i.email })] },
+      { label: 'Created', cls: 'cell-date', mobile: 'Created', cell: (i) => when(i.createdMs, i.createdAt) },
+      { label: 'Status', cls: 'cell-status', cell: (i) => h('span', { class: 'badge ' + (i.status === 'Used' ? 'badge--confirmed' : 'badge--awaiting'), text: i.status === 'Used' ? 'Used' : 'Not used yet' }) },
+      { label: 'Link', cls: 'cell-act', cell: (i) => (i.link
+        ? h('button', { class: 'btn btn--sm', type: 'button', onclick: () => copy(i.link, 'Invite link'), 'aria-label': 'Copy invite link for ' + (i.name || i.email) }, icon('copy'), 'Copy link')
+        : (i.reference ? h('a', { class: 'btn btn--sm', href: hashFor('enrolments', { ref: i.reference }), 'aria-label': 'Open the enrolment for ' + (i.name || i.email), text: 'Open enrolment' }) : null)) },
+    ],
+  },
+};
+
+function showList(page, force) {
+  const cfg = PAGES[page];
+  setTitle(cfg.title);
+  const nonce = state.nonce;
+  const cached = state.pages[page];
+  if (cached) drawList(page); else mountList(page);
+  return api(cfg.method).then((data) => {
+    state.pages[page] = data;
+    if (page === 'enquiries') { state.openEnquiries = data.counts.open; renderNav(); }
+    if (nonce === state.nonce && state.route.page === page) drawList(page);
+    // a panel opened from a link needs the list's data; it is drawn once that has arrived
+    if (nonce === state.nonce && state.route.ref && drawer.node && drawer.kind === page) loadPanel(state.route.ref);
+  }).catch((err) => {
+    if (nonce !== state.nonce) return;
+    const lp = LISTS[page];
+    if (lp && lp.results && document.body.contains(lp.results)) lp.results.replaceChildren(errorBanner(err, () => showList(page, true)));
+    else mount(errorBanner(err, () => showList(page, true)));
+  });
+}
+
+// The toolbar is built once and kept (so typing in the search box is not interrupted); only the results are redrawn.
+function mountList(page) {
+  const cfg = PAGES[page];
+  const lp = LISTS[page] = { mounted: true };
+  lp.input = h('input', { id: 'list-search', type: 'search', placeholder: cfg.searchHint, autocomplete: 'off', 'aria-label': cfg.searchLabel });
+  let timer;
+  lp.input.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => go(page, { params: Object.assign({}, state.route.params, { q: lp.input.value.trim(), page: 1 }), replace: true }), 220);
+  });
+  lp.seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Filter' });
+  lp.extra = h('div', { class: 'toolbar__extra' });
+  lp.head = h('div');
+  lp.results = h('div', { 'aria-live': 'polite' }, skeleton(6));
+  mount(
+    cfg.intro ? cfg.intro() : null,
+    h('div', { class: 'toolbar' }, h('div', { class: 'search' }, icon('search'), lp.input), lp.seg, lp.extra),
+    lp.head, lp.results);
+}
+
+function drawList(page) {
+  const cfg = PAGES[page];
+  const data = state.pages[page];
+  let lp = LISTS[page];
+  if (!lp || !lp.mounted || !document.body.contains(lp.results)) { mountList(page); lp = LISTS[page]; }
+  if (!data) return;
+  const params = state.route.params;
+  const q = (params.q || '').trim();
+  const f = params.f || 'all';
+  if (document.activeElement !== lp.input) lp.input.value = q;
+  const shown = data.items.filter((item) => cfg.matchSeg(item, f) && textHas(item, q, cfg.searchKeys));
+  fillSeg(lp.seg, cfg.segments(data), f, (id) => go(page, { params: Object.assign({}, params, { f: id, page: 1 }), replace: true }));
+  lp.extra.replaceChildren(...(cfg.extra ? cfg.extra(data, shown) : []));
+  lp.head.replaceChildren(...(cfg.head ? [cfg.head(data)] : []));
+  if (!shown.length) {
+    lp.results.replaceChildren(h('div', { class: 'card' }, h('p', { class: 'empty', text: q || f !== 'all' ? 'Nothing matches.' : cfg.empty })));
+    return;
+  }
+  const pages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+  const pageNo = Math.min(Math.max(1, Number(params.page) || 1), pages);
+  const slice = shown.slice((pageNo - 1) * PAGE_SIZE, pageNo * PAGE_SIZE);
+  lp.results.replaceChildren(
+    dataTable(cfg.caption, cfg.columns(), slice, cfg.rowOptions),
+    pagerNode(shown.length, pageNo, PAGE_SIZE, (n) => go(page, { params: Object.assign({}, params, { page: n }), replace: true })));
+}
+
+/* -- Invites: the form above the list --------------------- */
+function field(label, input, hint) {
+  return h('label', { class: 'field' }, h('span', { class: 'field__label', text: label }), input, hint ? h('span', { class: 'hint', text: hint }) : null);
+}
+function inviteForm() {
+  const name = h('input', { type: 'text', required: true, autocomplete: 'off', maxlength: '200' });
+  const email = h('input', { type: 'email', required: true, autocomplete: 'off' });
+  const out = h('div', { 'aria-live': 'polite' });
+  const submit = h('button', { class: 'btn btn--primary', type: 'submit', text: 'Create invite' });
+  const form = h('form', { class: 'invite-form', onsubmit: async (e) => {
+    e.preventDefault();
+    submit.disabled = true;
+    try {
+      const r = await api('createInvite', { name: name.value, email: email.value });
+      const box = h('div', { class: 'callout callout--ok', role: 'status', style: 'display:block' },
+        h('div', { text: (r.existing ? 'This address already had an unused invite, so here is the same link for ' : 'Invite ready for ') + r.name + '.' }),
+        h('div', { class: 'linkbox' }, h('input', { type: 'text', readonly: true, value: r.link, 'aria-label': 'Invite link', onfocus: (ev) => ev.target.select() }), h('button', { class: 'btn', type: 'button', onclick: () => copy(r.link, 'Invite link') }, icon('copy'), 'Copy')),
+        h('div', { class: 'hint', text: 'It works once, only for ' + r.email + '.' }));
+      out.replaceChildren(
+        r.enrolled ? h('p', { class: 'callout callout--warn', role: 'status' }, r.enrolled.name + ' already has an enrolment (' + r.enrolled.reference + ').', h('a', { href: hashFor('enrolments', { ref: r.enrolled.reference }), text: 'Open it' })) : null,
+        box);
+      name.value = ''; email.value = '';
+      showList('invites', true);
+    } catch (err) {
+      out.replaceChildren(h('p', { class: 'err-line', role: 'alert', text: err.message }));
+    } finally { submit.disabled = false; }
+  } }, field('Name', name), field('Email', email), submit);
+  return h('section', { class: 'card', 'aria-labelledby': 'h-invite', style: 'margin-bottom:16px' },
+    h('div', { class: 'card__head' }, h('h2', { id: 'h-invite', text: 'Create a private registration link' })),
+    h('div', { class: 'card__body' }, form, out));
+}
+
+/* -- Panel for one enquiry ---------------------------------- */
+function loadPanel(ref) {
+  if (state.route.page === 'enquiries') loadEnquiryDrawer(ref, drawer.token); else loadDrawer(ref, drawer.token);
+}
+function loadEnquiryDrawer(ref, token) {
+  const cached = state.pages.enquiries;
+  if (!cached) return; // showList draws the panel once the list has arrived
+  if (token !== drawer.token || !drawer.node) return;
+  const item = cached.items.find((i) => String(i.row) === String(ref));
+  if (!item) {
+    drawer.node.replaceChildren(h('div', { class: 'drawer__head' }, h('h2', { text: 'Could not open this enquiry' }), closeButton()), h('div', { class: 'drawer__body' }, errorBanner(new Error('That enquiry was not found. It may have been removed from the sheet.'))));
+    return;
+  }
+  renderEnquiryDrawer(item);
+}
+function renderEnquiryDrawer(item) {
+  const mailto = 'mailto:' + item.email + '?subject=' + encodeURIComponent('Re: ' + (item.type || 'your message'));
+  const toggle = h('button', { class: 'btn' + (item.handled ? '' : ' btn--primary'), type: 'button', text: item.handled ? 'Mark as not handled' : 'Mark as handled', onclick: async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try {
+      await api('setEnquiryHandled', { row: item.row, email: item.email, at: item.at, handled: !item.handled });
+      item.handled = !item.handled;
+      const counts = state.pages.enquiries.counts;
+      counts.open = state.pages.enquiries.items.filter((i) => !i.handled).length;
+      counts.handled = counts.all - counts.open;
+      state.openEnquiries = counts.open;
+      state.overview = null;
+      renderNav();
+      drawList('enquiries');
+      renderEnquiryDrawer(item);
+      toast(item.handled ? 'Marked as handled' : 'Marked as not handled');
+    } catch (err) { toast(err.message, true); btn.disabled = false; }
+  } });
+  const rows = [['Email', item.email, 'email'], ['Company', item.company], ['Topic', item.type], ['Received', item.at]];
+  drawer.node.setAttribute('aria-label', 'Enquiry from ' + (item.name || item.email));
+  drawer.node.replaceChildren(
+    h('div', { class: 'drawer__head' }, h('div', {}, h('h2', { text: item.name || item.email }), h('p', { class: 'muted', text: item.at })), closeButton()),
+    h('div', { class: 'drawer__body' },
+      h('div', {}, h('span', { class: 'badge ' + (item.handled ? 'badge--confirmed' : 'badge--review'), text: item.handled ? 'Handled' : 'New' })),
+      h('div', { class: 'actions' }, h('a', { class: 'btn', href: mailto, target: '_blank', rel: 'noopener' }, icon('mail'), 'Reply by email'), toggle),
+      h('section', { class: 'sec' }, h('h3', { text: 'Details' }), h('dl', { class: 'kv' }, rows.map((r) => [h('dt', { text: r[0] }), h('dd', {}, r[1] ? h('span', { text: r[1] }) : h('span', { class: 'muted', text: dash }), r[2] && r[1] ? copyButton(r[1], r[0].toLowerCase()) : null)]))),
+      h('section', { class: 'sec' }, h('h3', { text: 'Message' }), h('p', { class: 'msg', text: item.message || dash }))));
+}
+
+/* -- Add an enrolment ------------------------------------- */
+function showNew() {
+  setTitle('Add enrolment');
+  const nonce = state.nonce;
+  mount(skeleton(5));
+  const ready = state.form ? Promise.resolve(state.form) : api('offlineForm').then((f) => { state.form = f; return f; });
+  return ready.then((f) => { if (nonce === state.nonce && state.route.page === 'new') renderNew(f); })
+    .catch((err) => { if (nonce === state.nonce) mount(errorBanner(err, showNew)); });
+}
+function selectField(label, id, values) {
+  const select = h('select', { id, required: true }, h('option', { value: '', text: 'Select' }), values.map((v) => h('option', { value: v, text: v })));
+  return { select, node: field(label + ' *', select) };
+}
+function checkField(value, label) {
+  const input = h('input', { type: 'checkbox', value });
+  return { input, node: h('label', { class: 'check' }, input, h('span', { text: label })) };
+}
+function renderNew(f) {
+  const o = f.options;
+  const name = h('input', { type: 'text', required: true, autocomplete: 'off' });
+  const email = h('input', { type: 'email', required: true, autocomplete: 'off' });
+  const whatsapp = h('input', { type: 'text', required: true, autocomplete: 'off', placeholder: 'Include the country code' });
+  const place = h('input', { type: 'text', required: true, autocomplete: 'off', placeholder: 'For example Lagos, Nigeria' });
+  const background = selectField('Current background', 'f-background', o.background);
+  const bgOther = h('input', { type: 'text', autocomplete: 'off' });
+  const bgOtherWrap = h('div', { hidden: true }, field('Other background *', bgOther));
+  const experience = selectField('Years of work experience', 'f-experience', o.experience);
+  const stage = selectField('Stage of transition', 'f-stage', o.stage);
+  const source = selectField('Heard about the training via', 'f-source', o.source);
+  const srcOther = h('input', { type: 'text', autocomplete: 'off' });
+  const srcOtherWrap = h('div', { hidden: true }, field('Other source *', srcOther));
+  const wants = o.wants.map((w) => checkField(w[0], w[1]));
+  const wantOther = checkField('other', 'Other');
+  const wantOtherText = h('input', { type: 'text', autocomplete: 'off' });
+  const wantOtherWrap = h('div', { hidden: true }, field('Other goal *', wantOtherText));
+  const avail = o.availability.map((a) => checkField(a[0], a[1]));
+  const consent = h('input', { type: 'checkbox', required: true });
+  const err = h('p', { class: 'err-line', role: 'alert' });
+  const notice = h('div', { 'aria-live': 'polite' });
+  const submit = h('button', { class: 'btn btn--primary', type: 'submit', text: 'Add enrolment' });
+
+  const wantBoxes = wants.concat([wantOther]).map((w) => w.input);
+  const syncWants = () => {
+    const n = wantBoxes.filter((b) => b.checked).length;
+    wantBoxes.forEach((b) => { b.disabled = !b.checked && n >= f.maxWants; });
+    wantOtherWrap.hidden = !wantOther.input.checked;
+    wantOtherText.required = wantOther.input.checked;
+    if (!wantOther.input.checked) wantOtherText.value = '';
+  };
+  wantBoxes.forEach((b) => b.addEventListener('change', syncWants));
+  const syncOther = (select, wrap, input) => () => { wrap.hidden = select.value !== 'Other'; input.required = select.value === 'Other'; if (select.value !== 'Other') input.value = ''; };
+  background.select.addEventListener('change', syncOther(background.select, bgOtherWrap, bgOther));
+  source.select.addEventListener('change', syncOther(source.select, srcOtherWrap, srcOther));
+
+  const form = h('form', { class: 'form', onsubmit: async (e) => {
+    e.preventDefault();
+    err.textContent = '';
+    notice.replaceChildren();
+    const picked = wants.filter((w) => w.input.checked).map((w) => w.input.value);
+    const total = picked.length + (wantOther.input.checked ? 1 : 0);
+    if (total < 1 || total > f.maxWants) { err.textContent = 'Choose between 1 and ' + f.maxWants + ' things they most want.'; return; }
+    const times = avail.filter((a) => a.input.checked).map((a) => a.input.value);
+    if (!times.length) { err.textContent = 'Choose at least one live-session availability option.'; return; }
+    submit.disabled = true;
+    try {
+      const r = await api('createOffline', {
+        name: name.value, email: email.value, whatsapp: whatsapp.value, location: place.value,
+        background: background.select.value, background_other: bgOther.value, experience: experience.select.value, stage: stage.select.value,
+        source: source.select.value, source_other: srcOther.value, wants: picked, wantOther: wantOther.input.checked, want_other_text: wantOtherText.value,
+        availability: times, consent: consent.checked,
+      });
+      if (!r.created) {
+        notice.replaceChildren(h('p', { class: 'callout callout--warn', role: 'status' }, r.name + ' already has a registration (' + r.reference + '). Nothing was added.', h('a', { href: hashFor('enrolments', { ref: r.reference }), text: 'Open it' })));
+        notice.scrollIntoView({ block: 'nearest' });
+      } else {
+        toast('Added ' + r.name + ' (' + r.reference + ')');
+        refreshData();
+        go('enrolments', { ref: r.reference });
+      }
+    } catch (error) { err.textContent = error.message; } finally { submit.disabled = false; }
+  } },
+    h('p', { class: 'summary', text: 'For someone who is paying or has paid outside the website. They are added as awaiting payment at ' + naira(f.expectedAmount) + '; open the new enrolment to send the review email or confirm the payment.' }),
+    notice,
+    h('div', { class: 'card' }, h('div', { class: 'card__body', style: 'display:grid;gap:16px' },
+      h('div', { class: 'formgrid' }, field('Full name *', name), field('Email address *', email), field('WhatsApp number *', whatsapp), field('City and country *', place)),
+      h('div', { class: 'formgrid' }, background.node, experience.node),
+      bgOtherWrap,
+      stage.node,
+      h('fieldset', {}, h('legend', { text: 'What they most want *' }), h('p', { class: 'hint', text: 'Choose 1 to ' + f.maxWants + '.' }), wants.map((w) => w.node), wantOther.node, wantOtherWrap),
+      h('fieldset', {}, h('legend', { text: 'Live-session availability *' }), h('p', { class: 'hint', text: 'Choose at least one.' }), avail.map((a) => a.node)),
+      source.node, srcOtherWrap,
+      h('label', { class: 'check' }, consent, h('span', { text: 'They agreed to their details being used for BA Bridge registration, training communication and cohort administration.' })))),
+    err,
+    h('div', { class: 'actions' }, submit, h('a', { class: 'btn', href: hashFor('enrolments'), text: 'Cancel' })));
+  mount(form);
+}
+
+/* -- The pages that do not fit in the bottom bar (phones) -- */
+function openMore() {
+  const opener = document.activeElement;
+  const scrim = h('div', { class: 'scrim scrim--dialog' });
+  const items = NAV.filter((n) => !n.mobile).concat([{ id: 'new', label: 'Add enrolment', icon: 'plus' }]);
+  const node = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'More pages', tabindex: '-1' },
+    h('h2', { text: 'More' }), items.map((n) => h('a', { href: hashFor(n.id), onclick: () => close(true) }, icon(n.icon), n.label)));
+  const close = (navigated) => { scrim.remove(); node.remove(); document.removeEventListener('keydown', onKey, true); if (!navigated && document.body.contains(opener)) opener.focus({ preventScroll: true }); };
+  const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } else trapFocus(node, e); };
+  scrim.addEventListener('click', () => close());
+  document.addEventListener('keydown', onKey, true);
+  $('layer').append(scrim, node);
+  node.querySelector('a').focus();
+}
+
 /* -- Putting it together ----------------------------------- */
 function route() {
   const next = parseRoute();
@@ -828,12 +1276,18 @@ function route() {
   if (!prev || prev.page !== next.page) {
     state.nonce++;
     enrol.mounted = false;
+    Object.keys(LISTS).forEach((k) => { LISTS[k].mounted = false; });
     renderNav();
     closeDrawerNode();
-    (next.page === 'enrolments' ? showEnrolments() : showOverview());
+    if (next.page === 'enrolments') showEnrolments();
+    else if (next.page === 'new') showNew();
+    else if (PAGES[next.page]) showList(next.page);
+    else showOverview();
   } else if (next.page === 'enrolments' && !sameParams(prev.params, next.params)) {
     state.nonce++;
     showEnrolments();
+  } else if (PAGES[next.page] && !sameParams(prev.params, next.params)) {
+    drawList(next.page);
   }
   if (next.ref) openDrawer(next.ref); else closeDrawerNode();
 }
@@ -842,13 +1296,18 @@ function boot() {
   applyTheme(stash.get('ba-admin-theme'));
   $('theme-side').addEventListener('click', toggleTheme);
   $('theme-top').addEventListener('click', toggleTheme);
-  $('refresh').addEventListener('click', () => { state.overview = null; state.list = null; state.nonce++; (state.route.page === 'enrolments' ? showEnrolments(true) : showOverview(true)).then(() => toast('Refreshed')); });
+  $('refresh').addEventListener('click', () => {
+    state.overview = null; state.list = null; state.pages = {}; state.nonce++;
+    const page = state.route.page;
+    const done = page === 'enrolments' ? showEnrolments(true) : page === 'new' ? showNew() : PAGES[page] ? showList(page, true) : showOverview(true);
+    Promise.resolve(done).then(() => toast('Refreshed'));
+  });
   $('search').addEventListener('submit', (e) => { e.preventDefault(); const q = $('search-input').value.trim(); go('enrolments', { params: { q } }); });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && drawer.node && !document.querySelector('.dialog')) closeDrawer();
+    if (e.key === 'Escape' && drawer.node && !document.querySelector('.dialog, .sheet')) closeDrawer();
     if (e.key === '/' && !/^(input|textarea)$/i.test(document.activeElement.tagName) && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();
-      const field = enrol.input && $('enrol-search') ? enrol.input : $('search-input');
+      const field = $('enrol-search') || $('list-search') || $('search-input');
       field.focus();
     }
   });

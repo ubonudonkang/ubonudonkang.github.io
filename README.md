@@ -75,7 +75,17 @@ Every form on the site is handled by one browser script, `js/forms.js`, and one 
 
 ## Admin dashboard
 
-`scripts/admin.html.txt` is a responsive dashboard for the owner: a sidebar on laptops, a bottom tab bar on phones, and pages for the overview (what needs attention, key figures, system health) and every enrolment (search, filters, a detail panel with notes, review email, payment confirmation and welcome-email resend). It is the second half of `scripts/site_forms.gs`: the page is an HTML file in the Apps Script project, and it calls one server function, `adminApi`. The older admin page that opens with a key in its address still works until the dashboard is accepted.
+`scripts/admin.html.txt` is a responsive dashboard for the owner: a sidebar on laptops, a bottom tab bar (with a More menu) on phones, and these pages. It is the second half of `scripts/site_forms.gs`: the page is an HTML file in the Apps Script project, and it calls one server function, `adminApi`. The older admin page that opens with a key in its address still works until the dashboard is accepted.
+
+| Page | What it does |
+| --- | --- |
+| Overview | What needs attention, key figures (each opens its page), system health, and shortcuts to add an enrolment or create an invite |
+| Enrolments | Search, status filters and paging; a detail panel with notes, the review email, payment confirmation and the welcome-email resend |
+| Add enrolment | For someone paying outside the website. Same checks and same row as the older "Add Offline Enrollee" page; opens the new enrolment, ready to be confirmed |
+| Waitlist | Counts by cohort, search, repeats flagged (same email and cohort), **Copy emails** (each address once) and **Download CSV** |
+| Enquiries | Contact-form messages with a panel, a Reply by email link, and **Mark as handled** |
+| 1:1 sessions | Paid session payments and any with an unexpected amount; honour a booking only if its notes quote a reference listed here as Paid |
+| Invites | Create a private registration link (the same link is reused for an unused invite to the same address), copy links, and see which were used |
 
 **First deployment (about ten minutes):**
 
@@ -109,8 +119,12 @@ Every form on the site is handled by one browser script, `js/forms.js`, and one 
 - The page builds everything with `textContent` and `createElementNS`, never `innerHTML`, because names, emails and notes are typed by strangers, and because Google's page frame can refuse string-to-HTML assignments (an earlier version drew its icons that way and showed a blank page). The test serves the page under that same rule. If a script error ever does happen, the page says so on screen instead of staying blank. `scripts/test_admin_ui.mjs` includes a name written as an `<img onerror>` tag and checks that it shows as text.
 - Inside Apps Script the page runs in a frame, so its links (`#/enrolments/BAB-…`) work for navigation and the Back button but cannot be pasted as deep links into the dashboard's address.
 - The `Admin notes` column holds your notes about a person. Nothing reads it except the dashboard.
+- Invite links point at the public address the website uses (`WEB_APP_URL`), not the dashboard, so they open for the person they are sent to.
+- **Mark as handled** adds a `Handled` column to the Contact tab the first time it is used; nothing else reads it. The page sends back what it was showing, so a row that has moved (a deleted line) is never changed by mistake.
+- CSV downloads start with a byte-order mark so spreadsheet programs read names correctly, and any text that starts with `=`, `+`, `-` or `@` is made plain so a stranger's text cannot run as a formula. Apps Script's frame can block downloads; if nothing arrives, use **Copy emails** instead.
+- A Google Sheets cell holding a cohort such as `February 2027` is stored as a date, so the cohort is read back as words before it is counted (see Forms and the Apps Script).
 - Dashboard buttons call the same code as the review-email link (confirming a payment sends the same welcome email, copied to the same addresses), so both can be used side by side.
-- Tests: `node scripts/test_admin_api.mjs` covers access, figures, filters, detail and actions against the Apps Script stand-in (`scripts/gas_harness.mjs`). `node scripts/test_admin_ui.mjs` drives the page in Chromium against the same code (layouts at six widths, keyboard use, focus handling, dark mode, accessibility with axe when `axe-core` is available) and skips itself when Playwright is missing.
+- Tests: `node scripts/test_admin_api.mjs` covers access, figures, filters, detail and actions against the Apps Script stand-in (`scripts/gas_harness.mjs`). `node scripts/test_admin_ui.mjs` (overview, enrolments and the shell) and `node scripts/test_admin_pages.mjs` (the other pages and the phone menu) drive the page in Chromium against the same code (layouts at six widths, keyboard use, focus handling, dark mode, accessibility with axe when `axe-core` is available) and skips itself when Playwright is missing.
 
 ## Reopening BA Bridge registration
 

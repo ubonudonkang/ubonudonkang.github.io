@@ -44,6 +44,7 @@ export function makeSheet(name, headers) {
     getRange(row, column, height = 1, width = 1) {
       assert.ok(column + width - 1 <= columns, 'write must fit available columns');
       return {
+        getValue: () => rows[row - 1]?.[column - 1] ?? '',
         getValues: () => Array.from({ length: height }, (_, r) =>
           Array.from({ length: width }, (_, c) => rows[row + r - 1]?.[column + c - 1] ?? '')),
         setValue(value) { rows[row - 1] ??= []; rows[row - 1][column - 1] = value; },

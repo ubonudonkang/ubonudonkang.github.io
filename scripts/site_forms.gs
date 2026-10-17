@@ -1053,7 +1053,15 @@ const ADMIN_METHODS_ = {
   sendReview: { run: adminSendReviewApi_, write: true },
   confirmPayment: { run: adminConfirmApi_, write: true },
   resendWelcome: { run: adminResendWelcomeApi_, write: true },
-  saveNote: { run: adminSaveNote_, write: true }
+  saveNote: { run: adminSaveNote_, write: true },
+  waitlist: { run: adminWaitlist_ },
+  enquiries: { run: adminEnquiries_ },
+  setEnquiryHandled: { run: adminSetEnquiryHandled_, write: true },
+  sessions: { run: adminSessions_ },
+  invites: { run: adminInvites_ },
+  createInvite: { run: adminCreateInvite_, write: true },
+  offlineForm: { run: adminOfflineForm_ },
+  createOffline: { run: adminCreateOffline_, write: true }
 };
 
 // ---------- reading ----------
@@ -1082,12 +1090,9 @@ function timeOf_(value) {
   return isNaN(time) ? 0 : time;
 }
 
-// A cell as the dashboard shows it. Text that starts like a formula was saved with a leading ' (see safeCellText_); the quote is not part of the text.
+// A cell of the enrolment sheet as the dashboard shows it (see plain_).
 function text_(values, key) {
-  const value = values[COL[key] - 1];
-  return value instanceof Date
-    ? dateText_(value)
-    : String(value == null ? '' : value).trim().replace(/^'(?=[=+\-@])/, '');
+  return plain_(values[COL[key] - 1]);
 }
 
 function adminReadEnrolments_(sheet) {
@@ -1269,7 +1274,7 @@ function adminOverview_() {
     revenue,
     expectedAmount: EXPECTED_AMOUNT,
     waitlist: { total: waitlist.rows.length, byCohort },
-    enquiries: { total: adminTabRows_(FORM_TABS.contact).rows.length },
+    enquiries: adminEnquiryCounts_(),
     sessions: sessionStats,
     attentionTotal: attention.length,
     attention: attention.slice(0, 12),
@@ -1455,6 +1460,319 @@ function adminSaveNote_(params) {
   setRowValue_(sheet, found.row, 'admin_notes', safeCellText_(note));
 
   return { saved: true };
+}
+
+// ==================== ADMIN DASHBOARD: WAITLIST, ENQUIRIES, SESSIONS, INVITES, OFFLINE ENROLMENT ====================
+
+// The choices on the registration form, as the dashboard's "Add enrolment" page offers them.
+// They match registrationFieldsHtml_ (a test keeps the two together).
+const ADMIN_FORM_OPTIONS = {
+  background: [
+    'Student or recent graduate', 'Academic or market research', 'Banking, finance, or insurance',
+    'Operations, admin, or customer service', 'Tech, but not in a BA role', 'Working BA looking to level up', 'Other'
+  ],
+  experience: ['0 to 1', '2 to 4', '5 to 9', '10+'],
+  stage: [
+    'Just exploring whether BA is right for me', 'Decided on BA, need structured training',
+    'Already doing some BA-type work informally', 'Currently a BA, want to get stronger'
+  ],
+  source: ['LinkedIn', 'X (Twitter)', 'WhatsApp', 'Referral from a friend or colleague', 'Other'],
+  wants: [
+    ['want_jobready', 'Practical, job-ready skills'], ['want_portfolio', 'A portfolio project to show employers'],
+    ['want_certification', 'Certification prep (ECBA / CCBA)'], ['want_careerprep', 'CV, LinkedIn, and interview prep'],
+    ['want_mentor', 'Mentorship from a practising BA'], ['want_networking', 'Networking and job leads']
+  ],
+  availability: [
+    ['avail_weekday', 'Weekday evenings'], ['avail_sat_am', 'Saturday mornings'],
+    ['avail_sat_pm', 'Saturday afternoons'], ['avail_sun_pm', 'Sunday afternoons']
+  ]
+};
+const ADMIN_LIST_LIMIT = 5000;
+const ENQUIRY_HANDLED_HEADING = 'Handled';
+
+// A cell as the dashboard shows it (dates as text; the guard quote in front of =, +, - or @ is not part of the text).
+function plain_(value) {
+  return value instanceof Date
+    ? dateText_(value)
+    : String(value == null ? '' : value).trim().replace(/^'(?=[=+\-@])/, '');
+}
+
+function cellAt_(row, at) {
+  return at > -1 ? row[at] : '';
+}
+
+function isHandled_(value) {
+  return /^(yes|y|true|done|handled)$/i.test(String(value == null ? '' : value).trim());
+}
+
+function adminWaitlist_() {
+  const tab = adminTabRows_(FORM_TABS.waitlist);
+  const at = {
+    name: tab.header.indexOf('name'),
+    email: tab.header.indexOf('email'),
+    cohort: tab.header.indexOf('cohort'),
+    time: tab.header.indexOf('Timestamp')
+  };
+  const seen = {};
+  const counts = {};
+  let duplicates = 0;
+
+  const items = tab.rows.map((row, i) => {
+    const email = normalizeEmail_(plain_(cellAt_(row, at.email)));
+    const cohort = cohortText_(cellAt_(row, at.cohort)) || 'Not given';
+    const key = email + '|' + cohort.toLowerCase();
+    // The first signup is the real one; a later signup with the same email and cohort is flagged.
+    const duplicate = !!email && seen[key] === true;
+
+    seen[key] = true;
+    if (duplicate) duplicates++;
+    counts[cohort] = (counts[cohort] || 0) + 1;
+
+    return {
+      row: i + 2,
+      name: plain_(cellAt_(row, at.name)),
+      email,
+      cohort,
+      joinedAt: plain_(cellAt_(row, at.time)),
+      joinedMs: timeOf_(cellAt_(row, at.time)),
+      duplicate
+    };
+  }).reverse();
+
+  const cohorts = Object.keys(counts)
+    .map(name => ({ name, count: counts[name], ms: new Date('1 ' + name).getTime() || 0 }))
+    .sort((a, b) => b.ms - a.ms || (a.name < b.name ? -1 : 1))
+    .map(c => ({ name: c.name, count: c.count }));
+
+  return {
+    total: items.length,
+    duplicates,
+    cohorts,
+    items: items.slice(0, ADMIN_LIST_LIMIT)
+  };
+}
+
+function adminEnquiryRows_() {
+  const tab = adminTabRows_(FORM_TABS.contact);
+  const at = {
+    first: tab.header.indexOf('First name'),
+    last: tab.header.indexOf('Last name'),
+    email: tab.header.indexOf('Email'),
+    company: tab.header.indexOf('Company'),
+    type: tab.header.indexOf('Engagement type'),
+    message: tab.header.indexOf('Message'),
+    time: tab.header.indexOf('Timestamp'),
+    handled: tab.header.indexOf(ENQUIRY_HANDLED_HEADING)
+  };
+
+  return tab.rows.map((row, i) => ({
+    row: i + 2,
+    name: (plain_(cellAt_(row, at.first)) + ' ' + plain_(cellAt_(row, at.last))).trim(),
+    email: plain_(cellAt_(row, at.email)),
+    company: plain_(cellAt_(row, at.company)),
+    type: plain_(cellAt_(row, at.type)),
+    message: plain_(cellAt_(row, at.message)),
+    at: plain_(cellAt_(row, at.time)),
+    atMs: timeOf_(cellAt_(row, at.time)),
+    handled: isHandled_(cellAt_(row, at.handled))
+  }));
+}
+
+function adminEnquiryCounts_() {
+  const rows = adminEnquiryRows_();
+  const open = rows.filter(r => !r.handled).length;
+
+  return { total: rows.length, open };
+}
+
+function adminEnquiries_() {
+  const items = adminEnquiryRows_().reverse();
+  const open = items.filter(r => !r.handled).length;
+
+  return {
+    counts: { all: items.length, open, handled: items.length - open },
+    items: items.slice(0, ADMIN_LIST_LIMIT)
+  };
+}
+
+function adminSetEnquiryHandled_(params) {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(FORM_TABS.contact.tab);
+  const row = Number(params.row);
+
+  if (!sheet || !isFinite(row) || row < 2 || row > sheet.getLastRow() || Math.floor(row) !== row) {
+    throw new Error('That enquiry was not found. Refresh the page.');
+  }
+
+  const header = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(v => String(v).trim());
+  const emailAt = header.indexOf('Email');
+  const timeAt = header.indexOf('Timestamp');
+
+  // The page sends back what it was showing, so a row that has moved (a deleted line) is never changed by mistake.
+  if (
+    emailAt === -1 ||
+    normalizeEmail_(plain_(sheet.getRange(row, emailAt + 1).getValue())) !== normalizeEmail_(params.email) ||
+    (timeAt > -1 && plain_(sheet.getRange(row, timeAt + 1).getValue()) !== String(params.at || ''))
+  ) {
+    throw new Error('The sheet has changed since this page loaded. Refresh and try again.');
+  }
+
+  let handledAt = header.indexOf(ENQUIRY_HANDLED_HEADING);
+
+  if (handledAt === -1) {
+    ensureColumns_(sheet, header.length + 1);
+    sheet.getRange(1, header.length + 1).setValue(ENQUIRY_HANDLED_HEADING);
+    handledAt = header.length;
+  }
+
+  const handled = params.handled === true || params.handled === 'true';
+  sheet.getRange(row, handledAt + 1).setValue(handled ? 'Yes' : '');
+
+  return { handled };
+}
+
+function adminSessions_() {
+  const tab = adminTabRows_(FORM_TABS.sessions);
+  const at = {
+    reference: tab.header.indexOf('Squad reference'),
+    name: tab.header.indexOf('Name'),
+    email: tab.header.indexOf('Email'),
+    amount: tab.header.indexOf('Amount paid (NGN)'),
+    status: tab.header.indexOf('Status'),
+    time: tab.header.indexOf('Timestamp'),
+    source: tab.header.indexOf('Reported by')
+  };
+  const counts = { all: tab.rows.length, paid: 0, review: 0 };
+  let revenue = 0;
+
+  const items = tab.rows.map((row, i) => {
+    const status = plain_(cellAt_(row, at.status));
+    const amount = Number(cellAt_(row, at.amount));
+    const paid = status === 'Paid';
+
+    if (paid) { counts.paid++; revenue += isFinite(amount) ? amount : 0; }
+    else if (/review|check/i.test(status)) counts.review++;
+
+    return {
+      row: i + 2,
+      reference: plain_(cellAt_(row, at.reference)),
+      name: plain_(cellAt_(row, at.name)),
+      email: plain_(cellAt_(row, at.email)),
+      amount: cellAt_(row, at.amount) !== '' && isFinite(amount) ? amount : null,
+      status,
+      paid,
+      reportedBy: plain_(cellAt_(row, at.source)),
+      at: plain_(cellAt_(row, at.time)),
+      atMs: timeOf_(cellAt_(row, at.time))
+    };
+  }).reverse();
+
+  return { counts, revenue, expectedAmount: SESSION_AMOUNT, items: items.slice(0, ADMIN_LIST_LIMIT) };
+}
+
+function adminInvites_() {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(INVITE_SHEET_NAME);
+
+  if (!sheet || sheet.getLastRow() < 2) {
+    return { counts: { all: 0, unused: 0, used: 0 }, items: [] };
+  }
+
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, INVITE_HEADERS.length).getValues();
+  const counts = { all: rows.length, unused: 0, used: 0 };
+
+  const items = rows.map((v, i) => {
+    const status = String(v[4] || '').trim();
+    const token = String(v[1] || '').trim();
+
+    if (status === 'Unused') counts.unused++;
+    else if (status === 'Used') counts.used++;
+
+    return {
+      row: i + 2,
+      createdAt: plain_(v[0]),
+      createdMs: timeOf_(v[0]),
+      name: plain_(v[2]),
+      email: plain_(v[3]),
+      status,
+      usedAt: plain_(v[5]),
+      reference: plain_(v[6]),
+      // The link goes to the public address the website uses, so it opens for the person it is sent to.
+      link: status === 'Unused' && token ? inviteUrl_(token) : ''
+    };
+  }).reverse();
+
+  return { counts, items: items.slice(0, 300) };
+}
+
+function adminCreateInvite_(params) {
+  const name = String(params.name || '').trim();
+  const email = normalizeEmail_(params.email);
+
+  if (!name || !email) throw new Error('Name and email are required.');
+  if (name.length > 200) throw new Error('That name is too long.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Enter a valid email address.');
+
+  const inviteSheet = getInviteSheet_();
+  const existing = findUnusedInviteByEmail_(inviteSheet, email);
+  const enrolled = findByEmail_(getSheet_(), email, false);
+  let token;
+
+  if (existing) {
+    token = existing.token;
+  } else {
+    token = randomKey_();
+    inviteSheet.appendRow([stamp_(), token, safeCellText_(name), safeCellText_(email), 'Unused', '', '']);
+  }
+
+  return {
+    link: inviteUrl_(token),
+    name: existing ? existing.name : name,
+    email,
+    existing: !!existing,
+    enrolled: enrolled
+      ? { reference: cell_(enrolled.values, 'reference'), name: cell_(enrolled.values, 'name') }
+      : null
+  };
+}
+
+function adminOfflineForm_() {
+  return { options: ADMIN_FORM_OPTIONS, expectedAmount: EXPECTED_AMOUNT, maxWants: 3 };
+}
+
+// Adds someone who is paying or has paid outside the website. Same checks and same row as the older "Add Offline Enrollee" page.
+function adminCreateOffline_(params) {
+  const text = key => {
+    const value = String(params[key] == null ? '' : params[key]).trim();
+    if (value.length > MAX_FIELD_LENGTH) throw new Error('A field is too long.');
+    return value;
+  };
+  const data = {
+    name: text('name'), email: text('email'), whatsapp: text('whatsapp'), location: text('location'),
+    background: text('background'), background_other: text('background_other'),
+    experience: text('experience'), stage: text('stage'),
+    source: text('source'), source_other: text('source_other'),
+    want_other_text: text('want_other_text'),
+    consent: params.consent === true || params.consent === 'yes' ? 'yes' : ''
+  };
+
+  const listOf = key => (Array.isArray(params[key]) ? params[key].map(String) : []);
+  const known = list => list.map(item => item[0]);
+
+  listOf('wants').forEach(key => { if (known(ADMIN_FORM_OPTIONS.wants).indexOf(key) !== -1) data[key] = 'yes'; });
+  listOf('availability').forEach(key => { if (known(ADMIN_FORM_OPTIONS.availability).indexOf(key) !== -1) data[key] = 'yes'; });
+  if (params.wantOther === true) data.want_other = 'yes';
+
+  const reg = normalizeRegistration_(data);
+  const sheet = getSheet_();
+  const existing = findByEmail_(sheet, reg.email, false);
+
+  if (existing) {
+    return { created: false, reference: cell_(existing.values, 'reference'), name: cell_(existing.values, 'name') };
+  }
+
+  const reference = generateEnrolmentReference_(sheet, 'OFF');
+  createEnrolment_(sheet, reg, reference);
+
+  return { created: true, reference, name: reg.name, email: reg.email };
 }
 
 // ==================== ADMIN PANEL ====================

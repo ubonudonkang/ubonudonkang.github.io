@@ -45,7 +45,7 @@ function seeded(options = {}) {
   // Anonymous visitors on the public deployment: no address at all.
   const anon = seeded({ user: { active: '' } });
   anon.post(enrol('BAB-AD2-AAA'));
-  for (const method of ['overview', 'enrolments', 'enrolment', 'sendReview', 'confirmPayment', 'resendWelcome', 'saveNote']) {
+  for (const method of ['overview', 'enrolments', 'enrolment', 'sendReview', 'confirmPayment', 'resendWelcome', 'saveNote', 'waitlist', 'enquiries', 'setEnquiryHandled', 'sessions', 'invites', 'createInvite', 'offlineForm', 'createOffline']) {
     const out = anon.api(method, { reference: 'BAB-AD2-AAA' });
     assert.equal(out.ok, false, method);
     assert.match(out.error, /Only the site owner/, method);
@@ -332,6 +332,181 @@ function seeded(options = {}) {
   assert.match(h.api('saveNote', { reference: 'BAB-AC2-AAA', note: 'x'.repeat(2001) }).error, /up to 2000 characters/);
   assert.equal(h.data('saveNote', { reference: 'BAB-AC2-AAA', note: '' }).saved, true);
   assert.equal(h.cell('BAB-AC2-AAA', 'Admin notes'), '');
+}
+
+/* ── Waitlist: counts, newest first, and signups that repeat ── */
+{
+  const h = seeded();
+  assert.deepEqual(h.data('waitlist'), { total: 0, duplicates: 0, cohorts: [], items: [] });
+  assert.equal(h.named.Waitlist, undefined, 'reading the waitlist does not create the tab');
+  const wl = (email, cohort, name = 'N') => h.post({ form_name: 'ba-waitlist-x', name, email, cohort, consent: 'Yes' });
+  wl('a@example.test', 'February 2027', 'Ada'); wl('b@example.test', 'February 2027', 'Bola'); wl('c@example.test', 'May 2027', 'Chi');
+  const tab = h.named.Waitlist;
+  const heading = (label) => tab.rows[0].indexOf(label);
+  // Sheets turns the cohort into a date; a repeat of Ada was saved earlier by an older script (the form now refuses it); one cell is "=1+1"-like text from a stranger
+  tab.rows.slice(1).forEach((row) => { if (row[heading('cohort')] === 'February 2027') row[heading('cohort')] = new Date('2027-01-31T23:00:00Z'); });
+  tab.rows.push([new Date(), 'ba-waitlist-x', 'Ada again', 'A@Example.test ', 'February 2027', 'Yes', 'x']);
+  tab.rows.push([new Date(), 'ba-waitlist-x', "'=cmd", 'd@example.test', 'May 2027', 'Yes', 'x']);
+
+  const w = h.data('waitlist');
+  assert.equal(w.total, 5);
+  assert.equal(w.duplicates, 1);
+  assert.deepEqual(w.cohorts, [{ name: 'May 2027', count: 2 }, { name: 'February 2027', count: 3 }], 'cohorts are counted by their words, latest first');
+  assert.equal(w.items[0].name, '=cmd', "the guard quote is not shown");
+  assert.deepEqual(w.items.map((i) => i.email), ['d@example.test', 'a@example.test', 'c@example.test', 'b@example.test', 'a@example.test'], 'newest first, emails tidied');
+  assert.deepEqual(w.items.map((i) => i.duplicate), [false, true, false, false, false], 'the later of two signups with the same email and cohort is the duplicate');
+  assert.equal(w.items[1].cohort, 'February 2027');
+  assert.ok(w.items.every((i) => i.row >= 2 && typeof i.joinedMs === 'number'));
+}
+
+/* ── Enquiries: list, handled marker, and refusing a stale row ── */
+{
+  const h = seeded();
+  assert.deepEqual(h.data('enquiries'), { counts: { all: 0, open: 0, handled: 0 }, items: [] });
+  assert.equal(h.named.Contact, undefined);
+  const contact = (n, extra = {}) => h.post({ form_name: 'contact', first_name: 'First' + n, last_name: 'Last' + n, email: `q${n}@example.test`, company: 'Co', type: 'Mentoring', message: 'Hello ' + n, submission_id: 'sub' + n, ...extra });
+  contact(1); contact(2); contact(3);
+  let e = h.data('enquiries');
+  assert.deepEqual(e.counts, { all: 3, open: 3, handled: 0 });
+  assert.deepEqual(e.items.map((i) => i.name), ['First3 Last3', 'First2 Last2', 'First1 Last1'], 'newest first');
+  assert.equal(e.items[0].message, 'Hello 3');
+  assert.equal(h.data('overview').enquiries.open, 3);
+
+  const target = e.items[1];
+  assert.equal(h.named.Contact.rows[0].includes('Handled'), false, 'the column is added only when it is first needed');
+  assert.deepEqual(h.data('setEnquiryHandled', { row: target.row, email: target.email, at: target.at, handled: true }), { handled: true });
+  assert.equal(h.named.Contact.rows[0].at(-1), 'Handled');
+  e = h.data('enquiries');
+  assert.deepEqual(e.counts, { all: 3, open: 2, handled: 1 });
+  assert.equal(e.items[1].handled, true);
+  assert.equal(h.data('overview').enquiries.open, 2);
+  contact(4);
+  assert.equal(h.named.Contact.rows.at(-1).length, h.named.Contact.rows[0].length, 'a new enquiry still fits the sheet after the column was added');
+  assert.equal(h.data('enquiries').counts.open, 3);
+  assert.deepEqual(h.data('setEnquiryHandled', { row: target.row, email: target.email, at: target.at, handled: false }), { handled: false });
+  assert.equal(h.data('enquiries').counts.handled, 0);
+
+  // what the page was showing must still be what is on that row
+  assert.match(h.api('setEnquiryHandled', { row: target.row, email: 'someone-else@example.test', at: target.at, handled: true }).error, /changed since this page loaded/);
+  assert.match(h.api('setEnquiryHandled', { row: target.row, email: target.email, at: '1999-01-01 00:00', handled: true }).error, /changed since this page loaded/);
+  for (const row of [0, 1, 99, 2.5, 'abc', undefined]) assert.match(h.api('setEnquiryHandled', { row, email: target.email, at: target.at, handled: true }).error, /not found/, String(row));
+  assert.equal(h.data('enquiries').counts.handled, 0, 'refused calls change nothing');
+}
+
+/* ── 1:1 sessions ── */
+{
+  const h = seeded();
+  assert.deepEqual(h.data('sessions').counts, { all: 0, paid: 0, review: 0 });
+  assert.equal(h.named.Sessions, undefined);
+  h.answers['UU1-SESS0001'] = squadOk({ transaction_amount: 1500000 });
+  h.answers['UU1-SESS0002'] = squadOk({ transaction_amount: 100 });
+  postJson(h, webhook('UU1-SESS0001')); postJson(h, webhook('UU1-SESS0002'));
+  const s = h.data('sessions');
+  assert.deepEqual(s.counts, { all: 2, paid: 1, review: 1 });
+  assert.equal(s.revenue, 15000);
+  assert.equal(s.expectedAmount, 15000);
+  assert.deepEqual(s.items.map((i) => [i.reference, i.paid, i.amount]), [['UU1-SESS0002', false, 1], ['UU1-SESS0001', true, 15000]]);
+  assert.match(s.items[0].status, /review/i);
+}
+
+/* ── Invites: create, reuse, list, used ── */
+{
+  const h = seeded();
+  assert.deepEqual(h.data('invites'), { counts: { all: 0, unused: 0, used: 0 }, items: [] });
+  assert.equal(h.named['BA Bridge Invites'], undefined, 'reading invites does not create the tab');
+
+  const made = h.data('createInvite', { name: ' Ngozi Eze ', email: ' Ngozi@Example.TEST ' });
+  assert.equal(made.existing, false);
+  assert.equal(made.email, 'ngozi@example.test');
+  assert.match(made.link, /^https:\/\/script\.google\.com\/macros\/s\/AKfycby94krvGfIS7mXVT-szoGHHM_pCLIU11Bh_AemMxE_nsK-X_Hm1y8yaK69zNKfU20LT\/exec\?action=invite&token=[A-Za-z0-9]+$/, 'the link points at the public address the website uses, not the dashboard');
+  assert.equal(made.enrolled, null);
+  assert.equal(h.data('createInvite', { name: 'Someone', email: 'ngozi@example.test' }).link, made.link, 'an unused invite for the same email is reused');
+  assert.equal(h.data('createInvite', { name: 'x', email: 'ngozi@example.test' }).existing, true);
+  assert.equal(h.named['BA Bridge Invites'].rows.length, 2, 'reusing does not add a row');
+  assert.match(h.api('createInvite', { name: '', email: 'a@example.test' }).error, /required/);
+  assert.match(h.api('createInvite', { name: 'A', email: 'not-an-email' }).error, /valid email/);
+  assert.match(h.api('createInvite', { name: 'x'.repeat(201), email: 'a@example.test' }).error, /too long/);
+
+  // someone who already has an enrolment is flagged (not blocked)
+  h.post(enrol('BAB-IN1-AAA', { email: 'already@example.test' }));
+  const warned = h.data('createInvite', { name: 'Already Enrolled', email: 'already@example.test' });
+  assert.deepEqual(warned.enrolled, { reference: 'BAB-IN1-AAA', name: 'Ada Example' });
+  h.data('createInvite', { name: '=cmd|calc', email: 'evil@example.test' });
+  assert.equal(h.named['BA Bridge Invites'].rows.at(-1)[2], "'=cmd|calc", 'a name cannot become a spreadsheet formula');
+
+  let list = h.data('invites');
+  assert.deepEqual(list.counts, { all: 3, unused: 3, used: 0 });
+  assert.deepEqual(list.items.map((i) => i.email), ['evil@example.test', 'already@example.test', 'ngozi@example.test'], 'newest first');
+  assert.equal(list.items[0].name, '=cmd|calc');
+  assert.equal(list.items[2].link, made.link);
+
+  // the invitee uses the link through the real registration page flow
+  const token = made.link.split('token=')[1];
+  h.post({ action: 'invite_submit', token, name: 'Ngozi Eze', whatsapp: '+234 800 000 0002', location: 'Abuja', background: 'Student or recent graduate', experience: '0 to 1', stage: 'Just exploring whether BA is right for me', want_jobready: 'yes', avail_weekday: 'yes', source: 'LinkedIn', consent: 'yes' });
+  list = h.data('invites');
+  assert.deepEqual(list.counts, { all: 3, unused: 2, used: 1 });
+  const used = list.items.find((i) => i.email === 'ngozi@example.test');
+  assert.equal(used.status, 'Used');
+  assert.equal(used.link, '', 'a used invite has no link to hand out');
+  assert.match(used.reference, /^BAB-/);
+  assert.equal(h.data('enrolment', { reference: used.reference }).summary.email, 'ngozi@example.test', 'the enrolment it made is one click away');
+}
+
+/* ── Adding an enrolment from the dashboard ── */
+{
+  const h = seeded();
+  const form = h.data('offlineForm');
+  assert.equal(form.expectedAmount, 80000);
+  assert.equal(form.maxWants, 3);
+  // the choices are the ones on the older registration form
+  const legacy = h.context.registrationFieldsHtml_();
+  const labels = [...form.options.background, ...form.options.experience, ...form.options.stage, ...form.options.source, ...form.options.wants.map((w) => w[1]), ...form.options.availability.map((a) => a[1])];
+  for (const label of labels) assert.ok(legacy.includes(label), 'the older form offers: ' + label);
+  for (const [key] of [...form.options.wants, ...form.options.availability]) assert.ok(legacy.includes(`name="${key}"`), 'the older form has the box: ' + key);
+
+  const person = { name: 'Kemi Bello', email: ' Kemi@Example.TEST ', whatsapp: '+234 800 000 0003', location: 'Ibadan, Nigeria', background: 'Banking, finance, or insurance', experience: '5 to 9', stage: 'Decided on BA, need structured training', source: 'Referral from a friend or colleague', wants: ['want_portfolio', 'want_mentor'], availability: ['avail_sat_am'], consent: true };
+  const made = h.data('createOffline', person);
+  assert.equal(made.created, true);
+  assert.match(made.reference, /^BAB-OFF[A-Z0-9]+-[A-Z0-9]{3}$/);
+  assert.equal(made.email, 'kemi@example.test');
+  assert.equal(h.cell(made.reference, 'Payment status'), 'Awaiting payment');
+  assert.equal(h.cell(made.reference, 'Consent given'), 'Yes');
+  assert.equal(h.cell(made.reference, 'What they want most'), 'A portfolio project to show employers, Mentorship from a practising BA');
+  assert.equal(h.cell(made.reference, 'Availability'), 'Saturday mornings');
+  const detail = h.data('enrolment', { reference: made.reference });
+  assert.equal(detail.status, 'awaiting');
+  assert.equal(detail.canConfirm, true, 'it can be confirmed once paid');
+
+  // the same email again is not added twice
+  const again = h.data('createOffline', { ...person, name: 'Kemi B' });
+  assert.deepEqual(again, { created: false, reference: made.reference, name: 'Kemi Bello' });
+  assert.equal(h.enrolmentSheet.rows.length, 2);
+
+  // "Other" choices carry their own text
+  const other = h.data('createOffline', { ...person, email: 'other@example.test', background: 'Other', background_other: 'Teacher', source: 'Other', source_other: 'A podcast', wants: ['want_jobready'], wantOther: true, want_other_text: 'Move abroad' });
+  assert.equal(h.cell(other.reference, 'Background'), 'Other: Teacher');
+  assert.equal(h.cell(other.reference, 'Heard about it via'), 'Other: A podcast');
+  assert.match(h.cell(other.reference, 'What they want most'), /Move abroad/);
+
+  // the same checks as the older page, said in the same words
+  const refuse = (change, pattern) => {
+    const out = h.api('createOffline', { ...person, email: 'x' + Math.random().toString(36).slice(2) + '@example.test', ...change });
+    assert.equal(out.ok, false, JSON.stringify(change));
+    assert.match(out.error, pattern, JSON.stringify(change));
+  };
+  refuse({ name: '' }, /complete all required/);
+  refuse({ whatsapp: '' }, /complete all required/);
+  refuse({ email: 'nope' }, /valid email/);
+  refuse({ consent: false }, /Consent is required/);
+  refuse({ wants: [] }, /between 1 and 3/);
+  refuse({ wants: ['want_jobready', 'want_portfolio', 'want_mentor', 'want_networking'] }, /between 1 and 3/);
+  refuse({ wants: ['not_a_real_box'] }, /between 1 and 3/);
+  refuse({ availability: [] }, /at least one live-session/);
+  refuse({ background: 'Other', background_other: '' }, /Enter the Other background/);
+  refuse({ source: 'Other', source_other: '' }, /how they heard/);
+  refuse({ name: 'x'.repeat(5001) }, /too long/);
+  assert.equal(h.enrolmentSheet.rows.length, 3, 'refused requests add nothing');
+  assert.equal(h.cell(made.reference, 'Full name'), 'Kemi Bello', 'the existing record is not overwritten');
 }
 
 /* ── An existing workbook gains the notes column without disturbing anything ── */
