@@ -851,6 +851,13 @@ function withLock_(fn) {
  * processes any that Squad says were paid. Run installSquadSweepTrigger() once.
  */
 function sweepAwaitingSquadPayments() {
+  const r = runSquadSweep_();
+  const summary = 'Squad sweep complete. Checked: ' + r.checked + ' Newly paid: ' + r.paid + ' Errors: ' + r.failed;
+  Logger.log(summary);
+  return summary;
+}
+
+function runSquadSweep_() {
   const sheet = getSheet_();
   const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
@@ -890,9 +897,7 @@ function sweepAwaitingSquadPayments() {
     }
   }
 
-  const summary = 'Squad sweep complete. Checked: ' + checked + ' Newly paid: ' + paid + ' Errors: ' + failed;
-  Logger.log(summary);
-  return summary;
+  return { checked, paid, failed };
 }
 
 function installSquadSweepTrigger() {
@@ -1061,7 +1066,14 @@ const ADMIN_METHODS_ = {
   invites: { run: adminInvites_ },
   createInvite: { run: adminCreateInvite_, write: true },
   offlineForm: { run: adminOfflineForm_ },
-  createOffline: { run: adminCreateOffline_, write: true }
+  createOffline: { run: adminCreateOffline_, write: true },
+  enrolmentsExport: { run: adminEnrolmentsExport_ },
+  system: { run: adminSystem_ },
+  installSweep: { run: adminInstallSweep_ },
+  // runSweep takes the script lock itself for each payment, so it must not be wrapped in it (the lock is not re-entrant).
+  runSweep: { run: adminRunSweep_ },
+  checkReference: { run: adminCheckReference_ },
+  recordPayment: { run: adminRecordPayment_, write: true }
 };
 
 // ---------- reading ----------
@@ -1284,7 +1296,7 @@ function adminOverview_() {
   };
 }
 
-function adminEnrolments_(params) {
+function adminMatchEnrolments_(params) {
   const q = String(params.q || '').trim().toLowerCase();
   const digits = q.replace(/\D/g, '');
   const wanted = ['awaiting', 'review', 'confirmed'].indexOf(params.status) !== -1 ? params.status : '';
@@ -1303,6 +1315,14 @@ function adminEnrolments_(params) {
   matches.forEach(r => counts[enrolmentStatus_(r.values)]++);
 
   const filtered = wanted ? matches.filter(r => enrolmentStatus_(r.values) === wanted) : matches;
+
+  return { filtered, counts };
+}
+
+function adminEnrolments_(params) {
+  const found = adminMatchEnrolments_(params);
+  const filtered = found.filtered;
+  const counts = found.counts;
   const pages = Math.max(1, Math.ceil(filtered.length / ADMIN_PAGE_SIZE));
   const page = Math.min(Math.max(1, parseInt(params.page, 10) || 1), pages);
   const start = (page - 1) * ADMIN_PAGE_SIZE;
@@ -1773,6 +1793,180 @@ function adminCreateOffline_(params) {
   createEnrolment_(sheet, reg, reference);
 
   return { created: true, reference, name: reg.name, email: reg.email };
+}
+
+// ==================== ADMIN DASHBOARD: EXPORT, SYSTEM, PAYMENT LOOKUP ====================
+
+// What an enrolment export contains. Nothing private to the system (the confirmation token, the notes, email error text) is in it.
+const ADMIN_EXPORT_COLUMNS = [
+  ['Reference', v => text_(v, 'reference')],
+  ['Name', v => text_(v, 'name')],
+  ['Email', v => text_(v, 'email')],
+  ['WhatsApp', v => text_(v, 'whatsapp')],
+  ['City and country', v => text_(v, 'location')],
+  ['Background', v => text_(v, 'background')],
+  ['Years experience', v => text_(v, 'experience')],
+  ['Stage of transition', v => text_(v, 'stage')],
+  ['What they want most', v => text_(v, 'wants')],
+  ['Availability', v => text_(v, 'availability')],
+  ['Heard about it via', v => text_(v, 'source')],
+  ['Status', v => ({ awaiting: 'Awaiting payment', review: 'Needs confirmation', confirmed: 'Confirmed' })[enrolmentStatus_(v)]],
+  ['Payment status', v => text_(v, 'payment_status')],
+  ['Amount paid (NGN)', v => text_(v, 'amount_paid')],
+  ['Paid at', v => text_(v, 'paid_at')],
+  ['Enrolled at', v => text_(v, 'timestamp')]
+];
+
+// Every enrolment that matches the list's search and status filter (not just the page on screen), ready to become a file or a list of addresses.
+function adminEnrolmentsExport_(params) {
+  const rows = adminMatchEnrolments_(params || {}).filtered.map(r => ADMIN_EXPORT_COLUMNS.map(c => c[1](r.values)));
+  const emailAt = ADMIN_EXPORT_COLUMNS.map(c => c[0]).indexOf('Email');
+  const seen = {};
+  const emails = [];
+
+  rows.forEach(row => {
+    const email = normalizeEmail_(row[emailAt]);
+    if (email && !seen[email]) { seen[email] = true; emails.push(email); }
+  });
+
+  return { headers: ADMIN_EXPORT_COLUMNS.map(c => c[0]), rows, emails };
+}
+
+function adminTabSize_(name) {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(name);
+
+  return { name, rows: sheet ? Math.max(0, sheet.getLastRow() - 1) : null };
+}
+
+function adminSystem_() {
+  const props = PropertiesService.getScriptProperties();
+  const health = adminHealth_();
+  const effective = (() => { try { return normalizeEmail_(Session.getEffectiveUser().getEmail()); } catch (ignore) { return ''; } })();
+  const accounts = [effective].concat(adminEmails_()).filter((email, i, all) => email && all.indexOf(email) === i);
+  const enrolments = getSheet_();
+
+  return {
+    squad: {
+      mode: health.squad,
+      lastWebhook: health.lastWebhook,
+      sweepInstalled: health.sweepInstalled,
+      sweepEveryMinutes: 30,
+      // The two addresses to paste into the Squad dashboard.
+      webhookUrl: webAppUrl_(),
+      redirectUrl: 'https://ubonudonkang.com/ba-training/'
+    },
+    mail: {
+      quotaLeft: health.emailQuota,
+      reviewTo: NOTIFY_EMAIL,
+      notifyTo: SITE_NOTIFY_EMAIL,
+      welcomeCc: WELCOME_EMAIL_CC.split(',')
+    },
+    whatsappGroupUrl: props.getProperty(BA_GROUP_PROPERTY) || '',
+    prices: { cohort: EXPECTED_AMOUNT, session: SESSION_AMOUNT },
+    sheet: {
+      url: 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/edit',
+      tabs: [
+        { name: 'BA Training (enrolments)', rows: Math.max(0, enrolments.getLastRow() - 1) },
+        adminTabSize_(FORM_TABS.waitlist.tab),
+        adminTabSize_(FORM_TABS.contact.tab),
+        adminTabSize_(FORM_TABS.sessions.tab),
+        adminTabSize_(INVITE_SHEET_NAME)
+      ]
+    },
+    access: { accounts, timeZone: Session.getScriptTimeZone() }
+  };
+}
+
+function adminInstallSweep_() {
+  installSquadSweepTrigger();
+
+  return { installed: true };
+}
+
+function adminRunSweep_() {
+  const r = runSquadSweep_();
+
+  return { checked: r.checked, paid: r.paid, failed: r.failed };
+}
+
+// What Squad says about one payment reference and what the sheet holds for it. Changes nothing.
+function adminCheckReference_(params) {
+  const ref = String(params.reference || '').trim();
+  const enrolmentMatch = SQUAD_REF_PATTERN.exec(ref);
+  const isSession = SESSION_REF_PATTERN.test(ref);
+
+  if (!enrolmentMatch && !isSession) {
+    throw new Error('That does not look like a BA Bridge payment reference. Cohort payments look like BAB-XXXX-XXX-1 and 1:1 sessions like UU1-XXXXXXXX.');
+  }
+
+  const key = configuredSquadSecret_();
+  const tx = verifySquadTransaction_(ref);
+  const out = {
+    mode: squadApiBase_(key) === SQUAD_SANDBOX_API ? 'sandbox' : 'live',
+    reference: ref,
+    kind: isSession ? 'session' : 'enrolment',
+    found: tx.found,
+    status: tx.found ? tx.status : '',
+    amount: tx.found && isFinite(tx.amount) ? tx.amount / 100 : null,
+    currency: tx.found ? tx.currency : '',
+    expected: isSession ? SESSION_AMOUNT : EXPECTED_AMOUNT,
+    customer: { name: tx.found ? tx.name : '', email: tx.found ? tx.email : '' },
+    record: { exists: false, alreadyRecorded: false, paidWithOther: '', reference: '', name: '', status: '' },
+    canRecord: false,
+    reason: ''
+  };
+
+  out.amountMatches = out.amount !== null && out.amount === out.expected && (!out.currency || out.currency === 'NGN');
+
+  if (isSession) {
+    const sessions = adminTabRows_(FORM_TABS.sessions);
+    const at = sessions.header.indexOf('Squad reference');
+    const row = sessions.rows.filter(r => at > -1 && plain_(r[at]) === ref)[0];
+
+    out.record.alreadyRecorded = !!row;
+    out.record.exists = !!row;
+    out.record.reference = ref;
+  } else {
+    const found = findByReference_(getSheet_(), enrolmentMatch[1]);
+
+    if (found) {
+      const v = found.values;
+      out.record.exists = true;
+      out.record.reference = enrolmentMatch[1];
+      out.record.name = cell_(v, 'name');
+      out.record.status = enrolmentStatus_(v);
+      out.record.alreadyRecorded = isSquadPaid_(v) && cell_(v, 'squad_ref') === ref;
+      out.record.paidWithOther = isSquadPaid_(v) && !out.record.alreadyRecorded ? cell_(v, 'squad_ref') : '';
+    }
+  }
+
+  const paid = tx.found && String(tx.status).toLowerCase() === 'success';
+
+  if (!tx.found) out.reason = 'Squad has no payment with this reference.';
+  else if (!paid) out.reason = 'Squad says this payment is ' + (tx.status || 'not complete') + ', so there is nothing to record.';
+  else if (out.record.alreadyRecorded) out.reason = 'This payment is already recorded.';
+  else if (out.record.paidWithOther) out.reason = 'This enrolment is already paid with ' + out.record.paidWithOther + '. This looks like a second payment; consider a refund.';
+  else if (!isSession && !out.record.exists) out.reason = 'No enrolment in the sheet has the reference ' + enrolmentMatch[1] + '.';
+
+  out.canRecord = !out.reason;
+
+  return out;
+}
+
+// The same recognition the webhook and the sweep use, started by hand (for example after a webhook was missed).
+function adminRecordPayment_(params, user) {
+  const check = adminCheckReference_(params);
+
+  if (!check.canRecord) throw new Error(check.reason);
+
+  const outcome = processSquadPayment_(getSheet_(), check.reference, 'dashboard');
+
+  return {
+    result: String(outcome.result || ''),
+    reference: check.kind === 'enrolment' ? check.record.reference : check.reference,
+    kind: check.kind,
+    by: user
+  };
 }
 
 // ==================== ADMIN PANEL ====================

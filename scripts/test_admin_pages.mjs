@@ -23,11 +23,11 @@ const visit = async (backend, hash, options = {}) => {
 };
 let failed = null;
 try {
-  /* ── Navigation: a sidebar of six on a laptop, four tabs and a More menu on a phone ── */
+  /* ── Navigation: a sidebar of seven on a laptop, four tabs and a More menu on a phone ── */
   {
     const wide = await open(browser, shared, { url });
     await wide.page.waitForSelector('.kpi');
-    assert.deepEqual(await wide.page.locator('#nav a').allTextContents().then((t) => t.map((x) => x.replace(/\d+$/, ''))), ['Overview', 'Enrolments', 'Waitlist', 'Enquiries', '1:1 sessions', 'Invites']);
+    assert.deepEqual(await wide.page.locator('#nav a').allTextContents().then((t) => t.map((x) => x.replace(/\d+$/, ''))), ['Overview', 'Enrolments', 'Waitlist', 'Enquiries', '1:1 sessions', 'Invites', 'System']);
     assert.equal(await wide.page.locator('#nav a[href="#/enquiries"] .nav__count').textContent(), '3', 'the sidebar says how many enquiries are waiting');
     assert.deepEqual(await wide.page.locator('.quick a').allTextContents(), ['Add enrolment', 'Create invite']);
     assert.equal(await wide.page.locator('a.kpi', { hasText: 'Waitlist' }).getAttribute('href'), '#/waitlist');
@@ -43,7 +43,7 @@ try {
     assert.equal(await phone.page.locator('#more-btn').getAttribute('aria-current'), null);
     await phone.page.locator('#more-btn').click();
     await phone.page.waitForSelector('.sheet');
-    assert.deepEqual(await phone.page.locator('.sheet a').allTextContents(), ['1:1 sessions', 'Invites', 'Add enrolment']);
+    assert.deepEqual(await phone.page.locator('.sheet a').allTextContents(), ['1:1 sessions', 'Invites', 'System', 'Add enrolment']);
     assert.equal(await phone.page.evaluate(() => document.querySelector('.sheet').contains(document.activeElement)), true, 'focus moves into the menu');
     for (let i = 0; i < 8; i++) { await phone.page.keyboard.press('Tab'); assert.equal(await phone.page.evaluate(() => document.querySelector('.sheet').contains(document.activeElement)), true, 'Tab stays in the menu'); }
     await phone.page.keyboard.press('Escape');

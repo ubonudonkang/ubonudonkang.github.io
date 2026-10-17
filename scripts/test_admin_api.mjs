@@ -45,7 +45,7 @@ function seeded(options = {}) {
   // Anonymous visitors on the public deployment: no address at all.
   const anon = seeded({ user: { active: '' } });
   anon.post(enrol('BAB-AD2-AAA'));
-  for (const method of ['overview', 'enrolments', 'enrolment', 'sendReview', 'confirmPayment', 'resendWelcome', 'saveNote', 'waitlist', 'enquiries', 'setEnquiryHandled', 'sessions', 'invites', 'createInvite', 'offlineForm', 'createOffline']) {
+  for (const method of ['overview', 'enrolments', 'enrolment', 'sendReview', 'confirmPayment', 'resendWelcome', 'saveNote', 'waitlist', 'enquiries', 'setEnquiryHandled', 'sessions', 'invites', 'createInvite', 'offlineForm', 'createOffline', 'enrolmentsExport', 'system', 'installSweep', 'runSweep', 'checkReference', 'recordPayment']) {
     const out = anon.api(method, { reference: 'BAB-AD2-AAA' });
     assert.equal(out.ok, false, method);
     assert.match(out.error, /Only the site owner/, method);
@@ -507,6 +507,163 @@ function seeded(options = {}) {
   refuse({ name: 'x'.repeat(5001) }, /too long/);
   assert.equal(h.enrolmentSheet.rows.length, 3, 'refused requests add nothing');
   assert.equal(h.cell(made.reference, 'Full name'), 'Kemi Bello', 'the existing record is not overwritten');
+}
+
+/* ── Export: every match, not one page, and nothing private ── */
+{
+  const h = seeded();
+  for (let i = 1; i <= 30; i++) h.post(enrol(`BAB-EX${String(i).padStart(2, '0')}-AAA`, { name: i === 7 ? '=SUM(A1)' : `Student ${i}`, email: i % 10 === 0 ? 'shared@example.test' : `ex${i}@example.test` }));
+  h.answers['BAB-EX03-AAA-1'] = squadOk(); postJson(h, webhook('BAB-EX03-AAA-1'));
+  h.cell('BAB-EX01-AAA', 'Admin notes', 'private note');
+  const all = h.data('enrolmentsExport', {});
+  assert.equal(all.rows.length, 30, 'all of them, not the 25 that fit a page');
+  assert.deepEqual(all.headers.slice(0, 3), ['Reference', 'Name', 'Email']);
+  const blob = JSON.stringify(all);
+  assert.ok(!blob.includes('private note') && !blob.includes(h.cell('BAB-EX03-AAA', 'Confirmation token')), 'no notes, no tokens');
+  assert.ok(!all.headers.some((x) => /token|note|error/i.test(x)), 'no internal columns');
+  assert.equal(all.rows[0][0], 'BAB-EX30-AAA', 'newest first, like the list');
+  assert.equal(all.rows.find((r) => r[0] === 'BAB-EX07-AAA')[1], "=SUM(A1)", 'the guard quote is not part of the name (the page makes it safe for a file)');
+  assert.equal(all.rows.find((r) => r[0] === 'BAB-EX03-AAA')[all.headers.indexOf('Status')], 'Needs confirmation');
+  assert.equal(all.rows.find((r) => r[0] === 'BAB-EX04-AAA')[all.headers.indexOf('Status')], 'Awaiting payment');
+  assert.equal(all.emails.length, 28, 'each address once (three people share one)');
+  assert.equal(new Set(all.emails).size, 28);
+  assert.equal(h.data('enrolmentsExport', { status: 'review' }).rows.length, 1);
+  assert.equal(h.data('enrolmentsExport', { q: 'student 1' }).rows.length, 11, 'the same search as the list: Student 1 and 10 to 19');
+  assert.deepEqual(h.data('enrolmentsExport', { status: 'confirmed' }), { headers: all.headers, rows: [], emails: [] });
+  assert.equal(h.data('enrolmentsExport').rows.length, 30, 'no parameters at all is fine');
+}
+
+/* ── System: the facts the owner needs, the automatic check, and a manual run ── */
+{
+  const h = seeded();
+  h.properties.BA_BRIDGE_ADMIN_EMAILS = 'extra@example.test';
+  h.post(enrol('BAB-SY1-AAA'));
+  let sys = h.data('system');
+  assert.equal(sys.squad.mode, 'sandbox');
+  assert.equal(sys.squad.sweepInstalled, false);
+  assert.equal(sys.squad.sweepEveryMinutes, 30);
+  assert.equal(sys.squad.webhookUrl, 'https://script.google.com/macros/s/AKfycby94krvGfIS7mXVT-szoGHHM_pCLIU11Bh_AemMxE_nsK-X_Hm1y8yaK69zNKfU20LT/exec');
+  assert.equal(sys.squad.redirectUrl, 'https://ubonudonkang.com/ba-training/');
+  assert.equal(sys.squad.lastWebhook, null);
+  assert.equal(sys.mail.quotaLeft, 100);
+  assert.equal(sys.mail.reviewTo, 'ubonanalyst@gmail.com');
+  assert.deepEqual(sys.mail.welcomeCc, ['alabioluwafunmito@gmail.com', 'ubonudonkang@gmail.com']);
+  assert.equal(sys.whatsappGroupUrl, 'https://chat.whatsapp.com/TestGroup123');
+  assert.deepEqual(sys.prices, { cohort: 80000, session: 15000 });
+  assert.match(sys.sheet.url, /^https:\/\/docs\.google\.com\/spreadsheets\/d\/1y5frsyZV52ciQ9AXP2_GKhnnCtXb5SrnfwBWV-4U2Sk\/edit$/);
+  assert.deepEqual(sys.sheet.tabs.map((t) => [t.name, t.rows]), [['BA Training (enrolments)', 1], ['Waitlist', null], ['Contact', null], ['Sessions', null], ['BA Bridge Invites', null]], 'tabs that do not exist yet say so, and are not created by looking');
+  assert.equal(h.named.Waitlist, undefined);
+  assert.deepEqual(sys.access.accounts, ['owner@example.test', 'ubonanalyst@gmail.com', 'ubonudonkang@gmail.com', 'extra@example.test']);
+  assert.equal(sys.access.timeZone, 'Africa/Lagos');
+
+  h.post({ form_name: 'contact', first_name: 'A', last_name: 'B', email: 'a@example.test', message: 'Hi', submission_id: 's1' });
+  assert.equal(h.data('system').sheet.tabs.find((t) => t.name === 'Contact').rows, 1);
+
+  // the automatic check: turned on from the dashboard, once
+  assert.deepEqual(h.data('installSweep'), { installed: true });
+  assert.equal(h.data('system').squad.sweepInstalled, true);
+  assert.deepEqual(h.triggers.map((t) => [t.getHandlerFunction(), t.every]), [['sweepAwaitingSquadPayments', 30]]);
+  h.data('installSweep');
+  assert.equal(h.triggers.length, 1, 'turning it on twice does not stack triggers');
+
+  // running it by hand: finds a payment whose webhook never arrived
+  assert.deepEqual(h.data('runSweep'), { checked: 3, paid: 0, failed: 0 }, 'three attempt references are tried for each unpaid enrolment');
+  h.answers['BAB-SY1-AAA-2'] = squadOk();
+  const locksBefore = h.locks.count;
+  assert.deepEqual(h.data('runSweep'), { checked: 2, paid: 1, failed: 0 });
+  assert.equal(h.cell('BAB-SY1-AAA', 'Payment status'), 'Paid (Squad verified)');
+  assert.equal(h.locks.count - locksBefore, 2, 'the sweep takes its own lock per payment; the call is not wrapped in a second one (the lock cannot be taken twice)');
+  const empty = h.locks.count;
+  h.data('runSweep');
+  assert.equal(h.locks.count, empty, 'nothing to check means no lock at all');
+
+  // no key and webhook knowledge
+  delete h.properties.SQUAD_SECRET_KEY;
+  assert.equal(h.data('system').squad.mode, 'missing');
+  postJson(h, webhook('BAB-SY1-AAA-1'));
+  assert.equal(h.data('system').squad.lastWebhook.event, 'charge_successful');
+}
+
+/* ── Looking up a payment, and recording it by hand ── */
+{
+  const h = seeded();
+  h.post(enrol('BAB-LK1-AAA', { name: 'Lookup Person' }));
+  h.post(enrol('BAB-LK2-AAA', { name: 'Wrong Amount', email: 'wa@example.test' }));
+  const mailsBefore = h.emails.length;
+  const row = () => h.enrolmentSheet.rows.map((r) => r.slice());
+
+  assert.match(h.api('checkReference', { reference: 'nonsense' }).error, /does not look like a BA Bridge payment reference/);
+  assert.match(h.api('checkReference', { reference: '' }).error, /does not look like/);
+  assert.match(h.api('checkReference', { reference: 'BAB-LK1-AAA' }).error, /does not look like/, 'a reference without its attempt number is not a payment reference');
+
+  // not paid yet: Squad has nothing
+  let c = h.data('checkReference', { reference: 'BAB-LK1-AAA-1' });
+  assert.deepEqual([c.found, c.canRecord, c.kind, c.mode], [false, false, 'enrolment', 'sandbox']);
+  assert.match(c.reason, /Squad has no payment with this reference/);
+  assert.equal(c.record.exists, true);
+  assert.equal(c.record.name, 'Lookup Person');
+
+  // still pending
+  h.answers['BAB-LK1-AAA-1'] = squadOk({ transaction_status: 'Pending' });
+  c = h.data('checkReference', { reference: ' BAB-LK1-AAA-1 ' });
+  assert.deepEqual([c.found, c.status, c.canRecord], [true, 'Pending', false]);
+  assert.match(c.reason, /Pending/);
+
+  // paid, not yet recorded: looking changes nothing
+  h.answers['BAB-LK1-AAA-1'] = squadOk({ customer_name: 'Lookup Person', email: 'ada@example.test' });
+  const snapshot = JSON.stringify(row());
+  c = h.data('checkReference', { reference: 'BAB-LK1-AAA-1' });
+  assert.deepEqual([c.found, c.status, c.amount, c.currency, c.expected, c.amountMatches, c.canRecord, c.reason], [true, 'Success', 80000, 'NGN', 80000, true, true, '']);
+  assert.equal(c.record.alreadyRecorded, false);
+  assert.equal(JSON.stringify(row()), snapshot, 'checking changes nothing');
+  assert.equal(h.emails.length, mailsBefore, 'and sends nothing');
+
+  // recording: the same as the webhook would have done
+  const done = h.data('recordPayment', { reference: 'BAB-LK1-AAA-1' });
+  assert.deepEqual(done, { result: 'ok', reference: 'BAB-LK1-AAA', kind: 'enrolment', by: 'owner@example.test' });
+  assert.equal(h.cell('BAB-LK1-AAA', 'Payment status'), 'Paid (Squad verified)');
+  assert.equal(h.cell('BAB-LK1-AAA', 'Amount paid (NGN)'), 80000);
+  assert.equal(h.emails.filter((m) => /ubonanalyst@gmail\.com/.test(m.to || '')).length, 1, 'the review email goes out, as it does for a webhook');
+  c = h.data('checkReference', { reference: 'BAB-LK1-AAA-1' });
+  assert.deepEqual([c.record.alreadyRecorded, c.canRecord, c.reason], [true, false, 'This payment is already recorded.']);
+  assert.match(h.api('recordPayment', { reference: 'BAB-LK1-AAA-1' }).error, /already recorded/);
+  assert.equal(h.emails.filter((m) => /ubonanalyst@gmail\.com/.test(m.to || '')).length, 1, 'a second press sends nothing more');
+
+  // a second payment for someone already paid is flagged, not recorded
+  h.answers['BAB-LK1-AAA-2'] = squadOk();
+  c = h.data('checkReference', { reference: 'BAB-LK1-AAA-2' });
+  assert.equal(c.canRecord, false);
+  assert.match(c.reason, /already paid with BAB-LK1-AAA-1\. This looks like a second payment/);
+  assert.match(h.api('recordPayment', { reference: 'BAB-LK1-AAA-2' }).error, /second payment/);
+
+  // an amount that is not the price is shown, and can still be recorded for review
+  h.answers['BAB-LK2-AAA-1'] = squadOk({ transaction_amount: 100000 });
+  c = h.data('checkReference', { reference: 'BAB-LK2-AAA-1' });
+  assert.deepEqual([c.amount, c.amountMatches, c.canRecord], [1000, false, true]);
+  h.data('recordPayment', { reference: 'BAB-LK2-AAA-1' });
+  assert.match(h.cell('BAB-LK2-AAA', 'Payment status'), /amount needs review/i);
+
+  // a reference with no enrolment behind it
+  h.answers['BAB-NONE-AAA-1'] = squadOk();
+  c = h.data('checkReference', { reference: 'BAB-NONE-AAA-1' });
+  assert.equal(c.record.exists, false);
+  assert.match(c.reason, /No enrolment in the sheet has the reference BAB-NONE-AAA/);
+
+  // a 1:1 session payment
+  assert.equal(h.named.Sessions, undefined);
+  h.answers['UU1-SESS0009'] = squadOk({ transaction_amount: 1500000, customer_name: 'Sess Person', email: 'sess@example.test' });
+  c = h.data('checkReference', { reference: 'UU1-SESS0009' });
+  assert.deepEqual([c.kind, c.expected, c.amount, c.amountMatches, c.canRecord], ['session', 15000, 15000, true, true]);
+  assert.equal(h.named.Sessions, undefined, 'looking up a session does not create its tab');
+  const sess = h.data('recordPayment', { reference: 'UU1-SESS0009' });
+  assert.deepEqual([sess.result, sess.kind, sess.reference], ['ok', 'session', 'UU1-SESS0009']);
+  assert.equal(h.data('sessions').counts.paid, 1);
+  assert.equal(h.data('checkReference', { reference: 'UU1-SESS0009' }).canRecord, false);
+  assert.match(h.api('recordPayment', { reference: 'UU1-SESS0009' }).error, /already recorded/);
+
+  // no secret key: a clear message, nothing changes
+  delete h.properties.SQUAD_SECRET_KEY;
+  assert.match(h.api('checkReference', { reference: 'BAB-LK1-AAA-1' }).error, /SQUAD_SECRET_KEY/);
 }
 
 /* ── An existing workbook gains the notes column without disturbing anything ── */

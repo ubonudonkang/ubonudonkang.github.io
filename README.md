@@ -80,12 +80,13 @@ Every form on the site is handled by one browser script, `js/forms.js`, and one 
 | Page | What it does |
 | --- | --- |
 | Overview | What needs attention, key figures (each opens its page), system health, and shortcuts to add an enrolment or create an invite |
-| Enrolments | Search, status filters and paging; a detail panel with notes, the review email, payment confirmation and the welcome-email resend |
+| Enrolments | Search, status filters and paging; **Copy emails** and **Download CSV** for everything a filter matches (not just the page on screen); a detail panel with notes, the review email, payment confirmation and the welcome-email resend |
 | Add enrolment | For someone paying outside the website. Same checks and same row as the older "Add Offline Enrollee" page; opens the new enrolment, ready to be confirmed |
 | Waitlist | Counts by cohort, search, repeats flagged (same email and cohort), **Copy emails** (each address once) and **Download CSV** |
 | Enquiries | Contact-form messages with a panel, a Reply by email link, and **Mark as handled** |
 | 1:1 sessions | Paid session payments and any with an unexpected amount; honour a booking only if its notes quote a reference listed here as Paid |
 | Invites | Create a private registration link (the same link is reused for an unused invite to the same address), copy links, and see which were used |
+| System | Squad key mode, the last report from Squad, the automatic payment check (turn it on, or **Check now**), the webhook and redirect addresses to paste into Squad, email quota and recipients, prices, the WhatsApp group link, the spreadsheet's tabs, who may sign in, and **Look up a payment** (what Squad says about a reference; **Record this payment** if a report never arrived) |
 
 **First deployment (about ten minutes):**
 
@@ -123,8 +124,29 @@ Every form on the site is handled by one browser script, `js/forms.js`, and one 
 - **Mark as handled** adds a `Handled` column to the Contact tab the first time it is used; nothing else reads it. The page sends back what it was showing, so a row that has moved (a deleted line) is never changed by mistake.
 - CSV downloads start with a byte-order mark so spreadsheet programs read names correctly, and any text that starts with `=`, `+`, `-` or `@` is made plain so a stranger's text cannot run as a formula. Apps Script's frame can block downloads; if nothing arrives, use **Copy emails** instead.
 - A Google Sheets cell holding a cohort such as `February 2027` is stored as a date, so the cohort is read back as words before it is counted (see Forms and the Apps Script).
+- **Look up a payment** asks Squad about one reference and changes nothing. **Record this payment** then runs the same recognition the webhook and the sweep use (verify with Squad, mark the row paid, email the review link) and refuses anything already recorded, so pressing it twice does nothing the second time.
+- The enrolment export leaves out the confirmation token, the notes and the email-error columns. Coming back to the tab after five minutes refreshes what is on screen quietly (never under a form you are filling in).
 - Dashboard buttons call the same code as the review-email link (confirming a payment sends the same welcome email, copied to the same addresses), so both can be used side by side.
-- Tests: `node scripts/test_admin_api.mjs` covers access, figures, filters, detail and actions against the Apps Script stand-in (`scripts/gas_harness.mjs`). `node scripts/test_admin_ui.mjs` (overview, enrolments and the shell) and `node scripts/test_admin_pages.mjs` (the other pages and the phone menu) drive the page in Chromium against the same code (layouts at six widths, keyboard use, focus handling, dark mode, accessibility with axe when `axe-core` is available) and skips itself when Playwright is missing.
+- Tests: `node scripts/test_admin_api.mjs` covers access, figures, filters, detail and actions against the Apps Script stand-in (`scripts/gas_harness.mjs`). `node scripts/test_admin_ui.mjs` (overview, enrolments and the shell), `node scripts/test_admin_pages.mjs` (waitlist, enquiries, sessions, invites, add enrolment, the phone menu) and `node scripts/test_admin_system.mjs` (the System page, exports, the quiet refresh) drive the page in Chromium against the same code (layouts at six widths, keyboard use, focus handling, dark mode, accessibility with axe when `axe-core` is available) and skips itself when Playwright is missing.
+
+### Running BA Bridge from the dashboard
+
+**Every day:** open the dashboard and read *Needs your attention*, worst first.
+
+| It says | What to do |
+| --- | --- |
+| Urgent: amount needs review | Squad reported a payment that is not the price. Compare it in the Squad dashboard, then confirm or follow up with the student. |
+| Urgent: welcome email failed | Open it, check the email address in the panel, fix it in the sheet if it is wrong, and use *Resend welcome email*. |
+| Soon: paid, waiting for your confirmation | Compare with the Squad dashboard, then *Confirm payment*. That sends the welcome email. |
+| Later: awaiting payment for N days | Follow up on WhatsApp (the panel links to it) or leave it. Older ones stop appearing after 14 days. |
+
+**Someone says they paid but the dashboard says awaiting:** System, *Look up a payment*, paste the reference from their Squad receipt (`BAB-...-1`). If Squad says Paid, *Record this payment*. If Squad has nothing, the payment did not go through (or it is in the other mode: check the Squad key line says Live).
+
+**Payments stop being recognised:** System shows what is wrong. *Squad key* must say Live; *Last report from Squad* should be recent after a payment (if it says None, the webhook address in the Squad dashboard does not match the one shown on this page); *Automatic payment check* should be On. *Check now* catches anything a missed report left unrecorded.
+
+**Other jobs:** someone paying outside the website, *Add enrolment*, then open it and confirm once paid. A private registration link, *Invites*, copy the link and send it (it works once). Mailing the cohort, *Enrolments*, filter *Confirmed*, *Copy emails* (paste into Bcc) or *Download CSV*. Before a cohort opens, *Waitlist*, choose the cohort, *Copy emails*. Enquiries, open one, *Reply by email*, *Mark as handled*.
+
+**Changing settings:** the Squad secret key, the WhatsApp group link and extra admin accounts are script properties (Project Settings, Script Properties); prices are `EXPECTED_AMOUNT` and `SESSION_AMOUNT` in the script. After any change to the script or the `admin` file, give both deployments a *New version*. The older key-in-the-address admin page still works; remove it only once you no longer use it (it is the `action=admin` handling in `doGet`).
 
 ## Reopening BA Bridge registration
 
