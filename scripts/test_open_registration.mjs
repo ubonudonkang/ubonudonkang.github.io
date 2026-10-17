@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import { closeRegistration } from './close_ba_registration.mjs';
+import { SECTION_CTA, setSectionCtas } from './ba_section_ctas.mjs';
 import { openTrainingPage, openContentPage, renderCheckoutTemplate, updateAppsScript,
   validateConfig, moveHomePromoBelowHero, openReadme, defaultEndpoint, squadKeyNotice } from './open_ba_registration.mjs';
 
@@ -56,6 +58,32 @@ assert.doesNotMatch(training, /data-form="waitlist"|name="form_name" value="ba-w
 assert.doesNotMatch(training, /href="#waitlist"|November cohort full|All 10 November seats taken/);
 assert.match(training, /<form id="enrol-form" data-form="enrol"/);
 assert.doesNotMatch(training, /BA_FLOW_SCRIPT|<form id="waitlist-form"/);
+
+// The buttons repeated down the page: Join Waitlist while closed, Enrol Now once open, and back again.
+const closedPage = read('ba-training/index.html');
+const closedCtas = closedPage.match(SECTION_CTA);
+assert.equal(closedCtas.length, 6, 'six section buttons below the hero');
+for (const block of closedCtas) {
+  assert.match(block, /<a class="btn btn-primary" href="#waitlist" data-goatcounter-click="section-cta-[a-z]+-waitlist">Join Waitlist<\/a>/);
+  assert.match(block, /Free to join\. It does not reserve a seat\./);
+}
+const openCtas = training.match(SECTION_CTA);
+assert.equal(openCtas.length, 6);
+for (const block of openCtas) {
+  assert.match(block, /<a class="btn btn-primary" href="#join" data-goatcounter-click="section-cta-[a-z]+-enrol">Enrol Now<\/a>/);
+  assert.match(block, /₦90,000\. Starts 2 February 2027; apply by 25 January 2027\./);
+  assert.doesNotMatch(block, /waitlist/i);
+}
+assert.doesNotMatch(training, /Join Waitlist/);
+assert.equal(training.match(/>Enrol Now</g).length, 6);
+assert.deepEqual(openCtas.map((b) => b.match(/section-cta-([a-z]+)-/)[1]), closedCtas.map((b) => b.match(/section-cta-([a-z]+)-/)[1]),
+  'each button keeps its place on the page');
+const reclosed = closeRegistration(training, read('scripts/ba_bridge_waitlist.template.txt'), 'February 2027', 'May 2027');
+assert.deepEqual(reclosed.match(SECTION_CTA), closedCtas, 'closing again restores the waitlist buttons exactly');
+assert.equal(setSectionCtas(closedPage), closedPage, 'the closed page already has the waitlist buttons');
+assert.equal(setSectionCtas(setSectionCtas(closedPage, config), config), setSectionCtas(closedPage, config), 'opening twice changes nothing');
+assert.throws(() => setSectionCtas('<main></main>'), /found none/);
+assert.throws(() => setSectionCtas('<div class="section-cta"><a href="#waitlist">Join</a></div>'), /missing its tracking name/);
 
 const jsonLd = JSON.parse(training.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)[1]);
 const course = jsonLd['@graph'].find((item) => item['@type'] === 'Course');
