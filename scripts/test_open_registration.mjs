@@ -61,6 +61,8 @@ assert.doesNotMatch(training, /BA_FLOW_SCRIPT|<form id="waitlist-form"/);
 
 // The buttons repeated down the page: Join Waitlist while closed, Enrol Now once open, and back again.
 const closedPage = read('ba-training/index.html');
+assert.match(closedPage, /Two a week, on Wednesday and Saturday, 8 to 10pm West Africa Time\./, 'the schedule matches practevahq.com');
+assert.doesNotMatch(closedPage, /3-hour|Saturday workshop/, 'both sessions are two hours');
 const closedCtas = closedPage.match(SECTION_CTA);
 assert.equal(closedCtas.length, 6, 'six section buttons below the hero');
 for (const block of closedCtas) {
