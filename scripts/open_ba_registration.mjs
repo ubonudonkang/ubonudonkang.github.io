@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { setSectionCtas } from './ba_section_ctas.mjs';
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const SECTION_START = '<!-- BA_FLOW_SECTION_START -->';
@@ -154,6 +155,7 @@ export function openTrainingPage(page, template, c) {
     `The fee is ₦${c.priceText}. Submit the enrolment form first; a secure Squad checkout then opens where you can pay by card, bank transfer or USSD. Please keep your payment receipt and enrolment reference.`);
   page = replaceFaq(page, 'When is my place confirmed?',
     'Squad confirms your payment to us directly. We then check it against your enrolment and email your joining details.');
+  page = setSectionCtas(page, c);
   page = page.replaceAll('href="#waitlist"', 'href="#join"').replaceAll('#waitlist > .wrap', '#join > .wrap');
   return updateTrainingSeo(page, c);
 }
