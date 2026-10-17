@@ -213,7 +213,7 @@ try {
     await page.waitForSelector('tbody tr');
     const [enq] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download CSV' }).click()]);
     const enqLines = (await csvOf(enq)).slice(1).trim().split('\r\n');
-    assert.equal(enqLines[0], 'Name,Email,Company,Topic,Message,Received,Handled');
+    assert.equal(enqLines[0], 'Name,Email,Company,Topic,Message,Received,Site,Handled');
     assert.equal(enqLines.length >= 4, true);
     assert.ok((await csvOf(enq)).includes('"Hello, I would like to know more.\nSecond line 1"'), 'a message with a comma and a line break is quoted');
     await page.evaluate(() => { location.hash = '#/sessions'; });

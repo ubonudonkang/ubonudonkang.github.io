@@ -11,11 +11,11 @@ const signup = {
   name: 'Ada Example', email: 'Ada@Example.test', consent: 'Yes', _gotcha: ''
 };
 assert.equal(w.result(w.post(signup)), 'ok');
-assert.deepEqual(waitlistTab.rows[0], liveWaitlistHeaders, 'existing headings and order are untouched');
+assert.deepEqual(waitlistTab.rows[0], [...liveWaitlistHeaders, 'Site'], 'existing headings and order are untouched; the site is added on the right');
 assert.equal(waitlistTab.rows.length, 3);
 const added = waitlistTab.rows[2];
 assert.ok(added[0] instanceof Date);
-assert.deepEqual(added.slice(1), ['ba-waitlist-feb-2027', 'Ada Example', 'Ada@Example.test', 'February 2027', 'Yes', 'BA Bridge February 2027 waitlist']);
+assert.deepEqual(added.slice(1), ['ba-waitlist-feb-2027', 'Ada Example', 'Ada@Example.test', 'February 2027', 'Yes', 'BA Bridge February 2027 waitlist', 'ubonudonkang.com']);
 assert.equal(w.emails.length, 1);
 assert.equal(w.emails[0].to, 'ubonudonkang@gmail.com');
 assert.match(w.emails[0].subject, /New waitlist signup: Ada Example \(2 total\)/);
@@ -54,7 +54,37 @@ assert.match(stray.text ?? stray.html, /Unsupported|Unable to continue/);
 const independent = makeHarness({ enrolment: ['Wrong heading'] });
 assert.equal(independent.result(independent.post(signup)), 'ok');
 assert.equal(independent.named.Waitlist.rows.length, 2, 'a missing Waitlist tab is created with headings');
-assert.deepEqual(independent.named.Waitlist.rows[0], liveWaitlistHeaders);
+assert.deepEqual(independent.named.Waitlist.rows[0], [...liveWaitlistHeaders, 'Site']);
+
+/* ── Two websites, one script: each submission says where it came from ── */
+{
+  const both = makeHarness();
+  const wl = (extra) => both.post({ form_name: 'ba-waitlist-feb-2027', cohort: 'February 2027', name: 'Pat', email: 'pat@example.test', consent: 'Yes', type: 'BA Bridge February 2027 waitlist', ...extra });
+  // Practeva's form names itself in `type` (and may send `site`); the personal site sends neither
+  assert.equal(both.result(wl({ email: 'a@example.test', type: 'BA Bridge February 2027 waitlist (practevahq.com)' })), 'ok');
+  assert.equal(both.result(wl({ email: 'b@example.test' })), 'ok');
+  assert.equal(both.result(wl({ email: 'c@example.test', site: 'https://www.PracteVAhq.com/training', type: 'x' })), 'ok');
+  assert.equal(both.result(wl({ email: 'd@example.test', site: 'evil.example', type: 'y' })), 'ok');
+  const rows = both.named.Waitlist.rows;
+  const siteAt = rows[0].indexOf('Site');
+  assert.deepEqual(rows.slice(1).map((r) => r[siteAt]), ['practevahq.com', 'ubonudonkang.com', 'practevahq.com', 'ubonudonkang.com'], 'named by type, by default, by a tidied address; an unknown site falls back');
+  // the same person on both sites is one signup: the first one stays
+  assert.equal(both.result(wl({ email: 'A@example.test', site: 'ubonudonkang.com' })), 'ok');
+  assert.equal(rows.length, 5);
+  assert.equal(rows[1][siteAt], 'practevahq.com');
+  // each notification is sent under the name of the site it came from
+  assert.deepEqual(both.emails.map((m) => m.name), ['practevahq.com', 'ubonudonkang.com', 'practevahq.com', 'ubonudonkang.com']);
+  assert.match(both.emails[0].body, /via: practevahq\.com/);
+
+  const contact = (extra) => both.post({ form_name: 'contact', first_name: 'Ola', last_name: 'Okoye', email: 'ola@example.test', message: 'Hi', ...extra });
+  contact({ type: 'Practeva: Advisory for my organisation', submission_id: 'p1' });
+  contact({ type: 'consulting', submission_id: 'u1' });
+  const enquiries = both.named.Contact.rows;
+  assert.deepEqual(enquiries.slice(1).map((r) => r[enquiries[0].indexOf('Site')]), ['practevahq.com', 'ubonudonkang.com']);
+  const sent = both.emails.slice(-2);
+  assert.deepEqual(sent.map((m) => m.name), ['practevahq.com', 'ubonudonkang.com']);
+  assert.match(sent[0].body, /Via: practevahq\.com/);
+}
 
 /* ── Contact: its own tab, reply-to the sender, deduped by submission id ── */
 const c = makeHarness();
@@ -64,8 +94,8 @@ const enquiry = {
 };
 assert.equal(c.result(c.post(enquiry)), 'ok');
 const contactTab = c.named.Contact;
-assert.deepEqual(contactTab.rows[0], ['Timestamp', 'First name', 'Last name', 'Email', 'Company', 'Engagement type', 'Message', 'Submission ID']);
-assert.deepEqual(contactTab.rows[1].slice(1), ['Chidi', 'Okafor', 'chidi@example.test', 'Fintech Ltd', 'consulting', 'Need a BA for a payments project.', 'sub-1']);
+assert.deepEqual(contactTab.rows[0], ['Timestamp', 'First name', 'Last name', 'Email', 'Company', 'Engagement type', 'Message', 'Submission ID', 'Site']);
+assert.deepEqual(contactTab.rows[1].slice(1), ['Chidi', 'Okafor', 'chidi@example.test', 'Fintech Ltd', 'consulting', 'Need a BA for a payments project.', 'sub-1', 'ubonudonkang.com']);
 assert.equal(c.emails.length, 1);
 assert.equal(c.emails[0].to, 'ubonudonkang@gmail.com');
 assert.equal(c.emails[0].replyTo, 'chidi@example.test');
@@ -93,8 +123,8 @@ const enrol = {
 };
 assert.equal(h.result(h.post(enrol)), 'ok');
 const sheet = h.enrolmentSheet;
-assert.equal(sheet.columns, 40);
-assert.equal(sheet.rows[0].length, 40);
+assert.equal(sheet.columns, 41);
+assert.equal(sheet.rows[0].length, 41);
 assert.deepEqual(sheet.rows[0].slice(0, 26), enrolmentHeaders);
 const row = sheet.rows[1];
 assert.equal(row[1], enrol.reference);

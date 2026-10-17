@@ -101,11 +101,11 @@ try {
     const csv = fs.readFileSync(await download.path(), 'utf8');
     assert.equal(csv.charCodeAt(0), 0xFEFF);
     const lines = csv.slice(1).trim().split('\r\n');
-    assert.equal(lines[0], 'Name,Email,Cohort,Signed up,Repeat');
+    assert.equal(lines[0], 'Name,Email,Cohort,Signed up,Site,Repeat');
     assert.equal(lines.length, 7);
     assert.ok(csv.includes('"\'=HYPERLINK(""http://evil.example"",""click"")"'), 'a name starting with = is made plain, and quoted');
     assert.ok(!lines.some((l) => /^[=+\-@]/.test(l)), 'no line starts like a formula');
-    assert.ok(lines.some((l) => /Ada Waits again,ada\.w@example\.test,February 2027,.*,Yes$/.test(l)), 'the repeat is marked');
+    assert.ok(lines.some((l) => /Ada Waits again,ada\.w@example\.test,February 2027,.*,ubonudonkang\.com,Yes$/.test(l)), 'the repeat is marked');
     assert.deepEqual(errors, []);
     await page.context().close();
 
@@ -374,6 +374,29 @@ try {
     await refused.page.getByRole('button', { name: 'Add enrolment' }).click();
     await refused.page.getByRole('alert').filter({ hasText: 'valid email' }).waitFor();
     await refused.context.close();
+  }
+
+  /* ── Two websites: each waitlist signup and enquiry says where it came from, and the site can be searched ── */
+  {
+    const h = seeded();
+    h.post({ form_name: 'ba-waitlist-x', name: 'From Practeva', email: 'p@example.test', cohort: 'February 2027', consent: 'Yes', type: 'BA Bridge February 2027 waitlist (practevahq.com)' });
+    h.post({ form_name: 'ba-waitlist-x', name: 'From Personal', email: 'q@example.test', cohort: 'February 2027', consent: 'Yes', type: 'BA Bridge February 2027 waitlist' });
+    h.post({ form_name: 'contact', first_name: 'Pia', last_name: 'Practeva', email: 'pia@example.test', message: 'Hello', type: 'Practeva: Careers support', submission_id: 'v1' });
+    const { page, errors } = await visit(h, '#/waitlist');
+    await page.waitForSelector('tbody tr');
+    assert.deepEqual(await page.locator('tbody tr').evaluateAll((rows) => rows.map((r) => r.querySelector('td[data-label="Via"]').textContent)), ['ubonudonkang.com', 'practevahq.com']);
+    await page.locator('#list-search').fill('practevahq');
+    await page.waitForFunction(() => document.querySelectorAll('tbody tr').length === 1);
+    assert.match(await page.locator('tbody').textContent(), /From Practeva/);
+    await page.evaluate(() => { location.hash = '#/enquiries'; });
+    await page.waitForSelector('tbody tr');
+    assert.match(await page.locator('tbody tr').first().textContent(), /practevahq\.com/);
+    await page.locator('.rowlink').first().click();
+    await page.waitForSelector('.drawer h2');
+    assert.match(await page.locator('.drawer .kv').textContent(), /Via\s*practevahq\.com/);
+    await page.evaluate(() => { location.hash = '#/enrolments'; });
+    assert.deepEqual(errors, []);
+    await page.context().close();
   }
 
   /* ── Layouts: nothing scrolls sideways, tables turn into cards on phones ── */

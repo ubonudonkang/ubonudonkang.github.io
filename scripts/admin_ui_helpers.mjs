@@ -19,7 +19,7 @@ for (const where of ['axe-core/axe.min.js', process.env.AXE_PATH || '']) {
   try { axeSource = fs.readFileSync(where.startsWith('/') ? where : require.resolve(where), 'utf8'); break; } catch (e) { /* optional */ }
 }
 
-export const BUILD = 'Build 6';
+export const BUILD = 'Build 7';
 export const SANDBOX_KEY = 'sandbox_sk_testkey123';
 export const DAY = 24 * 60 * 60 * 1000;
 export const squadOk = (extra = {}) => ({ code: 200, body: { data: { transaction_status: 'Success', transaction_amount: 8000000, transaction_currency_id: 'NGN', ...extra } } });

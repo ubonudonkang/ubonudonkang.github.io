@@ -240,7 +240,7 @@ function seeded(options = {}) {
   const ngozi = h.data('enrolments', { q: 'ngozi' });
   assert.deepEqual(ngozi.counts, { all: 1, awaiting: 0, review: 1, confirmed: 0 });
   // summaries carry no sensitive internals
-  assert.deepEqual(Object.keys(first.items[0]).sort(), ['amountPaid', 'createdAt', 'createdMs', 'email', 'hasError', 'name', 'paidAt', 'paymentStatus', 'reference', 'squadStatus', 'status', 'welcomeSent', 'whatsapp']);
+  assert.deepEqual(Object.keys(first.items[0]).sort(), ['amountPaid', 'createdAt', 'createdMs', 'email', 'hasError', 'name', 'paidAt', 'paymentStatus', 'reference', 'site', 'squadStatus', 'status', 'welcomeSent', 'whatsapp']);
 }
 
 /* ── One enrolment ── */
@@ -666,11 +666,84 @@ function seeded(options = {}) {
   assert.match(h.api('checkReference', { reference: 'BAB-LK1-AAA-1' }).error, /SQUAD_SECRET_KEY/);
 }
 
+/* ── Enrolments from two websites: tagged, safely stored, and answered in the right voice ── */
+{
+  const h = seeded();
+  h.post(enrol('BAB-SI1-AAA', { name: 'Practeva Student', email: 'ps@example.test', site: 'practevahq.com' }));
+  h.post(enrol('BAB-SI2-AAA', { name: 'Personal Student', email: 'pp@example.test' }));
+  assert.equal(h.cell('BAB-SI1-AAA', 'Registered via'), 'practevahq.com');
+  assert.equal(h.cell('BAB-SI2-AAA', 'Registered via'), 'ubonudonkang.com', 'a post that names no site is the personal site, as every earlier row was');
+  h.post(enrol('BAB-SI3-AAA', { email: 'x@example.test', site: 'somewhere-else.example' }));
+  assert.equal(h.cell('BAB-SI3-AAA', 'Registered via'), 'ubonudonkang.com');
+
+  // only the registration answers are taken from a request; payment fields are the script's alone
+  h.post(enrol('BAB-SI4-AAA', { email: 'sneaky@example.test', squad_status: 'Success', squad_ref: 'BAB-SI4-AAA-1', payment_status: 'Paid', verified: 'Yes', amount_paid: '80000', admin_notes: 'note', welcome_email_sent_at: '2026-01-01', confirmed_by: 'owner', review_email_error: 'x', selar_status: 'paid' }));
+  for (const label of ['Squad status', 'Squad transaction ref', 'Amount paid (NGN)', 'Admin notes', 'Welcome email sent at', 'Confirmed by', 'Review email error', 'Selar status']) assert.equal(h.cell('BAB-SI4-AAA', label) || '', '', label);
+  assert.equal(h.cell('BAB-SI4-AAA', 'Payment status'), 'Awaiting payment');
+  assert.equal(h.cell('BAB-SI4-AAA', 'Verified by you'), 'No');
+  assert.equal(h.cell('BAB-SI4-AAA', 'Amount'), 80000);
+  assert.equal(h.data('enrolments', { q: 'sneaky' }).items[0].status, 'awaiting', 'a stranger cannot make their own row look paid');
+  const tooLong = h.context.doPost({ parameter: enrol('BAB-SI5-AAA', { name: 'x'.repeat(5001) }) });
+  assert.match(tooLong.text ?? tooLong.html, /too long/, 'a very long answer is refused');
+  assert.equal(h.enrolmentSheet.rows.some((r) => r[1] === 'BAB-SI5-AAA'), false);
+
+  // the dashboard says where each came from
+  assert.equal(h.data('enrolment', { reference: 'BAB-SI1-AAA' }).summary.site, 'practevahq.com');
+  assert.equal(h.data('enrolment', { reference: 'BAB-SI2-AAA' }).summary.site, 'ubonudonkang.com');
+  const detail = Object.fromEntries(h.data('enrolment', { reference: 'BAB-SI1-AAA' }).sections.flatMap((sec) => sec.items.map((i) => [i.label, i.value])));
+  assert.equal(detail['Registered via'], 'practevahq.com');
+  assert.equal(h.data('enrolmentsExport', { q: 'Practeva Student' }).rows[0][h.data('enrolmentsExport', {}).headers.indexOf('Registered via')], 'practevahq.com');
+  assert.equal(h.data('enrolments', { q: 'practevahq' }).items.length, 1, 'searching for the site finds its enrolments');
+
+  // the review email to you names the site; the welcome email to the student is in that site's voice
+  const confirm = (reference) => { h.api('sendReview', { reference }); return h.data('confirmPayment', { reference, amountPaid: '80000' }); };
+  confirm('BAB-SI1-AAA'); confirm('BAB-SI2-AAA');
+  const review = h.emails.filter((m) => /Review payment/.test(m.subject || ''));
+  assert.match(review[0].body, /Registered via: practevahq\.com/);
+  assert.match(review[1].body, /Registered via: ubonudonkang\.com/);
+  const welcomes = h.emails.filter((m) => /^Welcome to/.test(m.subject || ''));
+  const [practeva, personal] = welcomes;
+  assert.equal(practeva.to, 'ps@example.test');
+  assert.equal(practeva.subject, 'Welcome to the BA Bridge Cohort: your payment is confirmed');
+  assert.equal(practeva.name, 'Practeva');
+  assert.equal(practeva.replyTo, 'info@practevahq.com');
+  assert.match(practeva.body, /Thank you for enrolling in the BA Bridge Cohort at Practeva\. We have confirmed your payment/);
+  assert.match(practeva.body, /The Practeva team$/);
+  assert.doesNotMatch(practeva.body + practeva.htmlBody, /Ubon|—/, 'no person is named and no em dash is used');
+  assert.match(practeva.htmlBody, /background:#024a31/);
+  assert.doesNotMatch(practeva.htmlBody, /#1F3BD6/);
+  assert.match(practeva.body, /chat\.whatsapp\.com\/TestGroup123/);
+  assert.equal(personal.to, 'pp@example.test');
+  assert.equal(personal.name, 'BA Bridge');
+  assert.equal(personal.replyTo, 'ubonanalyst@gmail.com');
+  assert.match(personal.body, /Ubon$/);
+  assert.match(personal.htmlBody, /background:#1F3BD6/);
+  // resending keeps each in its own voice
+  h.data('resendWelcome', { reference: 'BAB-SI1-AAA' });
+  assert.equal(h.emails.filter((m) => /^Welcome to/.test(m.subject || '')).at(-1).name, 'Practeva');
+}
+
+/* ── Waitlist and enquiries show which site they came from ── */
+{
+  const h = seeded();
+  const wl = (email, type) => h.post({ form_name: 'ba-waitlist-x', name: 'N', email, cohort: 'February 2027', consent: 'Yes', type });
+  wl('a@example.test', 'BA Bridge February 2027 waitlist (practevahq.com)'); wl('b@example.test', 'BA Bridge February 2027 waitlist');
+  h.post({ form_name: 'contact', first_name: 'A', last_name: 'B', email: 'q@example.test', message: 'Hi', type: 'Practeva: Careers support', submission_id: 'q1' });
+  h.post({ form_name: 'contact', first_name: 'C', last_name: 'D', email: 'r@example.test', message: 'Hi', type: 'consulting', submission_id: 'q2' });
+  assert.deepEqual(h.data('waitlist').items.map((i) => [i.email, i.site]), [['b@example.test', 'ubonudonkang.com'], ['a@example.test', 'practevahq.com']]);
+  assert.deepEqual(h.data('enquiries').items.map((i) => [i.email, i.site]), [['r@example.test', 'ubonudonkang.com'], ['q@example.test', 'practevahq.com']]);
+  // rows from before the Site column existed are the personal site's, unless their type says otherwise
+  const tab = h.named.Waitlist;
+  tab.rows.forEach((row) => { row[tab.rows[0].indexOf('Site')] = ''; });
+  assert.deepEqual(h.data('waitlist').items.map((i) => i.site), ['ubonudonkang.com', 'practevahq.com']);
+}
+
 /* ── An existing workbook gains the notes column without disturbing anything ── */
 {
   const h = seeded();
   h.post(enrol('BAB-MG1-AAA'));
-  assert.equal(h.enrolmentSheet.rows[0].at(-1), 'Admin notes');
-  assert.equal(h.enrolmentSheet.rows[0].length, 40);
+  assert.equal(h.enrolmentSheet.rows[0].at(-1), 'Registered via');
+  assert.ok(h.enrolmentSheet.rows[0].includes('Admin notes'));
+  assert.equal(h.enrolmentSheet.rows[0].length, 41);
 }
 console.log('Admin dashboard API checks passed (access, overview, list, detail, actions).');

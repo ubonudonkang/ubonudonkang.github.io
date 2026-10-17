@@ -74,6 +74,37 @@ const COHORT_REMINDER_LOG_PROPERTY = 'BA_BRIDGE_COHORT_WELCOME_REMINDER_SENT';
 const WEB_APP_URL =
   'https://script.google.com/macros/s/AKfycby94krvGfIS7mXVT-szoGHHM_pCLIU11Bh_AemMxE_nsK-X_Hm1y8yaK69zNKfU20LT/exec';
 
+/*
+ * The websites that post to this script. A post says which one with `site`; without it the site is
+ * worked out from `type` (Practeva's forms put "practevahq.com" or "Practeva:" in it) and otherwise
+ * it is ubonudonkang.com, which is how every earlier row was made. The site decides who an email
+ * says it is from and how it signs off; payments, sheets and the dashboard are shared.
+ */
+const SITES = {
+  'ubonudonkang.com': {
+    notifyName: 'ubonudonkang.com',
+    senderName: 'BA Bridge',
+    replyTo: NOTIFY_EMAIL,
+    accent: '#1F3BD6'
+  },
+  'practevahq.com': {
+    notifyName: 'practevahq.com',
+    senderName: 'Practeva',
+    replyTo: 'info@practevahq.com',
+    accent: '#024a31'
+  }
+};
+const DEFAULT_SITE = 'ubonudonkang.com';
+
+function siteKey_(site, type) {
+  const named = String(site || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '');
+
+  if (SITES[named]) return named;
+  if (/practeva/i.test(String(type || ''))) return 'practevahq.com';
+
+  return DEFAULT_SITE;
+}
+
 const FIELDS = [
   ['timestamp', 'Timestamp'],
   ['reference', 'Reference'],
@@ -114,7 +145,8 @@ const FIELDS = [
   ['selar_status', 'Selar status'],
   ['selar_product', 'Selar product'],
   ['selar_webhook_received_at', 'Selar webhook received at'],
-  ['admin_notes', 'Admin notes']
+  ['admin_notes', 'Admin notes'],
+  ['site', 'Registered via']
 ];
 
 const INVITE_HEADERS = [
@@ -140,7 +172,7 @@ const FORM_TABS = {
     tab: 'Waitlist',
     fields: [
       ['timestamp', 'Timestamp'], ['form_name', 'Form'], ['name', 'name'],
-      ['email', 'email'], ['cohort', 'cohort'], ['consent', 'consent'], ['type', 'type']
+      ['email', 'email'], ['cohort', 'cohort'], ['consent', 'consent'], ['type', 'type'], ['site', 'Site']
     ],
     required: ['name', 'email', 'cohort'],
     dedupeFields: ['email', 'cohort'],
@@ -151,7 +183,7 @@ const FORM_TABS = {
     fields: [
       ['timestamp', 'Timestamp'], ['first_name', 'First name'], ['last_name', 'Last name'],
       ['email', 'Email'], ['company', 'Company'], ['type', 'Engagement type'],
-      ['message', 'Message'], ['submission_id', 'Submission ID']
+      ['message', 'Message'], ['submission_id', 'Submission ID'], ['site', 'Site']
     ],
     required: ['first_name', 'last_name', 'email', 'message'],
     dedupeFields: ['submission_id'],
@@ -349,6 +381,8 @@ function saveFormRow_(kind, data) {
     if (!values[key]) throw new Error('Missing required field: ' + key);
   });
 
+  if (Object.prototype.hasOwnProperty.call(values, 'site')) values.site = siteKey_(values.site, values.type);
+
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
     throw new Error('Enter a valid email address.');
   }
@@ -446,14 +480,19 @@ function formRowExists_(tab, def, key) {
 }
 
 function sendFormEmail_(kind, values, total) {
+  const site = SITES[siteKey_(values.site, values.type)];
+
   if (kind === 'waitlist') {
-    MailApp.sendEmail(
-      SITE_NOTIFY_EMAIL,
-      'New waitlist signup: ' + (values.name || values.email) + ' (' + total + ' total)',
-      'name: ' + values.name + '\nemail: ' + values.email + '\ncohort: ' + values.cohort +
-      '\nconsent: ' + values.consent + '\ntype: ' + values.type +
-      '\n\nTotal on waitlist: ' + total
-    );
+    MailApp.sendEmail({
+      to: SITE_NOTIFY_EMAIL,
+      subject: 'New waitlist signup: ' + (values.name || values.email) + ' (' + total + ' total)',
+      body:
+        'name: ' + values.name + '\nemail: ' + values.email + '\ncohort: ' + values.cohort +
+        '\nconsent: ' + values.consent + '\ntype: ' + values.type +
+        '\nvia: ' + site.notifyName +
+        '\n\nTotal on waitlist: ' + total,
+      name: site.notifyName
+    });
     return;
   }
 
@@ -464,13 +503,19 @@ function sendFormEmail_(kind, values, total) {
     subject: '[Contact] ' + (values.type || 'Enquiry') + ': ' + who,
     body: who + ' <' + values.email + '>\n' +
       (values.company ? values.company + '\n' : '') +
-      'Type: ' + (values.type || 'not given') + '\n\n' + values.message,
+      'Type: ' + (values.type || 'not given') + '\n' +
+      'Via: ' + site.notifyName + '\n\n' + values.message,
     replyTo: values.email,
-    name: 'ubonudonkang.com'
+    name: site.notifyName
   });
 }
 
 // ==================== PUBLIC SIGNUP ====================
+
+const SIGNUP_FIELDS = [
+  'reference', 'name', 'email', 'whatsapp', 'location', 'background', 'experience', 'stage', 'wants',
+  'blocker', 'format', 'availability', 'can_start', 'source', 'consent'
+];
 
 function createSignup_(sheet, data) {
   if (!data.reference || !data.name || !data.email) {
@@ -489,7 +534,17 @@ function createSignup_(sheet, data) {
     });
   }
 
-  const values = Object.assign({}, data, {
+  // Only what the registration form asks is taken from the request; everything about payment is set here.
+  const values = {};
+
+  SIGNUP_FIELDS.forEach(key => {
+    const text = String(data[key] == null ? '' : data[key]).trim();
+    if (text.length > MAX_FIELD_LENGTH) throw new Error('A field is too long.');
+    if (text) values[key] = text;
+  });
+
+  Object.assign(values, {
+    site: siteKey_(data.site, ''),
     timestamp: stamp_(),
     amount: EXPECTED_AMOUNT,
     payment_status: 'Awaiting payment',
@@ -1128,6 +1183,7 @@ function adminSummary_(r) {
     name: text_(v, 'name'),
     email: text_(v, 'email'),
     whatsapp: text_(v, 'whatsapp'),
+    site: siteKey_(text_(v, 'site'), ''),
     status: enrolmentStatus_(v),
     paymentStatus: cell_(v, 'payment_status'),
     squadStatus: cell_(v, 'squad_status'),
@@ -1305,7 +1361,7 @@ function adminMatchEnrolments_(params) {
     if (!q) return true;
 
     const v = r.values;
-    const haystack = (cell_(v, 'name') + ' ' + cell_(v, 'email') + ' ' + cell_(v, 'reference')).toLowerCase();
+    const haystack = (cell_(v, 'name') + ' ' + cell_(v, 'email') + ' ' + cell_(v, 'reference') + ' ' + siteKey_(cell_(v, 'site'), '')).toLowerCase();
 
     return haystack.indexOf(q) !== -1 ||
       (digits.length >= 4 && cell_(v, 'whatsapp').replace(/\D/g, '').indexOf(digits) !== -1);
@@ -1398,6 +1454,7 @@ function adminEnrolment_(params) {
       section('Enrolment', [
         item('Reference', 'reference', 'mono', true),
         item('Submitted', 'timestamp', 'text', true),
+        { label: 'Registered via', value: siteKey_(text_(v, 'site'), ''), kind: 'text' },
         item('Consent given', 'consent')
       ])
     ].filter(sec => sec.items.length),
@@ -1531,7 +1588,9 @@ function adminWaitlist_() {
     name: tab.header.indexOf('name'),
     email: tab.header.indexOf('email'),
     cohort: tab.header.indexOf('cohort'),
-    time: tab.header.indexOf('Timestamp')
+    time: tab.header.indexOf('Timestamp'),
+    site: tab.header.indexOf('Site'),
+    type: tab.header.indexOf('type')
   };
   const seen = {};
   const counts = {};
@@ -1555,6 +1614,7 @@ function adminWaitlist_() {
       cohort,
       joinedAt: plain_(cellAt_(row, at.time)),
       joinedMs: timeOf_(cellAt_(row, at.time)),
+      site: siteKey_(plain_(cellAt_(row, at.site)), plain_(cellAt_(row, at.type))),
       duplicate
     };
   }).reverse();
@@ -1582,6 +1642,7 @@ function adminEnquiryRows_() {
     type: tab.header.indexOf('Engagement type'),
     message: tab.header.indexOf('Message'),
     time: tab.header.indexOf('Timestamp'),
+    site: tab.header.indexOf('Site'),
     handled: tab.header.indexOf(ENQUIRY_HANDLED_HEADING)
   };
 
@@ -1594,6 +1655,7 @@ function adminEnquiryRows_() {
     message: plain_(cellAt_(row, at.message)),
     at: plain_(cellAt_(row, at.time)),
     atMs: timeOf_(cellAt_(row, at.time)),
+    site: siteKey_(plain_(cellAt_(row, at.site)), plain_(cellAt_(row, at.type))),
     handled: isHandled_(cellAt_(row, at.handled))
   }));
 }
@@ -1814,7 +1876,8 @@ const ADMIN_EXPORT_COLUMNS = [
   ['Payment status', v => text_(v, 'payment_status')],
   ['Amount paid (NGN)', v => text_(v, 'amount_paid')],
   ['Paid at', v => text_(v, 'paid_at')],
-  ['Enrolled at', v => text_(v, 'timestamp')]
+  ['Enrolled at', v => text_(v, 'timestamp')],
+  ['Registered via', v => siteKey_(text_(v, 'site'), '')]
 ];
 
 // Every enrolment that matches the list's search and status filter (not just the page on screen), ready to become a file or a list of addresses.
@@ -2822,6 +2885,7 @@ function sendReviewEmail_(sheet, found, options) {
       `Name: ${name}\n` +
       `Email: ${email}\n` +
       `Reference: ${reference}\n` +
+      `Registered via: ${siteKey_(cell_(found.values, 'site'), '')}\n` +
       `Expected amount: NGN ${amount}\n` +
       `Payment status: ${paymentStatus}\n` +
       `Squad reference: ${squadRef}\n` +
@@ -2837,6 +2901,7 @@ function sendReviewEmail_(sheet, found, options) {
         <strong>${esc_(name)}</strong><br>
         ${esc_(email)}<br>
         Reference: ${esc_(reference)}<br>
+        Registered via: ${esc_(siteKey_(cell_(found.values, 'site'), ''))}<br>
         Expected amount: ₦${esc_(amount)}<br>
         Payment status: ${esc_(paymentStatus)}<br>
         Squad reference: ${esc_(squadRef)}<br>
@@ -3063,7 +3128,8 @@ function sendWelcomeEmail_(sheet, found, options) {
     const mail = welcomeEmail_(
       name,
       reference,
-      configuredGroupUrl_()
+      configuredGroupUrl_(),
+      siteKey_(cell_(found.values, 'site'), '')
     );
 
     mail.to = recipient;
@@ -3144,7 +3210,9 @@ function retryWelcomeForm_(reference, token) {
     </form>`;
 }
 
-function welcomeEmail_(name, reference, groupUrl) {
+function welcomeEmail_(name, reference, groupUrl, site) {
+  if (site === 'practevahq.com') return practevaWelcomeEmail_(name, reference, groupUrl);
+
   const subject =
     'Welcome to BA Bridge Cohort — your payment is confirmed';
 
@@ -3173,6 +3241,39 @@ function welcomeEmail_(name, reference, groupUrl) {
     htmlBody: emailHtml_(html),
     name: 'BA Bridge',
     replyTo: NOTIFY_EMAIL
+  };
+}
+
+// The same message for someone who enrolled on practevahq.com: from Practeva, in the plural, signed by the team, with replies going to its own address.
+function practevaWelcomeEmail_(name, reference, groupUrl) {
+  const site = SITES['practevahq.com'];
+  const subject = 'Welcome to the BA Bridge Cohort: your payment is confirmed';
+
+  const body =
+    `Hi ${name},\n\n` +
+    `Thank you for enrolling in the BA Bridge Cohort at Practeva. ` +
+    `We have confirmed your payment and your place is secured.\n\n` +
+    `Join the cohort WhatsApp group for updates and next steps:\n` +
+    `${groupUrl}\n\n` +
+    `Your enrolment reference: ${reference}\n\n` +
+    `If you have any questions, reply to this email.\n\nThe Practeva team`;
+
+  const html = `
+    <p>Hi ${esc_(name)},</p>
+    <p>Thank you for enrolling in the BA Bridge Cohort at Practeva. We have confirmed your payment and your place is secured.</p>
+    <p>Join the cohort WhatsApp group for updates and next steps:</p>
+    <p><a class="button" href="${escAttr_(groupUrl)}">Join the WhatsApp group</a></p>
+    <p>Or use this link: <a href="${escAttr_(groupUrl)}">${esc_(groupUrl)}</a></p>
+    <p>Your enrolment reference: <strong>${esc_(reference)}</strong></p>
+    <p>If you have any questions, reply to this email.</p>
+    <p>The Practeva team</p>`;
+
+  return {
+    subject,
+    body,
+    htmlBody: emailHtml_(html, site.accent),
+    name: site.senderName,
+    replyTo: site.replyTo
   };
 }
 
@@ -4129,7 +4230,7 @@ function escAttr_(value) {
 
 // ==================== HTML ====================
 
-function emailHtml_(body) {
+function emailHtml_(body, accent) {
   return `
     <!doctype html>
     <html>
@@ -4137,7 +4238,7 @@ function emailHtml_(body) {
         <meta charset="UTF-8">
         <style>
           body{font-family:Arial,sans-serif;font-size:16px;line-height:1.6;color:#111}
-          .button{display:inline-block;padding:12px 18px;background:#1F3BD6;color:#fff!important;text-decoration:none;border-radius:6px}
+          .button{display:inline-block;padding:12px 18px;background:${accent || '#1F3BD6'};color:#fff!important;text-decoration:none;border-radius:6px}
           .note{color:#555}
         </style>
       </head>

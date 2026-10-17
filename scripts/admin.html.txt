@@ -340,7 +340,7 @@ legend { padding: 0 6px; font-weight: 600; }
     <nav class="nav" id="nav" aria-label="Main"></nav>
     <div class="side__foot">
       <span class="side__user" id="user"></span>
-      <span class="side__build">Build 6</span>
+      <span class="side__build">Build 7</span>
       <button class="btn btn--sm" type="button" id="theme-side"></button>
     </div>
   </aside>
@@ -977,7 +977,7 @@ const todayStamp = () => new Date().toISOString().slice(0, 10);
 const LISTS = {};
 const PAGES = {
   waitlist: {
-    title: 'Waitlist', method: 'waitlist', searchLabel: 'Search the waitlist', searchHint: 'Search name or email', searchKeys: ['name', 'email', 'cohort'],
+    title: 'Waitlist', method: 'waitlist', searchLabel: 'Search the waitlist', searchHint: 'Search name, email or site', searchKeys: ['name', 'email', 'cohort', 'site'],
     caption: 'Waitlist signups, newest first', empty: 'No one is on the waitlist yet.',
     segments: (d) => [['all', 'All', d.total]].concat(d.cohorts.map((c) => [c.name, c.name, c.count])).concat(d.duplicates ? [['repeats', 'Repeats', d.duplicates]] : []),
     matchSeg: (item, f) => f === 'all' || (f === 'repeats' ? item.duplicate : item.cohort === f),
@@ -986,27 +986,29 @@ const PAGES = {
       const emails = [...new Set(items.map((i) => i.email).filter(Boolean))];
       return [
         h('button', { class: 'btn', type: 'button', disabled: !emails.length, onclick: () => copy(emails.join(', '), emails.length + ' email' + (emails.length === 1 ? '' : 's')) }, icon('copy'), 'Copy ' + emails.length + ' email' + (emails.length === 1 ? '' : 's')),
-        h('button', { class: 'btn', type: 'button', disabled: !items.length, onclick: () => downloadCsv('waitlist-' + todayStamp() + '.csv', toCsv(['Name', 'Email', 'Cohort', 'Signed up', 'Repeat'], items.map((i) => [i.name, i.email, i.cohort, i.joinedAt, i.duplicate ? 'Yes' : '']))) }, icon('download'), 'Download CSV'),
+        h('button', { class: 'btn', type: 'button', disabled: !items.length, onclick: () => downloadCsv('waitlist-' + todayStamp() + '.csv', toCsv(['Name', 'Email', 'Cohort', 'Signed up', 'Site', 'Repeat'], items.map((i) => [i.name, i.email, i.cohort, i.joinedAt, i.site, i.duplicate ? 'Yes' : '']))) }, icon('download'), 'Download CSV'),
       ];
     },
     columns: () => [
       { label: 'Name', cls: 'cell-main', cell: (i) => [h('span', { class: 'rowname', text: i.name || i.email }), h('span', { class: 'sub', text: i.email })] },
       { label: 'Cohort', cls: 'cell-sub', mobile: 'Cohort', cell: (i) => i.cohort },
       { label: 'Signed up', cls: 'cell-date', mobile: 'Signed up', cell: (i) => when(i.joinedMs, i.joinedAt) },
+      { label: 'Via', cls: 'cell-sub', mobile: 'Via', cell: (i) => i.site },
       { label: 'Note', cls: 'cell-status', cell: (i) => (i.duplicate ? h('span', { class: 'badge badge--review', text: 'Repeat signup' }) : null) },
     ],
   },
   enquiries: {
-    title: 'Enquiries', method: 'enquiries', searchLabel: 'Search enquiries', searchHint: 'Search name, email or message', searchKeys: ['name', 'email', 'company', 'type', 'message'],
+    title: 'Enquiries', method: 'enquiries', searchLabel: 'Search enquiries', searchHint: 'Search name, email, message or site', searchKeys: ['name', 'email', 'company', 'type', 'message', 'site'],
     caption: 'Contact enquiries, newest first', empty: 'No enquiries yet.',
     segments: (d) => [['all', 'All', d.counts.all], ['open', 'Not handled', d.counts.open], ['handled', 'Handled', d.counts.handled]],
     matchSeg: (item, f) => f === 'all' || (f === 'open' ? !item.handled : item.handled),
-    extra: (d, items) => [h('button', { class: 'btn', type: 'button', disabled: !items.length, onclick: () => downloadCsv('enquiries-' + todayStamp() + '.csv', toCsv(['Name', 'Email', 'Company', 'Topic', 'Message', 'Received', 'Handled'], items.map((i) => [i.name, i.email, i.company, i.type, i.message, i.at, i.handled ? 'Yes' : '']))) }, icon('download'), 'Download CSV')],
+    extra: (d, items) => [h('button', { class: 'btn', type: 'button', disabled: !items.length, onclick: () => downloadCsv('enquiries-' + todayStamp() + '.csv', toCsv(['Name', 'Email', 'Company', 'Topic', 'Message', 'Received', 'Site', 'Handled'], items.map((i) => [i.name, i.email, i.company, i.type, i.message, i.at, i.site, i.handled ? 'Yes' : '']))) }, icon('download'), 'Download CSV')],
     rowOptions: (item) => ({ ref: item.row, open: String(item.row) === state.route.ref }),
     columns: () => [
       { label: 'From', cls: 'cell-main', cell: (i) => [h('a', { class: 'rowlink', href: hashFor('enquiries', { ref: i.row, params: state.route.params }), text: i.name || i.email }), h('span', { class: 'sub', text: clip(i.message, 90) })] },
       { label: 'Topic', cls: 'cell-sub', mobile: 'Topic', cell: (i) => i.type || dash },
       { label: 'Received', cls: 'cell-date', mobile: 'Received', cell: (i) => when(i.atMs, i.at) },
+      { label: 'Via', cls: 'cell-sub', mobile: 'Via', cell: (i) => i.site },
       { label: 'Status', cls: 'cell-status', cell: (i) => h('span', { class: 'badge ' + (i.handled ? 'badge--confirmed' : 'badge--review'), text: i.handled ? 'Handled' : 'New' }) },
     ],
   },
@@ -1174,7 +1176,7 @@ function renderEnquiryDrawer(item) {
       toast(item.handled ? 'Marked as handled' : 'Marked as not handled');
     } catch (err) { toast(err.message, true); btn.disabled = false; }
   } });
-  const rows = [['Email', item.email, 'email'], ['Company', item.company], ['Topic', item.type], ['Received', item.at]];
+  const rows = [['Email', item.email, 'email'], ['Company', item.company], ['Topic', item.type], ['Received', item.at], ['Via', item.site]];
   drawer.node.setAttribute('aria-label', 'Enquiry from ' + (item.name || item.email));
   drawer.node.replaceChildren(
     h('div', { class: 'drawer__head' }, h('div', {}, h('h2', { text: item.name || item.email }), h('p', { class: 'muted', text: item.at })), closeButton()),
