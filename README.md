@@ -66,12 +66,89 @@ Every form on the site is handled by one browser script, `js/forms.js`, and one 
 | 1:1 session payment | `resources/1-on-1-session/` | `session` | `Sessions` tab (from Squad's webhook) |
 
 - The script routes a post by `form_name` (`contact`, `ba-waitlist-*`) or `action` (`signup`, and the admin, review and Selar actions). Each tab is matched by column heading, so the existing `Waitlist` headings (`name`, `email`, `cohort`, `consent`, `type`) keep working; a missing tab is created.
-- Every submission carries a unique id or reference, and the script ignores repeats (same email and cohort for the waitlist, same `submission_id` for contact, same `reference` for enrolment). That is what makes the browser's retry safe.
+- Every submission carries a unique id or reference, and the script ignores repeats (same email and cohort for the waitlist, same `submission_id` for contact, same `reference` for enrolment). That is what makes the browser's retry safe. Google Sheets turns a typed or imported cohort such as `February 2027` into a real date, so the script reads a date in the `cohort` column back as `February 2027` (`cohortText_`) before comparing or counting.
 - A hidden `_gotcha` field is the honeypot. Contact and waitlist notifications go to `SITE_NOTIFY_EMAIL`; payment reviews go to `NOTIFY_EMAIL`.
 - `js/forms.js` reads the script's JSON answer when the browser allows it, so a rejected save shows the error message. If the browser blocks the answer (Apps Script's redirect can lack CORS headers) it resends once with `no-cors`; that send cannot be confirmed, so check the sheet after any deployment change.
+- **Two websites share this script:** ubonudonkang.com and practevahq.com (the `ubonudonkang/practeva` repo, whose `src/data/site.ts` holds this script's address). A post may carry `site` (`ubonudonkang.com` or `practevahq.com`); without it the script works the site out from `type` (Practeva's forms put `practevahq.com` or `Practeva:` there) and otherwise assumes ubonudonkang.com, which is how every earlier row was made. The site is stored in a `Site` column on the Waitlist and Contact tabs and a `Registered via` column on the BA Training tab (each added on the right the first time it is needed), and the dashboard shows it. It decides who an email is from: notifications go out under the site's name, and a student who enrolled on practevahq.com gets the welcome email from Practeva, signed by the team, with replies going to `info@practevahq.com`. Payments, the Squad account, the sheets and the dashboard are shared, and one person on both waitlists is one row.
+- A signup takes only the registration answers from the request (`SIGNUP_FIELDS`); every payment and confirmation field is set by the script, so a visitor cannot mark their own row paid.
 - Keep `scripts/site_forms.gs` as the **only** file in the Apps Script project. A second file declaring the same top-level names (for example `NOTIFY_EMAIL`) stops the whole project compiling, and the forms then fail without any visible error.
 
-**Deploying a change to the script:** paste `scripts/site_forms.gs` over the project's code, delete any other `.gs` files, run `checkSetup()` once, then *Deploy → Manage deployments → edit the existing deployment → New version* so the `/exec` URL does not change. Then submit one test form of each kind and confirm a row (and a notification email) arrives. The script's own secrets (admin key, Selar key, WhatsApp group link) stay in Script Properties, not in this repository.
+**Deploying a change to the script:** paste `scripts/site_forms.gs` over the project's code, delete any other `.gs` files (the dashboard's `admin` HTML file is the one exception; see Admin dashboard below), run `checkSetup()` once, then *Deploy → Manage deployments → edit the existing deployment → New version* so the `/exec` URL does not change. Then submit one test form of each kind and confirm a row (and a notification email) arrives. The script's own secrets (admin key, Selar key, WhatsApp group link) stay in Script Properties, not in this repository.
+
+## Admin dashboard
+
+`scripts/admin.html.txt` is a responsive dashboard for the owner: a sidebar on laptops, a bottom tab bar (with a More menu) on phones, and these pages. It is the second half of `scripts/site_forms.gs`: the page is an HTML file in the Apps Script project, and it calls one server function, `adminApi`. The older admin page that opens with a key in its address still works until the dashboard is accepted.
+
+| Page | What it does |
+| --- | --- |
+| Overview | What needs attention, key figures (each opens its page), system health, and shortcuts to add an enrolment or create an invite |
+| Enrolments | Search, status filters and paging; **Copy emails** and **Download CSV** for everything a filter matches (not just the page on screen); a detail panel with notes, the review email, payment confirmation and the welcome-email resend |
+| Add enrolment | For someone paying outside the website. Same checks and same row as the older "Add Offline Enrollee" page; opens the new enrolment, ready to be confirmed |
+| Waitlist | Counts by cohort, search, repeats flagged (same email and cohort), **Copy emails** (each address once) and **Download CSV** |
+| Enquiries | Contact-form messages with a panel, a Reply by email link, and **Mark as handled** |
+| 1:1 sessions | Paid session payments and any with an unexpected amount; honour a booking only if its notes quote a reference listed here as Paid |
+| Invites | Create a private registration link (the same link is reused for an unused invite to the same address), copy links, and see which were used |
+| System | Squad key mode, the last report from Squad, the automatic payment check (turn it on, or **Check now**), the webhook and redirect addresses to paste into Squad, email quota and recipients, prices, the WhatsApp group link, the spreadsheet's tabs, who may sign in, and **Look up a payment** (what Squad says about a reference; **Record this payment** if a report never arrived) |
+
+**First deployment (about ten minutes):**
+
+1. In the Apps Script project, paste the new `scripts/site_forms.gs` over `Code.gs` (still the only `.gs` file).
+2. Add the page: *Files +* → *HTML*, name it exactly `admin`, and paste all of `scripts/admin.html.txt` into it.
+3. Run `checkSetup()` once and accept any new permission prompt.
+4. *Deploy → Manage deployments → edit the existing deployment → New version*. This keeps the `/exec` address that the website and Squad use, and adds the new `Admin notes` column to the BA Training sheet the first time it is needed.
+5. *Deploy → New deployment → Web app*, **Execute as: Me**, **Who has access: Only myself**. Copy its URL; that is the dashboard. Open it signed in as `ubonudonkang@gmail.com` (bookmark it, or *Add to Home Screen* on a phone).
+
+**Safe by construction:** the public deployment never serves the dashboard to a stranger. Even on the public address, every `adminApi` call checks that the signed-in Google account is the account the script runs as, or one of the two addresses already set as `NOTIFY_EMAIL` and `SITE_NOTIFY_EMAIL` in the script, so a stranger who finds the page code still gets nothing. Google, not the page, says who is signed in. If Google ever shows the script no address, the check refuses. To let another account in (untested; Google may hide other people's addresses from the script), list it in the script property `BA_BRIDGE_ADMIN_EMAILS` (comma separated) and widen the dashboard deployment's access.
+
+**If the dashboard address does not show the dashboard:** open the dashboard deployment's address followed by `?action=app`, then match what you see.
+
+| You see | Cause | Fix |
+| --- | --- | --- |
+| `{"result":"error","message":"Unsupported action."}` | The deployment still runs an older version of the code | *Deploy → Manage deployments*, pencil on the dashboard deployment, *Version: New version*, *Deploy* |
+| `Dashboard page missing` | There is no HTML file called `admin` in the project | *Files +* → *HTML*, name it `admin`, paste `scripts/admin.html.txt`, then deploy a new version |
+| `Not authorised` and "Google did not tell the script which account" | The deployment is not set to *Execute as: Me* | Edit the deployment, set *Execute as: Me* and *Who has access: Only myself* |
+| `Not authorised` and "You are signed in as …" | Google gave the script an address that is not the account it runs as and not one of the two owner addresses | If it is your account, add it to the script property `BA_BRIDGE_ADMIN_EMAILS` and reload; otherwise open the address in a private window signed in only as the owner |
+| Google's "unable to open the file" page | Wrong Google account, or a deployment that was deleted | As above; copy the address again from *Manage deployments* |
+| The dashboard frame is there but empty, with no "Build" label in the sidebar corner | The `admin` file in the project, or the deployment's version, is older than `scripts/admin.html.txt` | Paste the current file into `admin`, save it (Ctrl+S), then edit the dashboard deployment to *New version* |
+| "Starting the dashboard..." that never goes away | The page's script was blocked or never ran | Reload in a private window; send a screenshot |
+| A red line "The dashboard could not start: ... SyntaxError ... (line N, column M)" followed by "Received, line N: ..." | The copy of the page that reached the browser differs from `scripts/admin.html.txt` at that spot (a half-pasted or altered copy). The page stays plain ASCII with no template strings so that copy and paste, and Google's page frame, have as little as possible to change | Paste again from the downloaded file opened in a plain text editor, not from a rendered preview; if it still fails, send the "Received" line |
+| A red line starting "The dashboard hit a problem and stopped" | The page's script failed; the line says why (a half-pasted file shows as a syntax error with a line number) | Paste the whole file again; if it persists, send the line |
+| The plain `BA Bridge endpoint is online.` message without `?action=app` | Normal on the public deployment; on the dashboard deployment it means Google gave the script no account | Use the `?action=app` address to see which case applies |
+
+**After every later change** to either file, both deployments need *New version* (the public one for the website, the dashboard one for the owner), because each deployment keeps its own version.
+
+**Notes:**
+
+- The page builds everything with `textContent` and `createElementNS`, never `innerHTML`, because names, emails and notes are typed by strangers, and because Google's page frame can refuse string-to-HTML assignments (an earlier version drew its icons that way and showed a blank page). The test serves the page under that same rule. If a script error ever does happen, the page says so on screen instead of staying blank. `scripts/test_admin_ui.mjs` includes a name written as an `<img onerror>` tag and checks that it shows as text.
+- Inside Apps Script the page runs in a frame, so its links (`#/enrolments/BAB-…`) work for navigation and the Back button but cannot be pasted as deep links into the dashboard's address.
+- The `Admin notes` column holds your notes about a person. Nothing reads it except the dashboard.
+- Invite links point at the public address the website uses (`WEB_APP_URL`), not the dashboard, so they open for the person they are sent to.
+- **Mark as handled** adds a `Handled` column to the Contact tab the first time it is used; nothing else reads it. The page sends back what it was showing, so a row that has moved (a deleted line) is never changed by mistake.
+- CSV downloads start with a byte-order mark so spreadsheet programs read names correctly, and any text that starts with `=`, `+`, `-` or `@` is made plain so a stranger's text cannot run as a formula. Apps Script's frame can block downloads; if nothing arrives, use **Copy emails** instead.
+- A Google Sheets cell holding a cohort such as `February 2027` is stored as a date, so the cohort is read back as words before it is counted (see Forms and the Apps Script).
+- **Look up a payment** asks Squad about one reference and changes nothing. **Record this payment** then runs the same recognition the webhook and the sweep use (verify with Squad, mark the row paid, email the review link) and refuses anything already recorded, so pressing it twice does nothing the second time.
+- The enrolment export leaves out the confirmation token, the notes and the email-error columns. Coming back to the tab after five minutes refreshes what is on screen quietly (never under a form you are filling in).
+- Dashboard buttons call the same code as the review-email link (confirming a payment sends the same welcome email, copied to the same addresses), so both can be used side by side.
+- Tests: `node scripts/test_admin_api.mjs` covers access, figures, filters, detail and actions against the Apps Script stand-in (`scripts/gas_harness.mjs`). `node scripts/test_admin_ui.mjs` (overview, enrolments and the shell), `node scripts/test_admin_pages.mjs` (waitlist, enquiries, sessions, invites, add enrolment, the phone menu) and `node scripts/test_admin_system.mjs` (the System page, exports, the quiet refresh) drive the page in Chromium against the same code (layouts at six widths, keyboard use, focus handling, dark mode, accessibility with axe when `axe-core` is available) and skips itself when Playwright is missing.
+
+### Running BA Bridge from the dashboard
+
+**Every day:** open the dashboard and read *Needs your attention*, worst first.
+
+| It says | What to do |
+| --- | --- |
+| Urgent: amount needs review | Squad reported a payment that is not the price. Compare it in the Squad dashboard, then confirm or follow up with the student. |
+| Urgent: welcome email failed | Open it, check the email address in the panel, fix it in the sheet if it is wrong, and use *Resend welcome email*. |
+| Soon: paid, waiting for your confirmation | Compare with the Squad dashboard, then *Confirm payment*. That sends the welcome email. |
+| Later: awaiting payment for N days | Follow up on WhatsApp (the panel links to it) or leave it. Older ones stop appearing after 14 days. |
+
+**Someone says they paid but the dashboard says awaiting:** System, *Look up a payment*, paste the reference from their Squad receipt (`BAB-...-1`). If Squad says Paid, *Record this payment*. If Squad has nothing, the payment did not go through (or it is in the other mode: check the Squad key line says Live).
+
+**Payments stop being recognised:** System shows what is wrong. *Squad key* must say Live; *Last report from Squad* should be recent after a payment (if it says None, the webhook address in the Squad dashboard does not match the one shown on this page); *Automatic payment check* should be On. *Check now* catches anything a missed report left unrecorded.
+
+**Other jobs:** someone paying outside the website, *Add enrolment*, then open it and confirm once paid. A private registration link, *Invites*, copy the link and send it (it works once). Mailing the cohort, *Enrolments*, filter *Confirmed*, *Copy emails* (paste into Bcc) or *Download CSV*. Before a cohort opens, *Waitlist*, choose the cohort, *Copy emails*. Enquiries, open one, *Reply by email*, *Mark as handled*.
+
+**Changing settings:** the Squad secret key, the WhatsApp group link and extra admin accounts are script properties (Project Settings, Script Properties); prices are `EXPECTED_AMOUNT` and `SESSION_AMOUNT` in the script. After any change to the script or the `admin` file, give both deployments a *New version*. The older key-in-the-address admin page still works; remove it only once you no longer use it (it is the `action=admin` handling in `doGet`).
 
 ## Reopening BA Bridge registration
 

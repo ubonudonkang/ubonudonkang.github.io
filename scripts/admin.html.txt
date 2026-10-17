@@ -1,0 +1,1493 @@
+<!doctype html>
+<!--
+  BA Bridge Admin: the owner-only dashboard.
+
+  In the Apps Script editor this is an HTML file named "admin" (File > New > HTML).
+  It talks to the server through one function, adminApi (scripts/site_forms.gs), and
+  renders everything with textContent, never innerHTML, because the data includes text
+  that strangers typed into the website's forms.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>BA Bridge Admin</title>
+<style>
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 400 600; font-display: swap;
+  src: local('Inter'), url(https://ubonudonkang.com/fonts/inter-latin.woff2) format('woff2'); }
+
+:root {
+  --bg: #F6F4EF; --surface: #FFFFFF; --surface-2: #FBFAF7;
+  --ink: #111111; --ink-2: #4B4B4B; --ink-3: #66625C;
+  --line: #E7E4DD; --line-2: #D6D2C8;
+  --accent: #1F3BD6; --accent-text: #1A32BF; --accent-soft: #E6EAFF; --on-accent: #FFFFFF;
+  --await-bg: #FFF1CC; --await-fg: #7A4F00;
+  --review-bg: #E6EAFF; --review-fg: #1A32BF;
+  --ok-bg: #DDF3E6; --ok-fg: #0F6B3E;
+  --bad-bg: #FCE4E1; --bad-fg: #A8261E;
+  --shadow: 0 1px 2px rgba(20, 16, 8, 0.06), 0 8px 24px -12px rgba(20, 16, 8, 0.18);
+  --radius: 14px;
+  --sans: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --mono: ui-monospace, 'JetBrains Mono', SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E0E10; --surface: #17181C; --surface-2: #1C1D22;
+    --ink: #F2F1EE; --ink-2: #B9B7B2; --ink-3: #A09D95;
+    --line: #2A2B31; --line-2: #383A42;
+    --accent: #4A63F0; --accent-text: #A9B8FF; --accent-soft: #1C2447; --on-accent: #FFFFFF;
+    --await-bg: #3A2E0E; --await-fg: #F2C14E;
+    --review-bg: #1C2447; --review-fg: #A9B8FF;
+    --ok-bg: #0F2E1F; --ok-fg: #6FD3A0;
+    --bad-bg: #3B1613; --bad-fg: #FF9C92;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E0E10; --surface: #17181C; --surface-2: #1C1D22;
+  --ink: #F2F1EE; --ink-2: #B9B7B2; --ink-3: #A09D95;
+  --line: #2A2B31; --line-2: #383A42;
+  --accent: #4A63F0; --accent-text: #A9B8FF; --accent-soft: #1C2447; --on-accent: #FFFFFF;
+  --await-bg: #3A2E0E; --await-fg: #F2C14E;
+  --review-bg: #1C2447; --review-fg: #A9B8FF;
+  --ok-bg: #0F2E1F; --ok-fg: #6FD3A0;
+  --bad-bg: #3B1613; --bad-fg: #FF9C92;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+h1, h2, h3, p, dl, dd, ul, ol, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button, input, textarea { font: inherit; color: inherit; }
+a { color: var(--accent-text); }
+:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; border-radius: 6px; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.mono { font-family: var(--mono); font-size: 0.86em; letter-spacing: 0; }
+.muted { color: var(--ink-3); }
+.skip { position: absolute; left: 12px; top: -60px; z-index: 100; padding: 10px 14px; background: var(--accent); color: var(--on-accent); border-radius: 8px; }
+.skip:focus { top: 12px; }
+
+/* -- Shell ------------------------------------------------- */
+.app { display: grid; grid-template-columns: 244px minmax(0, 1fr); min-height: 100vh; min-height: 100dvh; }
+.side { position: sticky; top: 0; height: 100vh; height: 100dvh; display: flex; flex-direction: column; gap: 22px; padding: 22px 14px 16px; background: var(--surface); border-right: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 10px; }
+.brand__mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 9px; background: var(--accent); color: var(--on-accent); font-weight: 600; letter-spacing: -0.02em; }
+.brand__name { font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+.brand__sub { display: block; font-size: 12px; font-weight: 400; color: var(--ink-3); }
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav a { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 10px; color: var(--ink-2); text-decoration: none; font-weight: 500; }
+.nav a:hover { background: var(--surface-2); color: var(--ink); }
+.nav a[aria-current="page"] { background: var(--accent-soft); color: var(--accent-text); }
+.nav__count { margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--bad-bg); color: var(--bad-fg); font-size: 12px; font-weight: 600; text-align: center; }
+.side__foot { margin-top: auto; display: grid; gap: 10px; padding: 0 10px; font-size: 13px; color: var(--ink-3); }
+.side__user { overflow-wrap: anywhere; }
+.side__build { font-size: 12px; }
+.boot { padding: 24px 0; color: var(--ink-3); }
+.boot--bad { color: var(--bad-fg); font-weight: 500; }
+.boot__src { margin: 10px 0 0; font: 400 12px/1.4 var(--mono); color: var(--ink-3); white-space: pre-wrap; overflow-wrap: anywhere; }
+.ico { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+.top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 14px; padding: 16px 32px; background: var(--bg); border-bottom: 1px solid transparent; }
+.top h1 { font-size: 22px; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em; }
+.top__spacer { flex: 1; }
+.search { position: relative; width: min(340px, 40vw); }
+.search input { width: 100%; height: 40px; padding: 0 12px 0 38px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); }
+.search .ico { position: absolute; left: 11px; top: 10px; color: var(--ink-3); pointer-events: none; }
+.search input::placeholder { color: var(--ink-3); }
+main { padding: 6px 32px 64px; max-width: 1240px; outline: none; }
+.tabbar { display: none; }
+
+@media (max-width: 899px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .side { display: none; }
+  .top { padding: 14px 16px; }
+  .top h1 { font-size: 20px; }
+  .top .search { display: none; }
+  main { padding: 4px 16px 112px; }
+  .tabbar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--line); }
+  .tabbar a, .tabbar button { flex: 1; min-width: 0; display: grid; justify-items: center; gap: 2px; padding: 8px 2px; border: 0; border-radius: 12px; background: transparent; color: var(--ink-3); text-decoration: none; font-size: 12px; font-weight: 500; position: relative; cursor: pointer; }
+  .tabbar a[aria-current="page"], .tabbar button[aria-current="true"] { color: var(--accent-text); background: var(--accent-soft); }
+  .tabbar .nav__count { position: absolute; top: 2px; left: calc(50% + 6px); margin: 0; }
+}
+
+/* -- Controls ---------------------------------------------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); color: var(--ink); font-weight: 500; cursor: pointer; text-decoration: none; }
+.btn:hover { background: var(--surface-2); }
+.btn[disabled] { opacity: 0.55; cursor: progress; }
+.btn--primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn--primary:hover { background: var(--accent); filter: brightness(1.08); }
+.btn--sm { min-height: 34px; padding: 0 12px; font-size: 14px; }
+.icon-btn { display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--ink-2); cursor: pointer; }
+.icon-btn:hover { background: var(--surface-2); border-color: var(--line); }
+@media (max-width: 899px) { .btn { min-height: 44px; } .btn--sm { min-height: 40px; } .icon-btn { width: 44px; height: 44px; } }
+
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.badge--awaiting { background: var(--await-bg); color: var(--await-fg); }
+.badge--review { background: var(--review-bg); color: var(--review-fg); }
+.badge--confirmed { background: var(--ok-bg); color: var(--ok-fg); }
+.badge--bad { background: var(--bad-bg); color: var(--bad-fg); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 18px 20px 6px; }
+.card__head h2 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.card__body { padding: 8px 20px 18px; }
+.empty { padding: 28px 20px; text-align: center; color: var(--ink-3); }
+.banner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 12px 0; padding: 12px 16px; border-radius: 12px; background: var(--bad-bg); color: var(--bad-fg); font-weight: 500; }
+
+/* -- Overview ---------------------------------------------- */
+/* Four main figures, then three smaller ones; two columns once there is less room. */
+.kpis { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; margin: 8px 0 20px; }
+.kpi { grid-column: span 3; display: block; padding: 16px 18px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); color: inherit; text-decoration: none; }
+a.kpi:hover { border-color: var(--line-2); transform: translateY(-1px); }
+.kpi:nth-child(n+5) { grid-column: span 4; }
+@media (max-width: 1099px) { .kpi, .kpi:nth-child(n+5) { grid-column: span 6; } .kpi:last-child:nth-child(odd) { grid-column: 1 / -1; } }
+@media (max-width: 560px) { .kpis { gap: 10px; } .kpi { padding: 12px 14px; } .kpi__value { font-size: 24px; } .kpi__hint { font-size: 12.5px; } }
+.kpi__label { display: block; font-size: 13px; color: var(--ink-3); font-weight: 500; }
+.kpi__value { display: block; margin-top: 6px; font-size: 28px; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; }
+.kpi__hint { display: block; margin-top: 6px; font-size: 13px; color: var(--ink-3); }
+.kpi--alert .kpi__value { color: var(--bad-fg); }
+.grid-2 { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 18px; align-items: start; }
+.stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.grid-2 > * { min-width: 0; }
+@media (max-width: 1099px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } }
+
+.attn { display: grid; }
+.attn__item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.attn__item:first-child { border-top: 0; }
+.attn__title { font-weight: 600; }
+.attn__meta { color: var(--ink-3); font-size: 13.5px; overflow-wrap: anywhere; }
+@media (max-width: 560px) { .attn__item { grid-template-columns: minmax(0, 1fr); gap: 8px; } .attn__item > .badge, .attn__item > .btn { justify-self: start; } }
+
+.feed { display: grid; }
+.feed li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.feed li:first-child { border-top: 0; }
+.feed a { color: var(--ink); text-decoration: none; }
+.feed a:hover { text-decoration: underline; }
+.feed time { color: var(--ink-3); font-size: 13px; white-space: nowrap; }
+
+.health { display: grid; gap: 2px; }
+.health li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
+.health li:first-child { border-top: 0; }
+.health__state { display: inline-flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 8px; font-weight: 500; text-align: right; }
+.health li > span:first-child { min-width: 0; }
+.updated { align-self: center; font-size: 13.5px; }
+.lookup { display: grid; gap: 12px; }
+.pill { padding: 1px 9px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.pill--ok { background: var(--ok-bg); color: var(--ok-fg); }
+.pill--warn { background: var(--await-bg); color: var(--await-fg); }
+.pill--bad { background: var(--bad-bg); color: var(--bad-fg); }
+
+/* -- Lists ------------------------------------------------- */
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 6px 0 16px; }
+.toolbar .search { width: min(360px, 100%); }
+.toolbar .search input { height: 42px; }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.seg button { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); cursor: pointer; font-weight: 500; color: var(--ink-2); }
+.seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.seg__n { font-size: 12.5px; font-variant-numeric: tabular-nums; }
+@media (max-width: 899px) { .seg button { min-height: 42px; } .toolbar .search { display: block; width: 100%; } }
+
+.tablewrap { overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+th { padding: 12px 16px; text-align: left; font-size: 12.5px; font-weight: 600; color: var(--ink-3); background: var(--surface-2); border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 13px 16px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: var(--surface-2); }
+tr.is-open { background: var(--accent-soft); }
+.rowlink { color: var(--ink); font-weight: 600; text-decoration: none; }
+.rowlink::after { content: ''; position: absolute; inset: 0; }
+td.cell-main { position: relative; }
+.sub { display: block; color: var(--ink-3); font-size: 13.5px; font-weight: 400; overflow-wrap: anywhere; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 4px 0; color: var(--ink-3); font-size: 14px; }
+.pager div { display: flex; gap: 8px; }
+
+@media (max-width: 719px) {
+  .tablewrap { background: transparent; border: 0; box-shadow: none; overflow: visible; }
+  thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+  table, tbody { display: block; }
+  tbody tr { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; margin-bottom: 12px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+  tbody tr:hover { background: var(--surface); }
+  td { display: block; padding: 0; border: 0; }
+  td.cell-main { grid-column: 1; }
+  td.cell-status { grid-column: 2; grid-row: 1; justify-self: end; }
+  td.cell-ref, td.cell-paid, td.cell-date, td.cell-sub { grid-column: 1 / -1; color: var(--ink-3); font-size: 13.5px; }
+  td[data-label]::before { content: attr(data-label) ': '; color: var(--ink-3); }
+  td.cell-main::before, td.cell-status::before { content: none; }
+  td:empty { display: none; }
+  td.cell-act { grid-column: 1 / -1; padding-top: 6px; }
+  td.num { text-align: left; }
+}
+
+/* -- Drawer and dialogs ------------------------------------ */
+.scrim { position: fixed; inset: 0; z-index: 40; background: rgba(8, 8, 10, 0.45); }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 41; display: flex; flex-direction: column; width: min(560px, 100vw); background: var(--surface); border-left: 1px solid var(--line); box-shadow: -20px 0 50px -20px rgba(0, 0, 0, 0.35); outline: none; animation: slide 200ms ease-out both; }
+.drawer__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 20px 22px 14px; border-bottom: 1px solid var(--line); }
+.drawer__head h2 { font-size: 20px; line-height: 1.25; font-weight: 600; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.drawer__body { flex: 1; overflow: auto; padding: 18px 22px 28px; display: grid; align-content: start; gap: 20px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.sec h3 { margin-bottom: 6px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); }
+.kv { display: grid; grid-template-columns: minmax(120px, 0.8fr) minmax(0, 1.4fr); gap: 0 16px; }
+.kv dt, .kv dd { padding: 8px 0; border-top: 1px solid var(--line); }
+.kv dt { color: var(--ink-3); font-size: 14px; }
+.kv dd { display: flex; align-items: center; gap: 8px; overflow-wrap: anywhere; min-width: 0; }
+.kv dt:first-of-type, .kv dt:first-of-type + dd { border-top: 0; }
+.kv dt { display: flex; align-items: center; }
+.kv .copy { flex: none; width: 32px; height: 32px; margin: -4px 0; }
+.note textarea { width: 100%; min-height: 96px; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); resize: vertical; }
+.note__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; color: var(--ink-3); font-size: 13.5px; }
+.skeleton { border-radius: 8px; background: linear-gradient(90deg, var(--line) 25%, var(--surface-2) 50%, var(--line) 75%); background-size: 200% 100%; animation: shimmer 1.3s linear infinite; }
+/* -- Pages added in phase 2 ---------------------------------- */
+.quick { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 4px; }
+.toolbar__extra { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 899px) { .toolbar__extra { margin-left: 0; width: 100%; } .toolbar__extra .btn { flex: 1; } }
+.rowname { font-weight: 600; }
+.summary { margin: 0 0 12px; color: var(--ink-2); }
+.callout { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 14px; padding: 12px 16px; border-radius: 12px; background: var(--review-bg); color: var(--review-fg); font-weight: 500; }
+.callout--warn { background: var(--await-bg); color: var(--await-fg); }
+.callout--ok { background: var(--ok-bg); color: var(--ok-fg); }
+.callout a { color: inherit; }
+.callout .btn { color: var(--ink); }
+.form { display: grid; gap: 16px; max-width: 720px; }
+.field { display: grid; gap: 6px; }
+.field__label { font-weight: 500; }
+.field input, .field select { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); }
+fieldset { min-width: 0; margin: 0; padding: 12px 16px 8px; border: 1px solid var(--line-2); border-radius: 12px; }
+legend { padding: 0 6px; font-weight: 600; }
+.check { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; cursor: pointer; }
+.check input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--accent); }
+.hint { margin-top: 8px; color: var(--ink-3); font-size: 13.5px; }
+.copybox { margin-top: 14px; }
+.err-line { min-height: 1.4em; color: var(--bad-fg); font-weight: 500; }
+.formgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 719px) { .formgrid { grid-template-columns: minmax(0, 1fr); } .field input, .field select { height: 46px; font-size: 16px; } }
+.invite-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+@media (max-width: 719px) { .invite-form { grid-template-columns: minmax(0, 1fr); } }
+.linkbox { display: flex; gap: 8px; margin-top: 8px; }
+.linkbox input { flex: 1; min-width: 0; height: 42px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); font: 400 13px var(--mono); }
+.msg { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 61; padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); background: var(--surface); border: 1px solid var(--line); border-radius: 18px 18px 0 0; box-shadow: 0 -20px 50px -20px rgba(0, 0, 0, 0.4); outline: none; }
+.sheet h2 { padding: 0 10px 6px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); }
+.sheet a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 10px; border-radius: 10px; color: var(--ink); text-decoration: none; font-weight: 500; }
+.sheet a:hover { background: var(--surface-2); }
+.nav__count--soft { background: var(--review-bg); color: var(--review-fg); }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes slide { from { transform: translateX(24px); opacity: 0; } }
+@keyframes rise { from { transform: translateY(24px); opacity: 0; } }
+@media (max-width: 719px) {
+  .drawer { width: 100vw; border-left: 0; animation-name: rise; }
+  .drawer__head { padding: 16px 16px 12px; }
+  .drawer__body { padding: 16px 16px 28px; }
+  .kv { grid-template-columns: minmax(0, 1fr); }
+  .kv dt { padding-bottom: 0; border-top: 1px solid var(--line); }
+  .kv dd { border-top: 0; padding-top: 2px; }
+  .kv dt:first-of-type { border-top: 0; }
+}
+
+.dialog { position: fixed; z-index: 60; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(460px, calc(100vw - 32px)); padding: 22px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.5); }
+.dialog h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.dialog p { margin-top: 8px; color: var(--ink-2); }
+.dialog label { display: block; margin-top: 14px; font-weight: 500; }
+.dialog input { width: 100%; height: 42px; margin-top: 6px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); }
+.dialog .err { margin-top: 10px; color: var(--bad-fg); font-weight: 500; }
+.dialog__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.scrim--dialog { z-index: 59; }
+
+.toasts { position: fixed; z-index: 80; right: 20px; bottom: 20px; display: grid; gap: 10px; width: min(380px, calc(100vw - 32px)); pointer-events: none; }
+.toast { padding: 12px 16px; border-radius: 12px; background: var(--ink); color: var(--bg); box-shadow: var(--shadow); font-weight: 500; pointer-events: auto; animation: rise 180ms ease-out both; }
+.toast--bad { background: var(--bad-fg); color: var(--surface); }
+@media (max-width: 899px) { .toasts { right: 16px; left: 16px; width: auto; bottom: calc(86px + env(safe-area-inset-bottom)); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+</style>
+<script>
+// Runs before the dashboard script. If that script cannot be parsed, throws before it draws anything, or is blocked,
+// this says so on the page instead of leaving it empty.
+(function () {
+  function say(text) {
+    var box = document.getElementById('boot');
+    if (!box) return;
+    box.className = 'boot boot--bad';
+    box.textContent = text;
+  }
+  window.addEventListener('error', function (e) {
+    say('The dashboard could not start: ' + (e.message || 'script error') + (e.lineno ? ' (line ' + e.lineno + ', column ' + (e.colno || '?') + ')' : ''));
+    // Show the text of that line exactly as this page received it; a copy that was altered on the way shows up here.
+    try {
+      var box = document.getElementById('boot'), main = '';
+      for (var i = 0; i < document.scripts.length; i++) if (document.scripts[i].text.length > main.length) main = document.scripts[i].text;
+      var line = main.split('\n')[(e.lineno || 0) - 1], col = e.colno || 1;
+      if (box && line) {
+        var src = document.createElement('pre');
+        src.className = 'boot__src';
+        src.textContent = 'Received, line ' + e.lineno + ': ' + line.slice(Math.max(0, col - 70), col + 90);
+        box.appendChild(src);
+      }
+    } catch (ignore) { /* the message above is still shown */ }
+  });
+  document.addEventListener('securitypolicyviolation', function (e) { say('The page was blocked by a security rule: ' + e.violatedDirective + ' (' + (e.blockedURI || 'inline') + ')'); });
+})();
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="app" id="app">
+  <aside class="side" id="side" aria-label="Sidebar">
+    <div class="brand"><span class="brand__mark" aria-hidden="true">BB</span><span class="brand__name">BA Bridge<span class="brand__sub">Admin</span></span></div>
+    <nav class="nav" id="nav" aria-label="Main"></nav>
+    <div class="side__foot">
+      <span class="side__user" id="user"></span>
+      <span class="side__build">Build 7</span>
+      <button class="btn btn--sm" type="button" id="theme-side"></button>
+    </div>
+  </aside>
+  <div class="col">
+    <header class="top">
+      <h1 id="title" tabindex="-1">Overview</h1>
+      <span class="top__spacer"></span>
+      <form class="search" id="search" role="search">
+        <label class="sr-only" for="search-input">Search enrolments</label>
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search-input" type="search" placeholder="Search name, email or reference" autocomplete="off">
+      </form>
+      <button class="icon-btn" type="button" id="refresh" aria-label="Refresh"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+      <button class="icon-btn" type="button" id="theme-top" aria-label="Switch theme"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/></svg></button>
+    </header>
+    <main id="main" tabindex="-1"><p class="boot" id="boot" role="status">Starting the dashboard...</p></main>
+  </div>
+  <nav class="tabbar" id="tabbar" aria-label="Main (mobile)"></nav>
+</div>
+<div id="layer"></div>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<p class="sr-only" id="announce" role="status" aria-live="polite"></p>
+
+<script>
+(() => {
+'use strict';
+
+/* -- Helpers ----------------------------------------------- */
+// Builds DOM from data. Text always goes in as a text node, so nothing a visitor typed can become markup.
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  for (const [key, value] of Object.entries(props || {})) {
+    if (value == null || value === false) continue;
+    if (key === 'class') el.className = value;
+    else if (key === 'text') el.textContent = value;
+    else if (key === 'dataset') Object.assign(el.dataset, value);
+    else if (key.startsWith('on')) el.addEventListener(key.slice(2), value);
+    else if (value === true) el.setAttribute(key, '');
+    else el.setAttribute(key, value);
+  }
+  for (const kid of kids.flat(Infinity)) {
+    if (kid == null || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+const $ = (id) => document.getElementById(id);
+const SVG = 'http://www.w3.org/2000/svg';
+// Icons are drawn from these shapes with createElementNS. Nothing here is ever turned into markup from a string:
+// Google's page frame can refuse that (Trusted Types), and a refused assignment left the whole dashboard blank.
+const ICONS = {
+  grid: [['rect', { x: 3.5, y: 3.5, width: 7, height: 7, rx: 1.5 }], ['rect', { x: 13.5, y: 3.5, width: 7, height: 7, rx: 1.5 }], ['rect', { x: 3.5, y: 13.5, width: 7, height: 7, rx: 1.5 }], ['rect', { x: 13.5, y: 13.5, width: 7, height: 7, rx: 1.5 }]],
+  users: [['circle', { cx: 9, cy: 8, r: 3.5 }], ['path', { d: 'M2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5' }], ['path', { d: 'M16 4.7a3.5 3.5 0 0 1 0 6.6M18.5 14.9c1.7.8 2.8 2.5 3 5.1' }]],
+  search: [['circle', { cx: 11, cy: 11, r: 7 }], ['path', { d: 'm20 20-3.5-3.5' }]],
+  copy: [['rect', { x: 9, y: 9, width: 11, height: 11, rx: 2 }], ['path', { d: 'M5 15V6a2 2 0 0 1 2-2h9' }]],
+  close: [['path', { d: 'M6 6l12 12M18 6 6 18' }]],
+  list: [['path', { d: 'M8 6h12M8 12h12M8 18h12' }], ['path', { d: 'M4 6h.01M4 12h.01M4 18h.01' }]],
+  mail: [['rect', { x: 3, y: 5, width: 18, height: 14, rx: 2 }], ['path', { d: 'm3.5 7 8.5 6 8.5-6' }]],
+  clock: [['circle', { cx: 12, cy: 12, r: 9 }], ['path', { d: 'M12 7v5l3 2' }]],
+  link: [['path', { d: 'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1' }], ['path', { d: 'M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1' }]],
+  plus: [['path', { d: 'M12 5v14M5 12h14' }]],
+  gear: [['path', { d: 'M4 7h10M18 7h2M4 17h2M10 17h10' }], ['circle', { cx: 16, cy: 7, r: 2 }], ['circle', { cx: 8, cy: 17, r: 2 }]],
+  more: [['circle', { cx: 5, cy: 12, r: 1.5 }], ['circle', { cx: 12, cy: 12, r: 1.5 }], ['circle', { cx: 19, cy: 12, r: 1.5 }]],
+  download: [['path', { d: 'M12 4v11M7 11l5 5 5-5' }], ['path', { d: 'M5 20h14' }]],
+  sun: [['circle', { cx: 12, cy: 12, r: 4 }], ['path', { d: 'M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4' }]],
+  moon: [['path', { d: 'M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z' }]],
+};
+function icon(name) {
+  const svg = document.createElementNS(SVG, 'svg');
+  svg.setAttribute('class', 'ico');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  for (const [tag, attrs] of ICONS[name] || []) {
+    const shape = document.createElementNS(SVG, tag);
+    for (const [key, value] of Object.entries(attrs)) shape.setAttribute(key, String(value));
+    svg.append(shape);
+  }
+  return svg;
+}
+const naira = (n) => '\u20A6' + Number(n || 0).toLocaleString('en-NG');
+const plural = (n, one, many) => ('' + (n) + ' ' + (n === 1 ? one : many || one + 's'));
+function ago(ms, fallback) {
+  if (!ms) return fallback || '';
+  const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
+  if (s < 60) return 'just now';
+  if (s < 3600) return ('' + (Math.floor(s / 60)) + ' min ago');
+  if (s < 86400) return ('' + (Math.floor(s / 3600)) + ' h ago');
+  if (s < 86400 * 14) return ('' + (Math.floor(s / 86400)) + ' d ago');
+  return fallback || new Date(ms).toISOString().slice(0, 10);
+}
+const when = (ms, text) => h('time', { datetime: ms ? new Date(ms).toISOString() : null, title: text || null, text: ago(ms, text) });
+const stash = {
+  get: (key) => { try { return localStorage.getItem(key); } catch (e) { return null; } },
+  set: (key, value) => { try { localStorage.setItem(key, value); } catch (e) { /* storage can be blocked in a framed page */ } },
+};
+
+/* -- Server calls ------------------------------------------ */
+function api(method, params) {
+  return new Promise((resolve, reject) => {
+    if (!window.google || !google.script || !google.script.run) {
+      reject(new Error('Open this page from the Apps Script dashboard deployment.'));
+      return;
+    }
+    google.script.run
+      .withSuccessHandler((res) => {
+        if (res && res.ok) { if (res.user) state.user = res.user; resolve(res.data); }
+        else reject(new Error((res && res.error) || 'The request failed.'));
+      })
+      .withFailureHandler((err) => reject(new Error((err && err.message) || 'The request failed.')))
+      .adminApi(method, params || {});
+  });
+}
+
+/* -- Errors that would otherwise leave a blank page -------- */
+function showFatal(err) {
+  const text = (err && err.message) || String(err || 'Something went wrong.');
+  const main = $('main');
+  if (!main || main.querySelector('.banner--fatal')) return;
+  const banner = h('div', { class: 'banner banner--fatal', role: 'alert' }, h('span', { text: ('The dashboard hit a problem and stopped: ' + (text)) }), h('button', { class: 'btn btn--sm', type: 'button', onclick: () => location.reload(), text: 'Reload' }));
+  main.prepend(banner);
+}
+window.addEventListener('error', (event) => showFatal(event.error || event.message));
+window.addEventListener('unhandledrejection', (event) => showFatal(event.reason));
+
+/* -- State, theme, feedback -------------------------------- */
+const state = { user: '', route: null, nonce: 0, overview: null, attention: 0, list: null, opener: null, pages: {}, form: null, openEnquiries: 0, system: null, hiddenAt: 0 };
+
+function applyTheme(theme) {
+  if (theme) document.documentElement.dataset.theme = theme;
+  const dark = document.documentElement.dataset.theme
+    ? document.documentElement.dataset.theme === 'dark'
+    : matchMedia('(prefers-color-scheme: dark)').matches;
+  for (const id of ['theme-side', 'theme-top']) {
+    const btn = $(id);
+    btn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+    btn.replaceChildren(icon(dark ? 'sun' : 'moon'), ...(id === 'theme-side' ? [dark ? 'Light theme' : 'Dark theme'] : []));
+  }
+}
+function toggleTheme() {
+  const dark = document.documentElement.dataset.theme
+    ? document.documentElement.dataset.theme === 'dark'
+    : matchMedia('(prefers-color-scheme: dark)').matches;
+  const next = dark ? 'light' : 'dark';
+  stash.set('ba-admin-theme', next);
+  applyTheme(next);
+}
+
+function toast(message, bad) {
+  const node = h('div', { class: 'toast' + (bad ? ' toast--bad' : ''), text: message });
+  $('toasts').append(node);
+  setTimeout(() => node.remove(), bad ? 7000 : 4200);
+}
+async function copy(text, label) {
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) {
+    // Clipboard access can be refused inside a framed page; fall back to selecting a hidden field.
+    const field = h('textarea', { class: 'sr-only', 'aria-hidden': 'true' });
+    field.value = text; document.body.append(field); field.select();
+    try { document.execCommand('copy'); } catch (err) { toast('Could not copy. Select the text and copy it.', true); field.remove(); return; }
+    field.remove();
+  }
+  toast(('' + (label || 'Text') + ' copied'));
+}
+const copyButton = (text, label) => h('button', { class: 'icon-btn copy', type: 'button', 'aria-label': ('Copy ' + (label)), onclick: () => copy(text, label) }, icon('copy'));
+
+/* -- Routing: the address after the # decides what is shown -- */
+// mobile: shown in the bottom bar; the rest sit behind its "More" button
+const NAV = [
+  { id: 'overview', label: 'Overview', icon: 'grid', mobile: true },
+  { id: 'enrolments', label: 'Enrolments', icon: 'users', mobile: true },
+  { id: 'waitlist', label: 'Waitlist', icon: 'list', mobile: true },
+  { id: 'enquiries', label: 'Enquiries', icon: 'mail', mobile: true },
+  { id: 'sessions', label: '1:1 sessions', icon: 'clock' },
+  { id: 'invites', label: 'Invites', icon: 'link' },
+  { id: 'system', label: 'System', icon: 'gear' },
+];
+const OTHER_PAGES = ['new'];
+const HAS_PANEL = ['enrolments', 'enquiries'];
+function parseRoute() {
+  const raw = location.hash.replace(/^#\/?/, '');
+  const [path, query = ''] = raw.split('?');
+  const parts = path.split('/').filter(Boolean).map((p) => { try { return decodeURIComponent(p); } catch (e) { return p; } });
+  const page = NAV.some((n) => n.id === parts[0]) || OTHER_PAGES.indexOf(parts[0]) !== -1 ? parts[0] : 'overview';
+  return { page, ref: HAS_PANEL.indexOf(page) !== -1 ? parts[1] || '' : '', params: Object.fromEntries(new URLSearchParams(query)) };
+}
+function hashFor(page, { ref, params } = {}) {
+  const query = new URLSearchParams(Object.entries(params || {}).filter(([, v]) => v !== '' && v != null && v !== 'all')).toString();
+  return ('#/' + (page) + (ref ? '/' + encodeURIComponent(ref) : '') + (query ? '?' + query : ''));
+}
+function go(page, options = {}) {
+  const target = hashFor(page, options);
+  if (!options.replace) { location.hash = target; return; }
+  // Changing filters or pages replaces the address instead of adding to Back history. If a frame refuses replaceState, location.replace does the same and fires hashchange.
+  try { history.replaceState(null, '', target); } catch (err) { location.replace(target); return; }
+  route();
+}
+const sameParams = (a, b) => JSON.stringify(Object.entries(a || {}).sort()) === JSON.stringify(Object.entries(b || {}).sort());
+
+function navCount(id) {
+  if (id === 'enrolments' && state.attention) return { n: state.attention, text: plural(state.attention, 'item') + ' need attention', soft: false };
+  if (id === 'enquiries' && state.openEnquiries) return { n: state.openEnquiries, text: state.openEnquiries + ' not handled', soft: true };
+  return null;
+}
+function renderNav() {
+  const link = (item) => {
+    const badge = navCount(item.id);
+    return h('a', { href: hashFor(item.id), 'aria-current': state.route && state.route.page === item.id ? 'page' : null }, icon(item.icon), item.label,
+      badge ? h('span', { class: 'nav__count' + (badge.soft ? ' nav__count--soft' : ''), 'aria-label': badge.text, text: String(badge.n) }) : null);
+  };
+  const hiddenNow = state.route && !NAV.slice(0, 4).some((n) => n.id === state.route.page);
+  $('nav').replaceChildren(...NAV.map(link));
+  $('tabbar').replaceChildren(...NAV.filter((n) => n.mobile).map(link),
+    h('button', { type: 'button', id: 'more-btn', 'aria-haspopup': 'dialog', 'aria-current': hiddenNow ? 'true' : null, onclick: openMore }, icon('more'), 'More'));
+}
+
+/* -- Pieces shared by the pages ---------------------------- */
+const STATUS = {
+  awaiting: { label: 'Awaiting payment', cls: 'awaiting' },
+  review: { label: 'Needs confirmation', cls: 'review' },
+  confirmed: { label: 'Confirmed', cls: 'confirmed' },
+};
+function statusBadge(item) {
+  if (item.status === 'review' && /amount needs review/i.test(item.paymentStatus || '')) return h('span', { class: 'badge badge--bad', text: 'Check the amount' });
+  const s = STATUS[item.status] || STATUS.awaiting;
+  return h('span', { class: ('badge badge--' + (s.cls)), text: s.label });
+}
+function skeleton(lines) {
+  return h('div', { 'aria-hidden': 'true', style: 'display:grid;gap:12px;padding:8px 0' },
+    Array.from({ length: lines }, (_, i) => h('div', { class: 'skeleton', style: ('height:' + (i === 0 ? 96 : 20) + 'px;width:' + (i === 0 ? '100' : 90 - (i % 3) * 18) + '%') })));
+}
+function errorBanner(err, retry) {
+  return h('div', { class: 'banner', role: 'alert' }, h('span', { text: err.message || String(err) }), retry ? h('button', { class: 'btn btn--sm', type: 'button', onclick: retry, text: 'Try again' }) : null);
+}
+// replaceChildren turns null into the text "null", so empty slots are dropped first.
+const mount = (...nodes) => $('main').replaceChildren(...nodes.filter(Boolean));
+function setTitle(text) {
+  $('title').textContent = text;
+  document.title = ('' + (text) + ' \u00B7 BA Bridge Admin');
+  $('announce').textContent = ('' + (text) + ' page');
+}
+
+/* -- Overview ---------------------------------------------- */
+function renderOverview(data) {
+  const c = data.counts;
+  const kpi = (label, value, hint, href, alert) => h(href ? 'a' : 'div', { class: 'kpi' + (alert ? ' kpi--alert' : ''), href }, h('span', { class: 'kpi__label', text: label }), h('span', { class: 'kpi__value', text: value }), hint ? h('span', { class: 'kpi__hint', text: hint }) : null);
+
+  const attention = data.attention.length
+    ? h('ul', { class: 'attn' }, data.attention.map((a) => h('li', { class: 'attn__item' },
+        h('span', { class: 'badge ' + (a.severity === 'high' ? 'badge--bad' : a.severity === 'medium' ? 'badge--review' : 'badge--awaiting'), text: a.severity === 'high' ? 'Urgent' : a.severity === 'medium' ? 'Soon' : 'Later' }),
+        h('div', {}, h('div', { class: 'attn__title', text: a.title }), h('div', { class: 'attn__meta', text: [a.name, a.detail].filter(Boolean).join(' \u00B7 ') })),
+        a.reference ? h('a', { class: 'btn btn--sm', href: hashFor('enrolments', { ref: a.reference }), 'aria-label': ('Open ' + (a.name)), text: 'Open' }) : null)))
+    : h('p', { class: 'empty', text: 'Nothing needs your attention.' });
+
+  const feed = data.activity.length
+    ? h('ul', { class: 'feed' }, data.activity.map((e) => h('li', {},
+        h('a', { href: hashFor('enrolments', { ref: e.reference }), text: e.text }), when(e.at))))
+    : h('p', { class: 'empty', text: 'No activity yet.' });
+
+  const hl = data.health;
+  const state_ = (cls, text) => h('span', { class: 'health__state' }, h('span', { class: ('pill pill--' + (cls)), text }));
+  const last = hl.lastWebhook;
+  const health = h('ul', { class: 'health' },
+    h('li', {}, h('span', { text: 'Squad key' }), hl.squad === 'live' ? state_('ok', 'Live') : hl.squad === 'sandbox' ? state_('warn', 'Sandbox') : state_('bad', 'Not set')),
+    h('li', {}, h('span', { text: 'Last report from Squad' }), last ? state_(last.result === 'error' ? 'bad' : 'ok', ('' + (ago(last.at)) + ' \u00B7 ' + (last.result))) : state_('warn', 'None yet')),
+    h('li', {}, h('span', { text: 'Automatic payment check' }), hl.sweepInstalled ? state_('ok', 'On') : state_('warn', 'Off')),
+    h('li', {}, h('span', { text: 'Email sends left today' }), state_(hl.emailQuota < 20 ? 'bad' : 'ok', String(hl.emailQuota))),
+    h('li', {}, h('span', { text: 'WhatsApp group link' }), hl.whatsappGroupSet ? state_('ok', 'Set') : state_('bad', 'Missing')));
+
+  const cohorts = Object.entries(data.waitlist.byCohort).map(([k, v]) => ('' + (k) + ': ' + (v))).join(' \u00B7 ');
+  state.openEnquiries = data.enquiries.open;
+  mount(
+    h('div', { class: 'quick' },
+      h('a', { class: 'btn btn--primary', href: hashFor('new') }, icon('plus'), 'Add enrolment'),
+      h('a', { class: 'btn', href: hashFor('invites') }, icon('link'), 'Create invite'),
+      h('span', { class: 'muted updated', text: 'Updated ' + ago(data.generatedAt, 'just now') })),
+    h('section', { class: 'kpis', 'aria-label': 'Key figures' },
+      kpi('Enrolments', String(c.all), ('' + (c.confirmed) + ' confirmed'), hashFor('enrolments')),
+      kpi('Awaiting payment', String(c.awaiting), 'Not paid yet', hashFor('enrolments', { params: { status: 'awaiting' } })),
+      kpi('Needs confirmation', String(c.review), c.review ? 'Paid, waiting for you' : 'All caught up', hashFor('enrolments', { params: { status: 'review' } }), c.review > 0),
+      kpi('Confirmed revenue', naira(data.revenue.confirmed), data.revenue.awaitingConfirmation ? ('' + (naira(data.revenue.awaitingConfirmation)) + ' awaiting confirmation') : 'Nothing pending'),
+      kpi('Waitlist', String(data.waitlist.total), cohorts || 'No signups yet', hashFor('waitlist')),
+      kpi('1:1 sessions', String(data.sessions.paid), data.sessions.revenue ? ('' + (naira(data.sessions.revenue)) + ' paid') : 'None paid yet', hashFor('sessions')),
+      kpi('Enquiries', String(data.enquiries.total), data.enquiries.open ? data.enquiries.open + ' not handled' : 'All handled', hashFor('enquiries', { params: data.enquiries.open ? { f: 'open' } : {} }))),
+    h('div', { class: 'grid-2' },
+      h('div', { class: 'stack' },
+        h('section', { class: 'card', 'aria-labelledby': 'h-attn' }, h('div', { class: 'card__head' }, h('h2', { id: 'h-attn', text: 'Needs your attention' }), data.attentionTotal > data.attention.length ? h('span', { class: 'muted', text: ('Showing ' + (data.attention.length) + ' of ' + (data.attentionTotal)) }) : null), h('div', { class: 'card__body' }, attention)),
+        h('section', { class: 'card', 'aria-labelledby': 'h-feed' }, h('div', { class: 'card__head' }, h('h2', { id: 'h-feed', text: 'Recent activity' })), h('div', { class: 'card__body' }, feed))),
+      h('section', { class: 'card', 'aria-labelledby': 'h-health' }, h('div', { class: 'card__head' }, h('h2', { id: 'h-health', text: 'System' }), h('a', { href: hashFor('system'), text: 'Details' })), h('div', { class: 'card__body' }, health))));
+  state.attention = data.attentionTotal;
+  renderNav();
+}
+
+function showOverview(force) {
+  setTitle('Overview');
+  const nonce = state.nonce;
+  if (state.overview && !force) renderOverview(state.overview); else mount(skeleton(5));
+  return api('overview').then((data) => {
+    state.overview = data;
+    if (nonce === state.nonce && state.route.page === 'overview') renderOverview(data);
+    else { state.attention = data.attentionTotal; state.openEnquiries = data.enquiries.open; renderNav(); }
+  }).catch((err) => {
+    if (nonce !== state.nonce) return;
+    if (!state.overview) mount(errorBanner(err, () => showOverview(true)));
+    else toast(('Could not refresh: ' + (err.message)), true);
+  });
+}
+
+/* -- Enrolments -------------------------------------------- */
+const enrol = { mounted: false, input: null, seg: null, results: null, params: {} };
+
+function mountEnrolments() {
+  enrol.input = h('input', { id: 'enrol-search', type: 'search', placeholder: 'Search name, email, reference or phone', autocomplete: 'off', 'aria-label': 'Search enrolments' });
+  let timer;
+  enrol.input.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => go('enrolments', { params: { ...enrol.params, q: enrol.input.value.trim(), page: 1 }, replace: true }), 260);
+  });
+  enrol.seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Filter by status' });
+  enrol.results = h('div', { 'aria-live': 'polite' });
+  const buttons = [
+    h('button', { class: 'btn', type: 'button', onclick: (e) => exportEnrolments('emails', e.currentTarget) }, icon('copy'), 'Copy emails'),
+    h('button', { class: 'btn', type: 'button', onclick: (e) => exportEnrolments('csv', e.currentTarget) }, icon('download'), 'Download CSV'),
+    h('a', { class: 'btn btn--primary', href: hashFor('new') }, icon('plus'), 'Add enrolment'),
+  ];
+  mount(h('div', { class: 'toolbar' }, h('div', { class: 'search' }, icon('search'), enrol.input), enrol.seg, h('div', { class: 'toolbar__extra' }, buttons)), enrol.results);
+  // the magnifier uses the same shape as the one in the top bar
+  enrol.mounted = true;
+}
+
+// Everything the search and status filter match, not just the page on screen.
+async function exportEnrolments(kind, btn) {
+  btn.disabled = true;
+  try {
+    const p = enrol.params;
+    const data = await api('enrolmentsExport', { q: p.q || '', status: p.status && p.status !== 'all' ? p.status : '' });
+    if (kind === 'emails') {
+      if (!data.emails.length) toast('No email addresses match.', true);
+      else copy(data.emails.join(', '), data.emails.length + ' email' + (data.emails.length === 1 ? '' : 's'));
+    } else if (!data.rows.length) toast('Nothing matches, so there is nothing to download.', true);
+    else downloadCsv('enrolments-' + todayStamp() + '.csv', toCsv(data.headers, data.rows));
+  } catch (err) { toast(err.message, true); } finally { btn.disabled = false; }
+}
+
+function renderSeg(counts) {
+  const items = [['all', 'All'], ['awaiting', 'Awaiting payment'], ['review', 'Needs confirmation'], ['confirmed', 'Confirmed']];
+  const current = enrol.params.status || 'all';
+  enrol.seg.replaceChildren(...items.map(([id, label]) => h('button', {
+    type: 'button', 'aria-pressed': String(current === id),
+    onclick: () => go('enrolments', { params: { ...enrol.params, status: id, page: 1 }, replace: true }),
+  }, label, h('span', { class: 'seg__n', text: counts ? String(counts[id]) : '' }))));
+}
+
+function renderList(data) {
+  renderSeg(data.counts);
+  const open = state.route.ref;
+  if (!data.items.length) {
+    enrol.results.replaceChildren(h('div', { class: 'card' }, h('p', { class: 'empty', text: enrol.params.q || enrol.params.status ? 'No enrolments match.' : 'No enrolments yet.' })));
+    return;
+  }
+  const rows = data.items.map((item) => h('tr', { class: item.reference === open ? 'is-open' : null, dataset: { ref: item.reference } },
+    h('td', { class: 'cell-main' }, h('a', { class: 'rowlink', href: hashFor('enrolments', { ref: item.reference, params: enrol.params }), text: item.name || item.reference }), h('span', { class: 'sub', text: item.email })),
+    h('td', { class: 'cell-ref mono', 'data-label': 'Reference', text: item.reference }),
+    h('td', { class: 'cell-status' }, statusBadge(item), item.hasError ? h('span', { class: 'sub', text: 'Email problem' }) : null),
+    h('td', { class: 'cell-paid num', 'data-label': 'Paid', text: item.amountPaid != null ? naira(item.amountPaid) : '\u2014' }),
+    h('td', { class: 'cell-date', 'data-label': 'Enrolled' }, when(item.createdMs, item.createdAt))));
+  const table = h('div', { class: 'card tablewrap' }, h('table', {},
+    h('caption', { class: 'sr-only', text: 'Enrolments, newest first' }),
+    h('thead', {}, h('tr', {}, h('th', { scope: 'col', text: 'Name' }), h('th', { scope: 'col', text: 'Reference' }), h('th', { scope: 'col', text: 'Status' }), h('th', { scope: 'col', class: 'num', text: 'Paid' }), h('th', { scope: 'col', text: 'Enrolled' }))),
+    h('tbody', {}, rows)));
+  const from = (data.page - 1) * data.pageSize + 1;
+  const pager = h('nav', { class: 'pager', 'aria-label': 'Pages' },
+    h('span', { text: ('' + (from) + '\u2013' + (from + data.items.length - 1) + ' of ' + (data.total)) }),
+    data.pages > 1 ? h('div', {},
+      h('button', { class: 'btn btn--sm', type: 'button', disabled: data.page <= 1, onclick: () => go('enrolments', { params: { ...enrol.params, page: data.page - 1 }, replace: true }), text: 'Previous' }),
+      h('button', { class: 'btn btn--sm', type: 'button', disabled: data.page >= data.pages, onclick: () => go('enrolments', { params: { ...enrol.params, page: data.page + 1 }, replace: true }), text: 'Next' })) : null);
+  enrol.results.replaceChildren(table, pager);
+}
+
+function showEnrolments(force) {
+  setTitle('Enrolments');
+  const route = state.route;
+  const params = { ...route.params };
+  const fresh = !enrol.mounted || !$('enrol-search');
+  if (fresh) mountEnrolments();
+  const changed = fresh || !sameParams(params, enrol.params);
+  enrol.params = params;
+  if (document.activeElement !== enrol.input) enrol.input.value = params.q || '';
+  if (!changed && !force && state.list) { renderList(state.list.data); return Promise.resolve(); }
+  const key = JSON.stringify(Object.entries(params).sort());
+  const nonce = state.nonce;
+  if (state.list && state.list.key === key) renderList(state.list.data);
+  else { renderSeg(null); enrol.results.replaceChildren(skeleton(6)); }
+  return api('enrolments', { q: params.q || '', status: params.status && params.status !== 'all' ? params.status : '', page: Number(params.page) || 1 })
+    .then((data) => {
+      state.list = { key, data };
+      if (nonce === state.nonce && state.route.page === 'enrolments') renderList(data);
+    })
+    .catch((err) => {
+      if (nonce !== state.nonce) return;
+      enrol.results.replaceChildren(errorBanner(err, () => showEnrolments(true)));
+    });
+}
+// After a change, bring the list and the overview back up to date without moving the page.
+function refreshData() {
+  state.overview = null;
+  state.list = null;
+  if (state.route.page === 'enrolments') showEnrolments(true);
+  state.pages = {};
+  api('overview').then((data) => { state.overview = data; state.attention = data.attentionTotal; state.openEnquiries = data.enquiries.open; renderNav(); }).catch(() => {});
+}
+
+/* -- Enrolment detail drawer ------------------------------- */
+const drawer = { ref: '', kind: '', node: null, scrim: null, token: 0, draft: null };
+
+function trapFocus(container, event) {
+  if (event.key !== 'Tab') return;
+  const focusable = [...container.querySelectorAll('a[href], button:not([disabled]), input, textarea, [tabindex]:not([tabindex="-1"])')].filter((el) => el.offsetParent !== null);
+  if (!focusable.length) { event.preventDefault(); container.focus(); return; }
+  const first = focusable[0], last = focusable[focusable.length - 1];
+  if (event.shiftKey && (document.activeElement === first || document.activeElement === container)) { event.preventDefault(); last.focus(); }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+}
+
+function closeDrawerNode() {
+  if (!drawer.node) return;
+  const ref = drawer.ref;
+  drawer.node.remove(); drawer.scrim.remove();
+  drawer.node = drawer.scrim = null; drawer.ref = ''; drawer.kind = '';
+  document.querySelectorAll('tr.is-open').forEach((tr) => tr.classList.remove('is-open'));
+  // The list is redrawn after an action, so the link that opened the panel may be a new element: find its row again.
+  const back = state.opener && document.body.contains(state.opener) ? state.opener
+    : document.querySelector('tr[data-ref="' + CSS.escape(ref) + '"] .rowlink') || document.querySelector('.rowlink');
+  state.opener = null;
+  if (back) back.focus({ preventScroll: true });
+}
+function closeDrawer() {
+  if (!drawer.node) return;
+  go(state.route.page, { params: state.route.params });
+}
+
+function openDrawer(ref) {
+  const kind = state.route.page;
+  if (drawer.ref === ref && drawer.kind === kind && drawer.node) return;
+  const token = ++drawer.token;
+  if (!drawer.node) {
+    state.opener = document.activeElement;
+    drawer.scrim = h('div', { class: 'scrim', onclick: closeDrawer });
+    drawer.node = h('div', { class: 'drawer', role: 'dialog', 'aria-modal': 'true', 'aria-label': kind === 'enquiries' ? 'Enquiry details' : 'Enrolment details', tabindex: '-1', onkeydown: (e) => trapFocus(drawer.node, e) });
+    $('layer').append(drawer.scrim, drawer.node);
+  }
+  drawer.ref = ref;
+  drawer.kind = kind;
+  document.querySelectorAll('tr.is-open').forEach((tr) => tr.classList.remove('is-open'));
+  const row = document.querySelector(('tr[data-ref="' + (CSS.escape(ref)) + '"]'));
+  if (row) row.classList.add('is-open');
+  drawer.node.replaceChildren(
+    h('div', { class: 'drawer__head' }, h('div', { class: 'skeleton', style: 'height:24px;width:60%' }), closeButton()),
+    h('div', { class: 'drawer__body' }, skeleton(5)));
+  drawer.node.focus({ preventScroll: true });
+  if (kind === 'enquiries') loadEnquiryDrawer(ref, token); else loadDrawer(ref, token);
+}
+const closeButton = () => h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close details', onclick: closeDrawer }, icon('close'));
+
+function loadDrawer(ref, token) {
+  return api('enrolment', { reference: ref }).then((data) => {
+    if (token !== drawer.token || !drawer.node) return;
+    renderDrawer(data);
+  }).catch((err) => {
+    if (token !== drawer.token || !drawer.node) return;
+    drawer.node.replaceChildren(h('div', { class: 'drawer__head' }, h('h2', { text: 'Could not open this enrolment' }), closeButton()), h('div', { class: 'drawer__body' }, errorBanner(err, /not found/i.test(err.message) ? null : () => loadDrawer(ref, token))));
+  });
+}
+
+function renderDrawer(data) {
+  const s = data.summary;
+  const act = (call, success) => async (event) => {
+    const btn = event.currentTarget;
+    btn.disabled = true;
+    try { success(await call()); refreshData(); loadDrawer(s.reference, drawer.token); }
+    catch (err) { toast(err.message, true); }
+    finally { btn.disabled = false; }
+  };
+  const actions = h('div', { class: 'actions' },
+    h('button', { class: 'btn', type: 'button', onclick: act(() => api('sendReview', { reference: s.reference }), (r) => toast(r.sent ? ('Review email sent to ' + (r.to)) : ('Review email not sent: ' + (r.error)), !r.sent)), text: 'Send review email' }),
+    data.canConfirm ? h('button', { class: 'btn btn--primary', type: 'button', onclick: () => confirmDialog(data), text: 'Confirm payment' }) : null,
+    data.canResend ? h('button', { class: 'btn', type: 'button', onclick: () => resendDialog(data), text: 'Resend welcome email' }) : null);
+
+  const sections = data.sections.map((sec) => h('section', { class: 'sec' }, h('h3', { text: sec.title }), h('dl', { class: 'kv' },
+    sec.items.map((item) => [h('dt', { text: item.label }), h('dd', {}, valueNode(item), item.value && (item.kind === 'email' || item.kind === 'mono') ? copyButton(item.value, item.label.toLowerCase()) : null)]))));
+
+  const note = h('textarea', { id: 'note', maxlength: String(data.notesMax), 'aria-label': 'Admin notes', placeholder: 'Only you can see these notes.' });
+  // The drawer is redrawn after every action; whatever is typed in the note and not yet saved must survive that.
+  note.value = drawer.draft && drawer.draft.ref === s.reference ? drawer.draft.value : data.notes || '';
+  const counter = h('span', { text: ('' + (note.value.length) + '/' + (data.notesMax)) });
+  note.addEventListener('input', () => { counter.textContent = ('' + (note.value.length) + '/' + (data.notesMax)); drawer.draft = { ref: s.reference, value: note.value }; });
+  const save = h('button', { class: 'btn btn--sm', type: 'button', text: 'Save note', onclick: async (e) => {
+    const btn = e.currentTarget; // currentTarget is cleared once the handler has awaited
+    btn.disabled = true;
+    try { await api('saveNote', { reference: s.reference, note: note.value }); drawer.draft = null; toast('Note saved'); }
+    catch (err) { toast(err.message, true); }
+    finally { btn.disabled = false; }
+  } });
+
+  drawer.node.setAttribute('aria-label', ('Enrolment: ' + (s.name || s.reference)));
+  drawer.node.replaceChildren(
+    h('div', { class: 'drawer__head' }, h('div', {}, h('h2', { text: s.name || s.reference }), h('p', { class: 'muted mono', text: s.reference })), closeButton()),
+    h('div', { class: 'drawer__body' },
+      h('div', {}, statusBadge(s)),
+      actions,
+      sections,
+      h('section', { class: 'sec note' }, h('h3', { text: 'Admin notes' }), note, h('div', { class: 'note__row' }, counter, save))));
+}
+
+function valueNode(item) {
+  if (!item.value) return h('span', { class: 'muted', text: '\u2014' });
+  if (item.kind === 'email') return h('a', { href: ('mailto:' + (item.value)), text: item.value });
+  if (item.kind === 'phone') {
+    const digits = item.value.replace(/\D/g, '');
+    return h('span', {}, item.value, digits.length >= 7 ? [' ', h('a', { href: ('https://wa.me/' + (digits)), target: '_blank', rel: 'noopener', text: 'Open in WhatsApp' })] : null);
+  }
+  if (item.kind === 'mono') return h('span', { class: 'mono', text: item.value });
+  return h('span', { text: item.value });
+}
+
+/* -- Dialogs ----------------------------------------------- */
+function dialog({ title, body, confirm, onConfirm, field }) {
+  const opener = document.activeElement;
+  const scrim = h('div', { class: 'scrim scrim--dialog' });
+  const err = h('p', { class: 'err', role: 'alert' });
+  const input = field ? h('input', { id: 'dialog-field', inputmode: 'decimal', autocomplete: 'off', value: field.value }) : null;
+  const ok = h('button', { class: 'btn btn--primary', type: 'button', text: confirm });
+  const cancel = h('button', { class: 'btn', type: 'button', text: 'Cancel' });
+  const node = h('div', { class: 'dialog', role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'dialog-title', 'aria-describedby': 'dialog-body', tabindex: '-1' },
+    h('h2', { id: 'dialog-title', text: title }), h('p', { id: 'dialog-body', text: body }),
+    field ? h('label', { for: 'dialog-field', text: field.label }) : null, input, err, h('div', { class: 'dialog__actions' }, cancel, ok));
+  const close = () => { scrim.remove(); node.remove(); document.removeEventListener('keydown', onKey, true); if (document.body.contains(opener)) opener.focus({ preventScroll: true }); };
+  const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } else trapFocus(node, e); };
+  cancel.addEventListener('click', close);
+  scrim.addEventListener('click', close);
+  ok.addEventListener('click', async () => {
+    err.textContent = ''; ok.disabled = cancel.disabled = true;
+    try { await onConfirm(input ? input.value.trim() : ''); close(); }
+    catch (e) { err.textContent = e.message; ok.disabled = cancel.disabled = false; }
+  });
+  document.addEventListener('keydown', onKey, true);
+  $('layer').append(scrim, node);
+  (input || ok).focus();
+}
+
+function confirmDialog(data) {
+  const s = data.summary;
+  dialog({
+    title: 'Confirm payment',
+    body: ('This marks ' + (s.name || s.reference) + ' as paid and emails them the welcome message with the WhatsApp group link, copied to ' + (data.welcomeCc.split(',').join(' and ')) + '. Compare the payment with the Squad dashboard first.'),
+    field: { label: 'Amount paid (NGN)', value: data.defaultAmount },
+    confirm: 'Confirm and send welcome email',
+    onConfirm: async (amount) => {
+      const r = await api('confirmPayment', { reference: s.reference, amountPaid: amount });
+      toast(r.welcome === 'failed' ? ('Confirmed, but the welcome email failed: ' + (r.error)) : ('Confirmed. Welcome email sent to ' + (r.to)), r.welcome === 'failed');
+      refreshData(); loadDrawer(s.reference, drawer.token);
+    },
+  });
+}
+function resendDialog(data) {
+  const s = data.summary;
+  dialog({
+    title: 'Send the welcome email again?',
+    body: ('' + (s.name || s.reference) + ' already has one. This sends it again to ' + (s.email) + ', copied to ' + (data.welcomeCc.split(',').join(' and ')) + '.'),
+    confirm: 'Send again',
+    onConfirm: async () => {
+      const r = await api('resendWelcome', { reference: s.reference });
+      toast(r.welcome === 'sent' ? ('Welcome email sent to ' + (r.to)) : ('Not sent: ' + (r.error)), r.welcome !== 'sent');
+      refreshData(); loadDrawer(s.reference, drawer.token);
+    },
+  });
+}
+
+/* -- Helpers for the list pages ---------------------------- */
+const PAGE_SIZE = 25;
+const clip = (text, n) => { text = String(text || ''); return text.length > n ? text.slice(0, n - 1) + '\u2026' : text; };
+const dash = '\u2014';
+const textHas = (item, query, keys) => {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  return keys.some((key) => String(item[key] == null ? '' : item[key]).toLowerCase().indexOf(q) !== -1);
+};
+function fillSeg(seg, items, current, onPick) {
+  seg.replaceChildren(...items.map((it) => h('button', { type: 'button', 'aria-pressed': String(current === it[0]), onclick: () => onPick(it[0]) }, it[1], h('span', { class: 'seg__n', text: String(it[2]) }))));
+}
+function pagerNode(total, page, size, onPage) {
+  const pages = Math.max(1, Math.ceil(total / size));
+  const from = total ? (page - 1) * size + 1 : 0;
+  const to = Math.min(total, page * size);
+  return h('nav', { class: 'pager', 'aria-label': 'Pages' },
+    h('span', { text: from + '\u2013' + to + ' of ' + total }),
+    pages > 1 ? h('div', {},
+      h('button', { class: 'btn btn--sm', type: 'button', disabled: page <= 1, onclick: () => onPage(page - 1), text: 'Previous' }),
+      h('button', { class: 'btn btn--sm', type: 'button', disabled: page >= pages, onclick: () => onPage(page + 1), text: 'Next' })) : null);
+}
+// cols: { label, cls, num, mobile (label shown on phones), cell(item) }
+function dataTable(caption, cols, items, rowOptions) {
+  return h('div', { class: 'card tablewrap' }, h('table', {},
+    h('caption', { class: 'sr-only', text: caption }),
+    h('thead', {}, h('tr', {}, cols.map((c) => h('th', { scope: 'col', class: c.num ? 'num' : null, text: c.label })))),
+    h('tbody', {}, items.map((item) => {
+      const opts = rowOptions ? rowOptions(item) : {};
+      return h('tr', { class: opts.open ? 'is-open' : null, dataset: opts.ref != null ? { ref: String(opts.ref) } : null },
+        cols.map((c) => h('td', { class: c.cls + (c.num ? ' num' : ''), 'data-label': c.mobile || null }, c.cell(item))));
+    }))));
+}
+// Spreadsheet programs run text that starts with = + - or @ as a formula, so such text is made plain before it goes in a file.
+function csvCell(value) {
+  let text = value == null ? '' : String(value);
+  if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
+  return /[",\n\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+function toCsv(headers, rows) {
+  return [headers].concat(rows).map((row) => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+}
+function downloadCsv(name, text) {
+  try {
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + text], { type: 'text/csv;charset=utf-8' }));
+    const a = h('a', { href: url, download: name });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast('Downloading ' + name + '. If nothing arrives, the page may block downloads: use Copy instead.');
+  } catch (err) {
+    copy(text, 'The CSV');
+  }
+}
+const todayStamp = () => new Date().toISOString().slice(0, 10);
+
+/* -- List pages: waitlist, enquiries, 1:1 sessions, invites -- */
+const LISTS = {};
+const PAGES = {
+  waitlist: {
+    title: 'Waitlist', method: 'waitlist', searchLabel: 'Search the waitlist', searchHint: 'Search name, email or site', searchKeys: ['name', 'email', 'cohort', 'site'],
+    caption: 'Waitlist signups, newest first', empty: 'No one is on the waitlist yet.',
+    segments: (d) => [['all', 'All', d.total]].concat(d.cohorts.map((c) => [c.name, c.name, c.count])).concat(d.duplicates ? [['repeats', 'Repeats', d.duplicates]] : []),
+    matchSeg: (item, f) => f === 'all' || (f === 'repeats' ? item.duplicate : item.cohort === f),
+    head: (d) => (d.duplicates ? h('p', { class: 'callout callout--warn', role: 'status' }, d.duplicates + (d.duplicates === 1 ? ' signup repeats' : ' signups repeat') + ' an earlier one (same email and cohort). The Repeats filter shows them; Copy emails lists each address once.') : null),
+    extra: (d, items) => {
+      const emails = [...new Set(items.map((i) => i.email).filter(Boolean))];
+      return [
+        h('button', { class: 'btn', type: 'button', disabled: !emails.length, onclick: () => copy(emails.join(', '), emails.length + ' email' + (emails.length === 1 ? '' : 's')) }, icon('copy'), 'Copy ' + emails.length + ' email' + (emails.length === 1 ? '' : 's')),
+        h('button', { class: 'btn', type: 'button', disabled: !items.length, onclick: () => downloadCsv('waitlist-' + todayStamp() + '.csv', toCsv(['Name', 'Email', 'Cohort', 'Signed up', 'Site', 'Repeat'], items.map((i) => [i.name, i.email, i.cohort, i.joinedAt, i.site, i.duplicate ? 'Yes' : '']))) }, icon('download'), 'Download CSV'),
+      ];
+    },
+    columns: () => [
+      { label: 'Name', cls: 'cell-main', cell: (i) => [h('span', { class: 'rowname', text: i.name || i.email }), h('span', { class: 'sub', text: i.email })] },
+      { label: 'Cohort', cls: 'cell-sub', mobile: 'Cohort', cell: (i) => i.cohort },
+      { label: 'Signed up', cls: 'cell-date', mobile: 'Signed up', cell: (i) => when(i.joinedMs, i.joinedAt) },
+      { label: 'Via', cls: 'cell-sub', mobile: 'Via', cell: (i) => i.site },
+      { label: 'Note', cls: 'cell-status', cell: (i) => (i.duplicate ? h('span', { class: 'badge badge--review', text: 'Repeat signup' }) : null) },
+    ],
+  },
+  enquiries: {
+    title: 'Enquiries', method: 'enquiries', searchLabel: 'Search enquiries', searchHint: 'Search name, email, message or site', searchKeys: ['name', 'email', 'company', 'type', 'message', 'site'],
+    caption: 'Contact enquiries, newest first', empty: 'No enquiries yet.',
+    segments: (d) => [['all', 'All', d.counts.all], ['open', 'Not handled', d.counts.open], ['handled', 'Handled', d.counts.handled]],
+    matchSeg: (item, f) => f === 'all' || (f === 'open' ? !item.handled : item.handled),
+    extra: (d, items) => [h('button', { class: 'btn', type: 'button', disabled: !items.length, onclick: () => downloadCsv('enquiries-' + todayStamp() + '.csv', toCsv(['Name', 'Email', 'Company', 'Topic', 'Message', 'Received', 'Site', 'Handled'], items.map((i) => [i.name, i.email, i.company, i.type, i.message, i.at, i.site, i.handled ? 'Yes' : '']))) }, icon('download'), 'Download CSV')],
+    rowOptions: (item) => ({ ref: item.row, open: String(item.row) === state.route.ref }),
+    columns: () => [
+      { label: 'From', cls: 'cell-main', cell: (i) => [h('a', { class: 'rowlink', href: hashFor('enquiries', { ref: i.row, params: state.route.params }), text: i.name || i.email }), h('span', { class: 'sub', text: clip(i.message, 90) })] },
+      { label: 'Topic', cls: 'cell-sub', mobile: 'Topic', cell: (i) => i.type || dash },
+      { label: 'Received', cls: 'cell-date', mobile: 'Received', cell: (i) => when(i.atMs, i.at) },
+      { label: 'Via', cls: 'cell-sub', mobile: 'Via', cell: (i) => i.site },
+      { label: 'Status', cls: 'cell-status', cell: (i) => h('span', { class: 'badge ' + (i.handled ? 'badge--confirmed' : 'badge--review'), text: i.handled ? 'Handled' : 'New' }) },
+    ],
+  },
+  sessions: {
+    title: '1:1 sessions', method: 'sessions', searchLabel: 'Search 1:1 sessions', searchHint: 'Search name, email or reference', searchKeys: ['name', 'email', 'reference'],
+    caption: '1:1 session payments, newest first', empty: 'No 1:1 session payments yet.',
+    segments: (d) => [['all', 'All', d.counts.all], ['paid', 'Paid', d.counts.paid], ['review', 'Needs a check', d.counts.review]],
+    matchSeg: (item, f) => f === 'all' || (f === 'paid' ? item.paid : !item.paid),
+    extra: (d, items) => [h('button', { class: 'btn', type: 'button', disabled: !items.length, onclick: () => downloadCsv('sessions-' + todayStamp() + '.csv', toCsv(['Reference', 'Name', 'Email', 'Amount (NGN)', 'Status', 'Reported by', 'Date'], items.map((i) => [i.reference, i.name, i.email, i.amount, i.paid ? 'Paid' : i.status, i.reportedBy, i.at]))) }, icon('download'), 'Download CSV')],
+    head: (d) => h('p', { class: 'summary' }, d.counts.paid + ' paid (' + naira(d.revenue) + '). Honour a booking only if its notes quote a reference listed here as Paid. A session is ' + naira(d.expectedAmount) + '.'),
+    columns: () => [
+      { label: 'Name', cls: 'cell-main', cell: (i) => [h('span', { class: 'rowname', text: i.name || i.email || dash }), h('span', { class: 'sub', text: i.email })] },
+      { label: 'Reference', cls: 'cell-sub mono', mobile: 'Reference', cell: (i) => i.reference },
+      { label: 'Amount', cls: 'cell-paid', num: true, mobile: 'Amount', cell: (i) => (i.amount != null ? naira(i.amount) : dash) },
+      { label: 'Date', cls: 'cell-date', mobile: 'Date', cell: (i) => when(i.atMs, i.at) },
+      { label: 'Status', cls: 'cell-status', cell: (i) => h('span', { class: 'badge ' + (i.paid ? 'badge--confirmed' : 'badge--bad'), text: i.paid ? 'Paid' : 'Check the amount' }) },
+    ],
+  },
+  invites: {
+    title: 'Invites', method: 'invites', searchLabel: 'Search invites', searchHint: 'Search name or email', searchKeys: ['name', 'email'],
+    caption: 'Registration invites, newest first', empty: 'No invites yet. Create one above.',
+    segments: (d) => [['all', 'All', d.counts.all], ['Unused', 'Not used yet', d.counts.unused], ['Used', 'Used', d.counts.used]],
+    matchSeg: (item, f) => f === 'all' || item.status === f,
+    intro: () => inviteForm(),
+    columns: () => [
+      { label: 'Name', cls: 'cell-main', cell: (i) => [h('span', { class: 'rowname', text: i.name || i.email }), h('span', { class: 'sub', text: i.email })] },
+      { label: 'Created', cls: 'cell-date', mobile: 'Created', cell: (i) => when(i.createdMs, i.createdAt) },
+      { label: 'Status', cls: 'cell-status', cell: (i) => h('span', { class: 'badge ' + (i.status === 'Used' ? 'badge--confirmed' : 'badge--awaiting'), text: i.status === 'Used' ? 'Used' : 'Not used yet' }) },
+      { label: 'Link', cls: 'cell-act', cell: (i) => (i.link
+        ? h('button', { class: 'btn btn--sm', type: 'button', onclick: () => copy(i.link, 'Invite link'), 'aria-label': 'Copy invite link for ' + (i.name || i.email) }, icon('copy'), 'Copy link')
+        : (i.reference ? h('a', { class: 'btn btn--sm', href: hashFor('enrolments', { ref: i.reference }), 'aria-label': 'Open the enrolment for ' + (i.name || i.email), text: 'Open enrolment' }) : null)) },
+    ],
+  },
+};
+
+function showList(page, force) {
+  const cfg = PAGES[page];
+  setTitle(cfg.title);
+  const nonce = state.nonce;
+  const cached = state.pages[page];
+  if (cached) drawList(page); else mountList(page);
+  return api(cfg.method).then((data) => {
+    state.pages[page] = data;
+    if (page === 'enquiries') { state.openEnquiries = data.counts.open; renderNav(); }
+    if (nonce === state.nonce && state.route.page === page) drawList(page);
+    // a panel opened from a link needs the list's data; it is drawn once that has arrived
+    if (nonce === state.nonce && state.route.ref && drawer.node && drawer.kind === page) loadPanel(state.route.ref);
+  }).catch((err) => {
+    if (nonce !== state.nonce) return;
+    const lp = LISTS[page];
+    if (lp && lp.results && document.body.contains(lp.results)) lp.results.replaceChildren(errorBanner(err, () => showList(page, true)));
+    else mount(errorBanner(err, () => showList(page, true)));
+  });
+}
+
+// The toolbar is built once and kept (so typing in the search box is not interrupted); only the results are redrawn.
+function mountList(page) {
+  const cfg = PAGES[page];
+  const lp = LISTS[page] = { mounted: true };
+  lp.input = h('input', { id: 'list-search', type: 'search', placeholder: cfg.searchHint, autocomplete: 'off', 'aria-label': cfg.searchLabel });
+  let timer;
+  lp.input.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => go(page, { params: Object.assign({}, state.route.params, { q: lp.input.value.trim(), page: 1 }), replace: true }), 220);
+  });
+  lp.seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Filter' });
+  lp.extra = h('div', { class: 'toolbar__extra' });
+  lp.head = h('div');
+  lp.results = h('div', { 'aria-live': 'polite' }, skeleton(6));
+  mount(
+    cfg.intro ? cfg.intro() : null,
+    h('div', { class: 'toolbar' }, h('div', { class: 'search' }, icon('search'), lp.input), lp.seg, lp.extra),
+    lp.head, lp.results);
+}
+
+function drawList(page) {
+  const cfg = PAGES[page];
+  const data = state.pages[page];
+  let lp = LISTS[page];
+  if (!lp || !lp.mounted || !document.body.contains(lp.results)) { mountList(page); lp = LISTS[page]; }
+  if (!data) return;
+  const params = state.route.params;
+  const q = (params.q || '').trim();
+  const f = params.f || 'all';
+  if (document.activeElement !== lp.input) lp.input.value = q;
+  const shown = data.items.filter((item) => cfg.matchSeg(item, f) && textHas(item, q, cfg.searchKeys));
+  fillSeg(lp.seg, cfg.segments(data), f, (id) => go(page, { params: Object.assign({}, params, { f: id, page: 1 }), replace: true }));
+  lp.extra.replaceChildren(...(cfg.extra ? cfg.extra(data, shown) : []));
+  lp.head.replaceChildren(...(cfg.head ? [cfg.head(data)] : []));
+  if (!shown.length) {
+    lp.results.replaceChildren(h('div', { class: 'card' }, h('p', { class: 'empty', text: q || f !== 'all' ? 'Nothing matches.' : cfg.empty })));
+    return;
+  }
+  const pages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+  const pageNo = Math.min(Math.max(1, Number(params.page) || 1), pages);
+  const slice = shown.slice((pageNo - 1) * PAGE_SIZE, pageNo * PAGE_SIZE);
+  lp.results.replaceChildren(
+    dataTable(cfg.caption, cfg.columns(), slice, cfg.rowOptions),
+    pagerNode(shown.length, pageNo, PAGE_SIZE, (n) => go(page, { params: Object.assign({}, params, { page: n }), replace: true })));
+}
+
+/* -- Invites: the form above the list --------------------- */
+function field(label, input, hint) {
+  return h('label', { class: 'field' }, h('span', { class: 'field__label', text: label }), input, hint ? h('span', { class: 'hint', text: hint }) : null);
+}
+function inviteForm() {
+  const name = h('input', { type: 'text', required: true, autocomplete: 'off', maxlength: '200' });
+  const email = h('input', { type: 'email', required: true, autocomplete: 'off' });
+  const out = h('div', { 'aria-live': 'polite' });
+  const submit = h('button', { class: 'btn btn--primary', type: 'submit', text: 'Create invite' });
+  const form = h('form', { class: 'invite-form', onsubmit: async (e) => {
+    e.preventDefault();
+    submit.disabled = true;
+    try {
+      const r = await api('createInvite', { name: name.value, email: email.value });
+      const box = h('div', { class: 'callout callout--ok', role: 'status', style: 'display:block' },
+        h('div', { text: (r.existing ? 'This address already had an unused invite, so here is the same link for ' : 'Invite ready for ') + r.name + '.' }),
+        h('div', { class: 'linkbox' }, h('input', { type: 'text', readonly: true, value: r.link, 'aria-label': 'Invite link', onfocus: (ev) => ev.target.select() }), h('button', { class: 'btn', type: 'button', onclick: () => copy(r.link, 'Invite link') }, icon('copy'), 'Copy')),
+        h('div', { class: 'hint', text: 'It works once, only for ' + r.email + '.' }));
+      out.replaceChildren(
+        r.enrolled ? h('p', { class: 'callout callout--warn', role: 'status' }, r.enrolled.name + ' already has an enrolment (' + r.enrolled.reference + ').', h('a', { href: hashFor('enrolments', { ref: r.enrolled.reference }), text: 'Open it' })) : null,
+        box);
+      name.value = ''; email.value = '';
+      showList('invites', true);
+    } catch (err) {
+      out.replaceChildren(h('p', { class: 'err-line', role: 'alert', text: err.message }));
+    } finally { submit.disabled = false; }
+  } }, field('Name', name), field('Email', email), submit);
+  return h('section', { class: 'card', 'aria-labelledby': 'h-invite', style: 'margin-bottom:16px' },
+    h('div', { class: 'card__head' }, h('h2', { id: 'h-invite', text: 'Create a private registration link' })),
+    h('div', { class: 'card__body' }, form, out));
+}
+
+/* -- Panel for one enquiry ---------------------------------- */
+function loadPanel(ref) {
+  if (state.route.page === 'enquiries') loadEnquiryDrawer(ref, drawer.token); else loadDrawer(ref, drawer.token);
+}
+function loadEnquiryDrawer(ref, token) {
+  const cached = state.pages.enquiries;
+  if (!cached) return; // showList draws the panel once the list has arrived
+  if (token !== drawer.token || !drawer.node) return;
+  const item = cached.items.find((i) => String(i.row) === String(ref));
+  if (!item) {
+    drawer.node.replaceChildren(h('div', { class: 'drawer__head' }, h('h2', { text: 'Could not open this enquiry' }), closeButton()), h('div', { class: 'drawer__body' }, errorBanner(new Error('That enquiry was not found. It may have been removed from the sheet.'))));
+    return;
+  }
+  renderEnquiryDrawer(item);
+}
+function renderEnquiryDrawer(item) {
+  const mailto = 'mailto:' + item.email + '?subject=' + encodeURIComponent('Re: ' + (item.type || 'your message'));
+  const toggle = h('button', { class: 'btn' + (item.handled ? '' : ' btn--primary'), type: 'button', text: item.handled ? 'Mark as not handled' : 'Mark as handled', onclick: async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try {
+      await api('setEnquiryHandled', { row: item.row, email: item.email, at: item.at, handled: !item.handled });
+      item.handled = !item.handled;
+      const counts = state.pages.enquiries.counts;
+      counts.open = state.pages.enquiries.items.filter((i) => !i.handled).length;
+      counts.handled = counts.all - counts.open;
+      state.openEnquiries = counts.open;
+      state.overview = null;
+      renderNav();
+      drawList('enquiries');
+      renderEnquiryDrawer(item);
+      toast(item.handled ? 'Marked as handled' : 'Marked as not handled');
+    } catch (err) { toast(err.message, true); btn.disabled = false; }
+  } });
+  const rows = [['Email', item.email, 'email'], ['Company', item.company], ['Topic', item.type], ['Received', item.at], ['Via', item.site]];
+  drawer.node.setAttribute('aria-label', 'Enquiry from ' + (item.name || item.email));
+  drawer.node.replaceChildren(
+    h('div', { class: 'drawer__head' }, h('div', {}, h('h2', { text: item.name || item.email }), h('p', { class: 'muted', text: item.at })), closeButton()),
+    h('div', { class: 'drawer__body' },
+      h('div', {}, h('span', { class: 'badge ' + (item.handled ? 'badge--confirmed' : 'badge--review'), text: item.handled ? 'Handled' : 'New' })),
+      h('div', { class: 'actions' }, h('a', { class: 'btn', href: mailto, target: '_blank', rel: 'noopener' }, icon('mail'), 'Reply by email'), toggle),
+      h('section', { class: 'sec' }, h('h3', { text: 'Details' }), h('dl', { class: 'kv' }, rows.map((r) => [h('dt', { text: r[0] }), h('dd', {}, r[1] ? h('span', { text: r[1] }) : h('span', { class: 'muted', text: dash }), r[2] && r[1] ? copyButton(r[1], r[0].toLowerCase()) : null)]))),
+      h('section', { class: 'sec' }, h('h3', { text: 'Message' }), h('p', { class: 'msg', text: item.message || dash }))));
+}
+
+/* -- Add an enrolment ------------------------------------- */
+function showNew() {
+  setTitle('Add enrolment');
+  const nonce = state.nonce;
+  mount(skeleton(5));
+  const ready = state.form ? Promise.resolve(state.form) : api('offlineForm').then((f) => { state.form = f; return f; });
+  return ready.then((f) => { if (nonce === state.nonce && state.route.page === 'new') renderNew(f); })
+    .catch((err) => { if (nonce === state.nonce) mount(errorBanner(err, showNew)); });
+}
+function selectField(label, id, values) {
+  const select = h('select', { id, required: true }, h('option', { value: '', text: 'Select' }), values.map((v) => h('option', { value: v, text: v })));
+  return { select, node: field(label + ' *', select) };
+}
+function checkField(value, label) {
+  const input = h('input', { type: 'checkbox', value });
+  return { input, node: h('label', { class: 'check' }, input, h('span', { text: label })) };
+}
+function renderNew(f) {
+  const o = f.options;
+  const name = h('input', { type: 'text', required: true, autocomplete: 'off' });
+  const email = h('input', { type: 'email', required: true, autocomplete: 'off' });
+  const whatsapp = h('input', { type: 'text', required: true, autocomplete: 'off', placeholder: 'Include the country code' });
+  const place = h('input', { type: 'text', required: true, autocomplete: 'off', placeholder: 'For example Lagos, Nigeria' });
+  const background = selectField('Current background', 'f-background', o.background);
+  const bgOther = h('input', { type: 'text', autocomplete: 'off' });
+  const bgOtherWrap = h('div', { hidden: true }, field('Other background *', bgOther));
+  const experience = selectField('Years of work experience', 'f-experience', o.experience);
+  const stage = selectField('Stage of transition', 'f-stage', o.stage);
+  const source = selectField('Heard about the training via', 'f-source', o.source);
+  const srcOther = h('input', { type: 'text', autocomplete: 'off' });
+  const srcOtherWrap = h('div', { hidden: true }, field('Other source *', srcOther));
+  const wants = o.wants.map((w) => checkField(w[0], w[1]));
+  const wantOther = checkField('other', 'Other');
+  const wantOtherText = h('input', { type: 'text', autocomplete: 'off' });
+  const wantOtherWrap = h('div', { hidden: true }, field('Other goal *', wantOtherText));
+  const avail = o.availability.map((a) => checkField(a[0], a[1]));
+  const consent = h('input', { type: 'checkbox', required: true });
+  const err = h('p', { class: 'err-line', role: 'alert' });
+  const notice = h('div', { 'aria-live': 'polite' });
+  const submit = h('button', { class: 'btn btn--primary', type: 'submit', text: 'Add enrolment' });
+
+  const wantBoxes = wants.concat([wantOther]).map((w) => w.input);
+  const syncWants = () => {
+    const n = wantBoxes.filter((b) => b.checked).length;
+    wantBoxes.forEach((b) => { b.disabled = !b.checked && n >= f.maxWants; });
+    wantOtherWrap.hidden = !wantOther.input.checked;
+    wantOtherText.required = wantOther.input.checked;
+    if (!wantOther.input.checked) wantOtherText.value = '';
+  };
+  wantBoxes.forEach((b) => b.addEventListener('change', syncWants));
+  const syncOther = (select, wrap, input) => () => { wrap.hidden = select.value !== 'Other'; input.required = select.value === 'Other'; if (select.value !== 'Other') input.value = ''; };
+  background.select.addEventListener('change', syncOther(background.select, bgOtherWrap, bgOther));
+  source.select.addEventListener('change', syncOther(source.select, srcOtherWrap, srcOther));
+
+  const form = h('form', { class: 'form', onsubmit: async (e) => {
+    e.preventDefault();
+    err.textContent = '';
+    notice.replaceChildren();
+    const picked = wants.filter((w) => w.input.checked).map((w) => w.input.value);
+    const total = picked.length + (wantOther.input.checked ? 1 : 0);
+    if (total < 1 || total > f.maxWants) { err.textContent = 'Choose between 1 and ' + f.maxWants + ' things they most want.'; return; }
+    const times = avail.filter((a) => a.input.checked).map((a) => a.input.value);
+    if (!times.length) { err.textContent = 'Choose at least one live-session availability option.'; return; }
+    submit.disabled = true;
+    try {
+      const r = await api('createOffline', {
+        name: name.value, email: email.value, whatsapp: whatsapp.value, location: place.value,
+        background: background.select.value, background_other: bgOther.value, experience: experience.select.value, stage: stage.select.value,
+        source: source.select.value, source_other: srcOther.value, wants: picked, wantOther: wantOther.input.checked, want_other_text: wantOtherText.value,
+        availability: times, consent: consent.checked,
+      });
+      if (!r.created) {
+        notice.replaceChildren(h('p', { class: 'callout callout--warn', role: 'status' }, r.name + ' already has a registration (' + r.reference + '). Nothing was added.', h('a', { href: hashFor('enrolments', { ref: r.reference }), text: 'Open it' })));
+        notice.scrollIntoView({ block: 'nearest' });
+      } else {
+        toast('Added ' + r.name + ' (' + r.reference + ')');
+        refreshData();
+        go('enrolments', { ref: r.reference });
+      }
+    } catch (error) { err.textContent = error.message; } finally { submit.disabled = false; }
+  } },
+    h('p', { class: 'summary', text: 'For someone who is paying or has paid outside the website. They are added as awaiting payment at ' + naira(f.expectedAmount) + '; open the new enrolment to send the review email or confirm the payment.' }),
+    notice,
+    h('div', { class: 'card' }, h('div', { class: 'card__body', style: 'display:grid;gap:16px' },
+      h('div', { class: 'formgrid' }, field('Full name *', name), field('Email address *', email), field('WhatsApp number *', whatsapp), field('City and country *', place)),
+      h('div', { class: 'formgrid' }, background.node, experience.node),
+      bgOtherWrap,
+      stage.node,
+      h('fieldset', {}, h('legend', { text: 'What they most want *' }), h('p', { class: 'hint', text: 'Choose 1 to ' + f.maxWants + '.' }), wants.map((w) => w.node), wantOther.node, wantOtherWrap),
+      h('fieldset', {}, h('legend', { text: 'Live-session availability *' }), h('p', { class: 'hint', text: 'Choose at least one.' }), avail.map((a) => a.node)),
+      source.node, srcOtherWrap,
+      h('label', { class: 'check' }, consent, h('span', { text: 'They agreed to their details being used for BA Bridge registration, training communication and cohort administration.' })))),
+    err,
+    h('div', { class: 'actions' }, submit, h('a', { class: 'btn', href: hashFor('enrolments'), text: 'Cancel' })));
+  mount(form);
+}
+
+/* -- System page: payments, the automatic check, and a payment lookup -- */
+function infoRow(label, ...value) {
+  return h('li', {}, h('span', { text: label }), h('span', { class: 'health__state' }, value));
+}
+const pill = (cls, text) => h('span', { class: 'pill pill--' + cls, text });
+function copyBox(label, text) {
+  return h('div', { class: 'copybox' }, h('span', { class: 'field__label', text: label }),
+    h('div', { class: 'linkbox' }, h('input', { type: 'text', readonly: true, value: text, 'aria-label': label, onfocus: (e) => e.target.select() }), h('button', { class: 'btn', type: 'button', onclick: () => copy(text, label) }, icon('copy'), 'Copy')));
+}
+function showSystem(force) {
+  setTitle('System');
+  const nonce = state.nonce;
+  if (state.system) renderSystem(state.system); else mount(skeleton(6));
+  return api('system').then((d) => {
+    state.system = d;
+    if (nonce === state.nonce && state.route.page === 'system') renderSystem(d);
+  }).catch((err) => {
+    if (nonce !== state.nonce) return;
+    if (!state.system) mount(errorBanner(err, () => showSystem(true)));
+    else toast('Could not refresh: ' + err.message, true);
+  });
+}
+function renderSystem(d) {
+  const sq = d.squad;
+  const sweepMsg = h('p', { class: 'hint', role: 'status', 'aria-live': 'polite' });
+  const turnOn = h('button', { class: 'btn btn--sm', type: 'button', text: 'Turn on', onclick: async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try { await api('installSweep'); state.system = null; toast('The automatic payment check is on'); showSystem(true); }
+    catch (err) { toast(err.message + ' You can also run installSquadSweepTrigger from the Apps Script editor.', true); btn.disabled = false; }
+  } });
+  const checkNow = h('button', { class: 'btn btn--sm', type: 'button', text: 'Check now', onclick: async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    sweepMsg.textContent = 'Asking Squad about every unpaid enrolment from the last 7 days...';
+    try {
+      const r = await api('runSweep');
+      sweepMsg.textContent = 'Checked ' + r.checked + ', newly paid ' + r.paid + ', errors ' + r.failed + '.' + (r.paid ? ' The review emails have been sent.' : '');
+      if (r.paid) refreshData();
+    } catch (err) { sweepMsg.textContent = ''; toast(err.message, true); } finally { btn.disabled = false; }
+  } });
+  const last = sq.lastWebhook;
+  const keyHelp = sq.mode === 'live' ? null
+    : sq.mode === 'sandbox' ? 'A sandbox key only recognises test payments. Put the live secret key (sk_...) in the script property SQUAD_SECRET_KEY before real payments.'
+    : 'Add the secret key as the script property SQUAD_SECRET_KEY (Project Settings, Script Properties). Until then no payment can be recognised.';
+
+  const payments = h('section', { class: 'card', 'aria-labelledby': 'h-pay' }, h('div', { class: 'card__head' }, h('h2', { id: 'h-pay', text: 'Payments (Squad)' })),
+    h('div', { class: 'card__body' },
+      h('ul', { class: 'health' },
+        infoRow('Squad key', sq.mode === 'live' ? pill('ok', 'Live') : sq.mode === 'sandbox' ? pill('warn', 'Sandbox') : pill('bad', 'Not set')),
+        infoRow('Last report from Squad', last ? [pill(last.result === 'error' ? 'bad' : 'ok', ago(last.at, 'a while ago')), h('span', { class: 'muted', text: last.event + ' - ' + last.result })] : pill('warn', 'None yet')),
+        infoRow('Automatic payment check', sq.sweepInstalled ? pill('ok', 'On, every ' + sq.sweepEveryMinutes + ' min') : pill('warn', 'Off'), sq.sweepInstalled ? null : turnOn, checkNow)),
+      keyHelp ? h('p', { class: 'hint', text: keyHelp }) : null,
+      sweepMsg,
+      h('p', { class: 'hint', text: 'Squad tells this script about each payment. The automatic check is the safety net for a report that never arrived; Check now runs it immediately.' }),
+      copyBox('Webhook URL for the Squad dashboard', sq.webhookUrl),
+      copyBox('Redirect URL for the Squad dashboard', sq.redirectUrl)));
+
+  const email = d.mail;
+  const side = h('div', { class: 'stack' },
+    h('section', { class: 'card', 'aria-labelledby': 'h-mail' }, h('div', { class: 'card__head' }, h('h2', { id: 'h-mail', text: 'Email' })), h('div', { class: 'card__body' }, h('ul', { class: 'health' },
+      infoRow('Sends left today', pill(email.quotaLeft < 20 ? 'bad' : 'ok', String(email.quotaLeft))),
+      infoRow('Payment review emails go to', h('span', { text: email.reviewTo })),
+      infoRow('Contact and waitlist alerts go to', h('span', { text: email.notifyTo })),
+      infoRow('Welcome emails are copied to', h('span', { text: email.welcomeCc.join(', ') }))))),
+    h('section', { class: 'card', 'aria-labelledby': 'h-set' }, h('div', { class: 'card__head' }, h('h2', { id: 'h-set', text: 'Prices and group' })), h('div', { class: 'card__body' },
+      h('ul', { class: 'health' }, infoRow('Cohort', h('span', { text: naira(d.prices.cohort) })), infoRow('1:1 session', h('span', { text: naira(d.prices.session) }))),
+      h('p', { class: 'hint', text: 'Prices live in the script (EXPECTED_AMOUNT and SESSION_AMOUNT) and in the website pages; a test keeps them equal.' }),
+      d.whatsappGroupUrl ? copyBox('WhatsApp group link', d.whatsappGroupUrl) : h('p', { class: 'callout callout--warn', role: 'status', text: 'The WhatsApp group link is not set (script property BA_BRIDGE_WHATSAPP_GROUP_URL). Welcome emails need it.' }))),
+    h('section', { class: 'card', 'aria-labelledby': 'h-sheet' }, h('div', { class: 'card__head' }, h('h2', { id: 'h-sheet', text: 'Spreadsheet' })), h('div', { class: 'card__body' },
+      h('ul', { class: 'health' }, d.sheet.tabs.map((t) => infoRow(t.name, h('span', { text: t.rows == null ? 'not created yet' : t.rows + (t.rows === 1 ? ' row' : ' rows') })))),
+      h('p', {}, h('a', { class: 'btn btn--sm', href: d.sheet.url, target: '_blank', rel: 'noopener', text: 'Open the spreadsheet' })))),
+    h('section', { class: 'card', 'aria-labelledby': 'h-acc' }, h('div', { class: 'card__head' }, h('h2', { id: 'h-acc', text: 'Access' })), h('div', { class: 'card__body' },
+      h('ul', { class: 'health' }, infoRow('Signed in as', h('span', { text: state.user || '-' })), infoRow('Accounts allowed in', h('span', { text: d.access.accounts.join(', ') })), infoRow('Time zone', h('span', { text: d.access.timeZone }))),
+      h('p', { class: 'hint', text: 'To allow another Google account, add it to the script property BA_BRIDGE_ADMIN_EMAILS (comma separated).' }))));
+
+  mount(h('div', { class: 'grid-2' }, h('div', { class: 'stack' }, payments, lookupCard()), side));
+}
+
+function lookupCard() {
+  const input = h('input', { type: 'text', required: true, autocomplete: 'off', spellcheck: 'false', placeholder: 'BAB-XXXX-XXX-1 or UU1-XXXXXXXX' });
+  const out = h('div', { 'aria-live': 'polite', style: 'margin-top:14px' });
+  const btn = h('button', { class: 'btn btn--primary', type: 'submit', text: 'Check with Squad' });
+  const form = h('form', { class: 'lookup', onsubmit: async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    out.replaceChildren(h('p', { class: 'muted', text: 'Asking Squad...' }));
+    try { renderLookup(out, await api('checkReference', { reference: input.value })); }
+    catch (err) { out.replaceChildren(h('p', { class: 'err-line', role: 'alert', text: err.message })); }
+    finally { btn.disabled = false; }
+  } }, field('Payment reference', input, 'Find it in the Squad dashboard or in a payment email. Looking it up changes nothing.'), btn);
+  return h('section', { class: 'card', 'aria-labelledby': 'h-look' }, h('div', { class: 'card__head' }, h('h2', { id: 'h-look', text: 'Look up a payment' })), h('div', { class: 'card__body' }, form, out));
+}
+
+function renderLookup(out, r) {
+  const stateOf = !r.found ? pill('bad', 'Not found at Squad') : /^success$/i.test(r.status) ? pill('ok', 'Paid') : pill('warn', r.status || 'Not complete');
+  const here = r.kind === 'session'
+    ? (r.record.alreadyRecorded ? 'Recorded in the Sessions tab' : 'Not recorded yet')
+    : (r.record.exists ? r.record.name + ' (' + r.record.reference + ')' + (r.record.alreadyRecorded ? ', payment recorded' : '') : 'No enrolment has this reference');
+  const rows = h('ul', { class: 'health' },
+    infoRow('Squad says', stateOf),
+    infoRow('Mode', pill(r.mode === 'live' ? 'ok' : 'warn', r.mode === 'live' ? 'Live' : 'Sandbox')),
+    r.found ? infoRow('Amount', h('span', { text: (r.amount != null ? naira(r.amount) : 'unknown') + ' (expected ' + naira(r.expected) + ')' }), r.amountMatches ? pill('ok', 'Matches') : pill('bad', 'Different')) : null,
+    r.found && (r.customer.name || r.customer.email) ? infoRow('Customer', h('span', { text: [r.customer.name, r.customer.email].filter(Boolean).join(', ') })) : null,
+    infoRow('In your sheet', h('span', { text: here })),
+    r.kind === 'enrolment' && r.record.exists ? infoRow('Open', h('a', { href: hashFor('enrolments', { ref: r.record.reference }), text: 'the enrolment' })) : null);
+  const record = r.canRecord ? h('button', { class: 'btn btn--primary', type: 'button', text: 'Record this payment', onclick: () => dialog({
+    title: 'Record this payment?',
+    body: 'This does what Squad\'s own report would have done: marks the enrolment as paid by Squad and emails you the review link. You still confirm the payment yourself afterwards. Safe to press once; a second press does nothing.',
+    confirm: 'Record payment',
+    onConfirm: async () => {
+      const done = await api('recordPayment', { reference: r.reference });
+      const said = done.result === 'ok' ? (done.kind === 'session' ? 'Recorded in the Sessions tab, and you were emailed.' : 'Recorded. The review email has been sent.') : 'Squad answered: ' + done.result + '.';
+      out.replaceChildren(h('p', { class: 'callout callout--ok', role: 'status' }, said, done.kind === 'enrolment' ? h('a', { href: hashFor('enrolments', { ref: done.reference }), text: 'Open the enrolment' }) : null));
+      refreshData();
+    },
+  }) }) : null;
+  out.replaceChildren(rows, r.reason ? h('p', { class: 'callout callout--warn', role: 'status', text: r.reason }) : null, record ? h('div', { class: 'actions', style: 'margin-top:12px' }, record) : null);
+}
+
+/* -- The pages that do not fit in the bottom bar (phones) -- */
+function openMore() {
+  const opener = document.activeElement;
+  const scrim = h('div', { class: 'scrim scrim--dialog' });
+  const items = NAV.filter((n) => !n.mobile).concat([{ id: 'new', label: 'Add enrolment', icon: 'plus' }]);
+  const node = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'More pages', tabindex: '-1' },
+    h('h2', { text: 'More' }), items.map((n) => h('a', { href: hashFor(n.id), onclick: () => close(true) }, icon(n.icon), n.label)));
+  const close = (navigated) => { scrim.remove(); node.remove(); document.removeEventListener('keydown', onKey, true); if (!navigated && document.body.contains(opener)) opener.focus({ preventScroll: true }); };
+  const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } else trapFocus(node, e); };
+  scrim.addEventListener('click', () => close());
+  document.addEventListener('keydown', onKey, true);
+  $('layer').append(scrim, node);
+  node.querySelector('a').focus();
+}
+
+/* -- Putting it together ----------------------------------- */
+function route() {
+  const next = parseRoute();
+  const prev = state.route;
+  state.route = next;
+  if (!prev || prev.page !== next.page) {
+    state.nonce++;
+    enrol.mounted = false;
+    Object.keys(LISTS).forEach((k) => { LISTS[k].mounted = false; });
+    renderNav();
+    closeDrawerNode();
+    if (next.page === 'enrolments') showEnrolments();
+    else if (next.page === 'new') showNew();
+    else if (next.page === 'system') showSystem();
+    else if (PAGES[next.page]) showList(next.page);
+    else showOverview();
+  } else if (next.page === 'enrolments' && !sameParams(prev.params, next.params)) {
+    state.nonce++;
+    showEnrolments();
+  } else if (PAGES[next.page] && !sameParams(prev.params, next.params)) {
+    drawList(next.page);
+  }
+  if (next.ref) openDrawer(next.ref); else closeDrawerNode();
+}
+
+function reloadPage(force) {
+  const page = state.route.page;
+  if (page === 'enrolments') return showEnrolments(force);
+  if (page === 'new') return showNew();
+  if (page === 'system') return showSystem(force);
+  if (PAGES[page]) return showList(page, force);
+  return showOverview(force);
+}
+
+function boot() {
+  applyTheme(stash.get('ba-admin-theme'));
+  $('theme-side').addEventListener('click', toggleTheme);
+  $('theme-top').addEventListener('click', toggleTheme);
+  $('refresh').addEventListener('click', () => {
+    state.overview = null; state.list = null; state.pages = {}; state.nonce++;
+    const page = state.route.page;
+    state.system = null;
+    Promise.resolve(reloadPage(true)).then(() => toast('Refreshed'));
+  });
+  $('search').addEventListener('submit', (e) => { e.preventDefault(); const q = $('search-input').value.trim(); go('enrolments', { params: { q } }); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && drawer.node && !document.querySelector('.dialog, .sheet')) closeDrawer();
+    if (e.key === '/' && !/^(input|textarea)$/i.test(document.activeElement.tagName) && !e.metaKey && !e.ctrlKey) {
+      e.preventDefault();
+      const field = $('enrol-search') || $('list-search') || $('search-input');
+      field.focus();
+    }
+  });
+  // Coming back to the tab after a while: bring what is on screen up to date, quietly.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { state.hiddenAt = Date.now(); return; }
+    const away = state.hiddenAt ? Date.now() - state.hiddenAt : 0;
+    state.hiddenAt = 0;
+    if (away > 5 * 60 * 1000 && state.route && state.route.page !== 'new' && !document.querySelector('.dialog')) reloadPage(true);
+  });
+  window.addEventListener('hashchange', route);
+  $('user').textContent = '';
+  route();
+  // the signed-in address arrives with the first answer
+  const waitForUser = setInterval(() => { if (state.user) { $('user').textContent = state.user; clearInterval(waitForUser); } }, 300);
+  setTimeout(() => clearInterval(waitForUser), 15000);
+}
+try { boot(); } catch (err) { showFatal(err); }
+})();
+</script>
+</body>
+</html>

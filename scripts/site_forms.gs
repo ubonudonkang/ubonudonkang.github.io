@@ -4,11 +4,13 @@
  *
  *   BA Training (gid 0)  action=signup               BA Bridge enrolment, Squad payments, payment review, welcome emails
  *   BA Bridge Invites    admin panel                 private one-time registration links
+ *   (dashboard)          doGet / adminApi            owner-only single-page dashboard: scripts/admin.html.txt, file name "admin"
  *   Sessions             Squad webhook / action=payment  1:1 Career Clarity session payments
  *   Waitlist             form_name=ba-waitlist-*     cohort waitlist signups
  *   Contact              form_name=contact           contact page enquiries
  *
- * Keep this as the ONLY file in the Apps Script project. A second file that
+ * Keep this as the ONLY .gs file in the Apps Script project (the dashboard's page is an
+ * HTML file named "admin", which is fine). A second file that
  * declares the same top-level names (for example NOTIFY_EMAIL) stops the whole
  * project compiling, and every form then fails silently.
  *
@@ -58,6 +60,7 @@ const SQUAD_SANDBOX_API = 'https://sandbox-api-d.squadco.com';
 // Squad needs a fresh transaction reference for every checkout attempt.
 const SQUAD_REF_PATTERN = /^(BAB-[A-Z0-9]+-[A-Z0-9]{3})-(\d{1,3})$/;
 const SQUAD_SWEEP_HANDLER = 'sweepAwaitingSquadPayments';
+const SQUAD_LAST_WEBHOOK_PROPERTY = 'SQUAD_LAST_WEBHOOK';
 
 // 1:1 Career Clarity session. The price is also shown on the session page (data-amount).
 const SESSION_AMOUNT = 15000;
@@ -70,6 +73,37 @@ const COHORT_REMINDER_LOG_PROPERTY = 'BA_BRIDGE_COHORT_WELCOME_REMINDER_SENT';
 
 const WEB_APP_URL =
   'https://script.google.com/macros/s/AKfycby94krvGfIS7mXVT-szoGHHM_pCLIU11Bh_AemMxE_nsK-X_Hm1y8yaK69zNKfU20LT/exec';
+
+/*
+ * The websites that post to this script. A post says which one with `site`; without it the site is
+ * worked out from `type` (Practeva's forms put "practevahq.com" or "Practeva:" in it) and otherwise
+ * it is ubonudonkang.com, which is how every earlier row was made. The site decides who an email
+ * says it is from and how it signs off; payments, sheets and the dashboard are shared.
+ */
+const SITES = {
+  'ubonudonkang.com': {
+    notifyName: 'ubonudonkang.com',
+    senderName: 'BA Bridge',
+    replyTo: NOTIFY_EMAIL,
+    accent: '#1F3BD6'
+  },
+  'practevahq.com': {
+    notifyName: 'practevahq.com',
+    senderName: 'Practeva',
+    replyTo: 'info@practevahq.com',
+    accent: '#024a31'
+  }
+};
+const DEFAULT_SITE = 'ubonudonkang.com';
+
+function siteKey_(site, type) {
+  const named = String(site || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '');
+
+  if (SITES[named]) return named;
+  if (/practeva/i.test(String(type || ''))) return 'practevahq.com';
+
+  return DEFAULT_SITE;
+}
 
 const FIELDS = [
   ['timestamp', 'Timestamp'],
@@ -110,7 +144,9 @@ const FIELDS = [
   ['selar_currency', 'Selar currency'],
   ['selar_status', 'Selar status'],
   ['selar_product', 'Selar product'],
-  ['selar_webhook_received_at', 'Selar webhook received at']
+  ['selar_webhook_received_at', 'Selar webhook received at'],
+  ['admin_notes', 'Admin notes'],
+  ['site', 'Registered via']
 ];
 
 const INVITE_HEADERS = [
@@ -136,7 +172,7 @@ const FORM_TABS = {
     tab: 'Waitlist',
     fields: [
       ['timestamp', 'Timestamp'], ['form_name', 'Form'], ['name', 'name'],
-      ['email', 'email'], ['cohort', 'cohort'], ['consent', 'consent'], ['type', 'type']
+      ['email', 'email'], ['cohort', 'cohort'], ['consent', 'consent'], ['type', 'type'], ['site', 'Site']
     ],
     required: ['name', 'email', 'cohort'],
     dedupeFields: ['email', 'cohort'],
@@ -147,7 +183,7 @@ const FORM_TABS = {
     fields: [
       ['timestamp', 'Timestamp'], ['first_name', 'First name'], ['last_name', 'Last name'],
       ['email', 'Email'], ['company', 'Company'], ['type', 'Engagement type'],
-      ['message', 'Message'], ['submission_id', 'Submission ID']
+      ['message', 'Message'], ['submission_id', 'Submission ID'], ['site', 'Site']
     ],
     required: ['first_name', 'last_name', 'email', 'message'],
     dedupeFields: ['submission_id'],
@@ -229,8 +265,12 @@ function doGet(e) {
   const action = String(data.action || '').trim();
 
   if (!action) {
+    // On the owner-only dashboard deployment the root URL is the dashboard itself.
+    if (currentAdminEmail_()) return adminApp_();
     return json_({ result: 'ok', message: 'BA Bridge endpoint is online.' });
   }
+
+  if (action === 'app') return adminApp_();
 
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -341,6 +381,8 @@ function saveFormRow_(kind, data) {
     if (!values[key]) throw new Error('Missing required field: ' + key);
   });
 
+  if (Object.prototype.hasOwnProperty.call(values, 'site')) values.site = siteKey_(values.site, values.type);
+
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
     throw new Error('Enter a valid email address.');
   }
@@ -400,6 +442,20 @@ function getFormTab_(def) {
   return { sheet, header };
 }
 
+// A cohort such as "February 2027" is turned into a date by Google Sheets when it is typed or imported, so read it back as the same words.
+function cohortText_(value) {
+  if (value instanceof Date) {
+    // The cell holds the first of that month at midnight in the sheet's time zone; noon keeps a small time-zone difference from landing on the month before.
+    return Utilities.formatDate(
+      new Date(value.getTime() + 12 * 60 * 60 * 1000),
+      Session.getScriptTimeZone(),
+      'MMMM yyyy'
+    );
+  }
+
+  return String(value == null ? '' : value).replace(/^'/, '').trim();
+}
+
 function formRowExists_(tab, def, key) {
   if (tab.sheet.getLastRow() < 2) return false;
 
@@ -415,21 +471,28 @@ function formRowExists_(tab, def, key) {
     .some(row => {
       const probe = {};
       def.dedupeFields.forEach(name => {
-        probe[name] = String(row[index[name]] == null ? '' : row[index[name]]).replace(/^'/, '');
+        probe[name] = name === 'cohort'
+          ? cohortText_(row[index[name]])
+          : String(row[index[name]] == null ? '' : row[index[name]]).replace(/^'/, '');
       });
       return def.dedupeKey(probe) === key;
     });
 }
 
 function sendFormEmail_(kind, values, total) {
+  const site = SITES[siteKey_(values.site, values.type)];
+
   if (kind === 'waitlist') {
-    MailApp.sendEmail(
-      SITE_NOTIFY_EMAIL,
-      'New waitlist signup: ' + (values.name || values.email) + ' (' + total + ' total)',
-      'name: ' + values.name + '\nemail: ' + values.email + '\ncohort: ' + values.cohort +
-      '\nconsent: ' + values.consent + '\ntype: ' + values.type +
-      '\n\nTotal on waitlist: ' + total
-    );
+    MailApp.sendEmail({
+      to: SITE_NOTIFY_EMAIL,
+      subject: 'New waitlist signup: ' + (values.name || values.email) + ' (' + total + ' total)',
+      body:
+        'name: ' + values.name + '\nemail: ' + values.email + '\ncohort: ' + values.cohort +
+        '\nconsent: ' + values.consent + '\ntype: ' + values.type +
+        '\nvia: ' + site.notifyName +
+        '\n\nTotal on waitlist: ' + total,
+      name: site.notifyName
+    });
     return;
   }
 
@@ -440,13 +503,19 @@ function sendFormEmail_(kind, values, total) {
     subject: '[Contact] ' + (values.type || 'Enquiry') + ': ' + who,
     body: who + ' <' + values.email + '>\n' +
       (values.company ? values.company + '\n' : '') +
-      'Type: ' + (values.type || 'not given') + '\n\n' + values.message,
+      'Type: ' + (values.type || 'not given') + '\n' +
+      'Via: ' + site.notifyName + '\n\n' + values.message,
     replyTo: values.email,
-    name: 'ubonudonkang.com'
+    name: site.notifyName
   });
 }
 
 // ==================== PUBLIC SIGNUP ====================
+
+const SIGNUP_FIELDS = [
+  'reference', 'name', 'email', 'whatsapp', 'location', 'background', 'experience', 'stage', 'wants',
+  'blocker', 'format', 'availability', 'can_start', 'source', 'consent'
+];
 
 function createSignup_(sheet, data) {
   if (!data.reference || !data.name || !data.email) {
@@ -465,7 +534,17 @@ function createSignup_(sheet, data) {
     });
   }
 
-  const values = Object.assign({}, data, {
+  // Only what the registration form asks is taken from the request; everything about payment is set here.
+  const values = {};
+
+  SIGNUP_FIELDS.forEach(key => {
+    const text = String(data[key] == null ? '' : data[key]).trim();
+    if (text.length > MAX_FIELD_LENGTH) throw new Error('A field is too long.');
+    if (text) values[key] = text;
+  });
+
+  Object.assign(values, {
+    site: siteKey_(data.site, ''),
     timestamp: stamp_(),
     amount: EXPECTED_AMOUNT,
     payment_status: 'Awaiting payment',
@@ -497,19 +576,35 @@ function isSquadWebhook_(data) {
 function handleSquadWebhook_(data) {
   return withLock_(() => {
     try {
+      let out;
+
       if (String(data.Event).toLowerCase() !== 'charge_successful') {
-        return json_({ result: 'ignored', reason: 'Not a successful charge.' });
+        out = { result: 'ignored', reason: 'Not a successful charge.' };
+      } else {
+        const squadRef = squadRefFromWebhook_(data);
+        out = squadRef
+          ? processSquadPayment_(getSheet_(), squadRef, 'webhook')
+          : { result: 'ignored', reason: 'Not a BA Bridge payment.' };
       }
 
-      const squadRef = squadRefFromWebhook_(data);
-      if (!squadRef) return json_({ result: 'ignored', reason: 'Not a BA Bridge payment.' });
-
-      return json_(processSquadPayment_(getSheet_(), squadRef, 'webhook'));
+      rememberWebhook_(data.Event, out.result);
+      return json_(out);
     } catch (err) {
       console.error('Squad webhook error:', err);
+      rememberWebhook_(data.Event, 'error');
       return json_({ result: 'error', message: String(err) });
     }
   });
+}
+
+// The dashboard shows when Squad last reached this script, so a broken webhook URL is easy to spot.
+function rememberWebhook_(event, result) {
+  try {
+    PropertiesService.getScriptProperties().setProperty(
+      SQUAD_LAST_WEBHOOK_PROPERTY,
+      JSON.stringify({ at: Date.now(), event: String(event || ''), result: String(result || '') })
+    );
+  } catch (ignore) {}
 }
 
 function squadRefFromWebhook_(data) {
@@ -811,6 +906,13 @@ function withLock_(fn) {
  * processes any that Squad says were paid. Run installSquadSweepTrigger() once.
  */
 function sweepAwaitingSquadPayments() {
+  const r = runSquadSweep_();
+  const summary = 'Squad sweep complete. Checked: ' + r.checked + ' Newly paid: ' + r.paid + ' Errors: ' + r.failed;
+  Logger.log(summary);
+  return summary;
+}
+
+function runSquadSweep_() {
   const sheet = getSheet_();
   const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
@@ -850,9 +952,7 @@ function sweepAwaitingSquadPayments() {
     }
   }
 
-  const summary = 'Squad sweep complete. Checked: ' + checked + ' Newly paid: ' + paid + ' Errors: ' + failed;
-  Logger.log(summary);
-  return summary;
+  return { checked, paid, failed };
 }
 
 function installSquadSweepTrigger() {
@@ -889,6 +989,1047 @@ function testSquadVerify() {
 
   Logger.log(result);
   return result;
+}
+
+// ==================== ADMIN DASHBOARD ====================
+
+/*
+ * The owner-only dashboard (scripts/admin.html.txt, an HTML file named "admin"
+ * in this project). It talks to the server through ONE function, adminApi,
+ * which checks who is signed in before doing anything.
+ *
+ * Access: deploy this project a second time as a web app, "Execute as: Me" and
+ * "Who has access: Only myself", and open that deployment's URL. Only the signed-in
+ * owner passes currentAdminEmail_; on the public deployment visitors are
+ * anonymous, so the dashboard and its API refuse them. The owner's own addresses
+ * are also accepted when Google reports them as the signed-in account: the two
+ * already configured above (NOTIFY_EMAIL, SITE_NOTIFY_EMAIL), because the account
+ * the script runs as is not always the one the owner opens the dashboard with.
+ * More accounts can be allowed with a comma-separated BA_BRIDGE_ADMIN_EMAILS
+ * script property, but only where Google shows this script the visitor's address.
+ *
+ * Every method returns plain data (strings, numbers, booleans): Apps Script cannot
+ * pass Date objects to a page.
+ */
+const ADMIN_EMAILS_PROPERTY = 'BA_BRIDGE_ADMIN_EMAILS';
+const ADMIN_PAGE_SIZE = 25;
+const ADMIN_NOTE_MAX_LENGTH = 2000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function currentAdminEmail_() {
+  let active = '';
+  let effective = '';
+
+  try { active = normalizeEmail_(Session.getActiveUser().getEmail()); } catch (ignore) {}
+  try { effective = normalizeEmail_(Session.getEffectiveUser().getEmail()); } catch (ignore) {}
+
+  // An anonymous visitor has no address, so an empty match never counts.
+  if (!active) return '';
+
+  return active === effective || adminEmails_().indexOf(active) !== -1 ? active : '';
+}
+
+// Addresses allowed in besides the account the script runs as. Google tells the script
+// who is signed in, so a visitor cannot claim one of these without being that account.
+function adminEmails_() {
+  return [NOTIFY_EMAIL, SITE_NOTIFY_EMAIL]
+    .concat(String(PropertiesService.getScriptProperties().getProperty(ADMIN_EMAILS_PROPERTY) || '').split(','))
+    .map(normalizeEmail_)
+    .filter(Boolean);
+}
+
+function requireAdmin_() {
+  const email = currentAdminEmail_();
+
+  if (!email) {
+    throw new Error('Only the site owner can do this. Open the dashboard deployment while signed in to your Google account.');
+  }
+
+  return email;
+}
+
+function adminApp_() {
+  if (!currentAdminEmail_()) {
+    // Say what the script can see, so the owner can tell a wrong account from a wrongly set up deployment.
+    // Only the visitor's own address is ever shown, never the owner's.
+    let seen = '';
+    try { seen = normalizeEmail_(Session.getActiveUser().getEmail()); } catch (ignore) {}
+
+    return page_(
+      'Not authorised',
+      '<p>The dashboard opens only for the site owner, signed in to their Google account, ' +
+      'on the dashboard deployment (Execute as: Me, Who has access: Only myself).</p>' +
+      (
+        seen
+          ? '<p>You are signed in as <strong>' + esc_(seen) + '</strong>, which is not on the dashboard\'s list of owners. ' +
+            'If this is your account, add it to the script property BA_BRIDGE_ADMIN_EMAILS (Project Settings &gt; ' +
+            'Script Properties), then reload.</p>'
+          : '<p>Google did not tell the script which account you are using. If you are the owner, open ' +
+            'Deploy &gt; Manage deployments and check that this deployment is set to Execute as: Me.</p>'
+      )
+    );
+  }
+
+  try {
+    return HtmlService
+      .createHtmlOutputFromFile('admin')
+      .setTitle('BA Bridge Admin')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  } catch (err) {
+    console.error('Dashboard page could not be loaded:', err);
+
+    return page_(
+      'Dashboard page missing',
+      '<p>This deployment has no HTML file named <strong>admin</strong>. In the Apps Script editor choose ' +
+      'Files + &gt; HTML, name it exactly <strong>admin</strong> (the editor adds .html itself), paste ' +
+      'scripts/admin.html.txt into it, save, then edit this deployment and choose New version.</p>'
+    );
+  }
+}
+
+// The only function the dashboard page calls.
+function adminApi(method, params) {
+  try {
+    const user = requireAdmin_();
+    const spec = ADMIN_METHODS_[String(method)];
+
+    if (!spec) throw new Error('Unknown request.');
+
+    const data = spec.write
+      ? withLock_(() => spec.run(params || {}, user))
+      : spec.run(params || {}, user);
+
+    return { ok: true, user, data };
+  } catch (err) {
+    console.error('Admin API error (' + method + '):', err);
+    return { ok: false, error: String(err && err.message ? err.message : err) };
+  }
+}
+
+const ADMIN_METHODS_ = {
+  overview: { run: adminOverview_ },
+  enrolments: { run: adminEnrolments_ },
+  enrolment: { run: adminEnrolment_ },
+  sendReview: { run: adminSendReviewApi_, write: true },
+  confirmPayment: { run: adminConfirmApi_, write: true },
+  resendWelcome: { run: adminResendWelcomeApi_, write: true },
+  saveNote: { run: adminSaveNote_, write: true },
+  waitlist: { run: adminWaitlist_ },
+  enquiries: { run: adminEnquiries_ },
+  setEnquiryHandled: { run: adminSetEnquiryHandled_, write: true },
+  sessions: { run: adminSessions_ },
+  invites: { run: adminInvites_ },
+  createInvite: { run: adminCreateInvite_, write: true },
+  offlineForm: { run: adminOfflineForm_ },
+  createOffline: { run: adminCreateOffline_, write: true },
+  enrolmentsExport: { run: adminEnrolmentsExport_ },
+  system: { run: adminSystem_ },
+  installSweep: { run: adminInstallSweep_ },
+  // runSweep takes the script lock itself for each payment, so it must not be wrapped in it (the lock is not re-entrant).
+  runSweep: { run: adminRunSweep_ },
+  checkReference: { run: adminCheckReference_ },
+  recordPayment: { run: adminRecordPayment_, write: true }
+};
+
+// ---------- reading ----------
+
+function enrolmentStatus_(values) {
+  const payment = cell_(values, 'payment_status');
+
+  if (cell_(values, 'verified') === 'Yes' || /manually confirmed/i.test(payment)) return 'confirmed';
+  if (/^paid/i.test(payment) || /amount needs review/i.test(payment)) return 'review';
+
+  return 'awaiting';
+}
+
+function dateText_(value) {
+  if (value instanceof Date) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
+  }
+
+  return String(value == null ? '' : value).trim().slice(0, 16);
+}
+
+function timeOf_(value) {
+  if (value instanceof Date) return value.getTime();
+
+  const time = new Date(String(value || '').trim().replace(' ', 'T')).getTime();
+  return isNaN(time) ? 0 : time;
+}
+
+// A cell of the enrolment sheet as the dashboard shows it (see plain_).
+function text_(values, key) {
+  return plain_(values[COL[key] - 1]);
+}
+
+function adminReadEnrolments_(sheet) {
+  const last = sheet.getLastRow();
+
+  if (last < 2) return [];
+
+  return sheet
+    .getRange(2, 1, last - 1, FIELDS.length)
+    .getValues()
+    .map((values, i) => ({ row: i + 2, values }))
+    .filter(r => cell_(r.values, 'reference'));
+}
+
+function adminSummary_(r) {
+  const v = r.values;
+  const paid = Number(v[COL.amount_paid - 1]);
+
+  return {
+    reference: cell_(v, 'reference'),
+    name: text_(v, 'name'),
+    email: text_(v, 'email'),
+    whatsapp: text_(v, 'whatsapp'),
+    site: siteKey_(text_(v, 'site'), ''),
+    status: enrolmentStatus_(v),
+    paymentStatus: cell_(v, 'payment_status'),
+    squadStatus: cell_(v, 'squad_status'),
+    amountPaid: v[COL.amount_paid - 1] !== '' && isFinite(paid) ? paid : null,
+    createdAt: text_(v, 'timestamp'),
+    createdMs: timeOf_(v[COL.timestamp - 1]),
+    paidAt: text_(v, 'paid_at'),
+    welcomeSent: !!v[COL.welcome_email_sent_at - 1],
+    hasError: !!(cell_(v, 'welcome_email_error') || cell_(v, 'review_email_error'))
+  };
+}
+
+// Rows of one of the website's other tabs, without creating the tab when it does not exist yet.
+function adminTabRows_(def) {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(def.tab);
+
+  if (!sheet || sheet.getLastRow() < 2) return { header: [], rows: [] };
+
+  const header = sheet
+    .getRange(1, 1, 1, sheet.getLastColumn())
+    .getValues()[0]
+    .map(v => String(v).trim());
+
+  return {
+    header,
+    rows: sheet.getRange(2, 1, sheet.getLastRow() - 1, header.length).getValues()
+  };
+}
+
+function adminHealth_() {
+  const props = PropertiesService.getScriptProperties();
+  let squad = 'missing';
+
+  try {
+    squad = squadApiBase_(configuredSquadSecret_()) === SQUAD_SANDBOX_API ? 'sandbox' : 'live';
+  } catch (ignore) {}
+
+  let last = null;
+
+  try {
+    last = JSON.parse(props.getProperty(SQUAD_LAST_WEBHOOK_PROPERTY) || 'null');
+  } catch (ignore) {}
+
+  return {
+    squad,
+    sweepInstalled: ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === SQUAD_SWEEP_HANDLER),
+    lastWebhook: last,
+    emailQuota: MailApp.getRemainingDailyQuota(),
+    whatsappGroupSet: !!props.getProperty(BA_GROUP_PROPERTY),
+    adminKeySet: !!props.getProperty(ADMIN_KEY_PROPERTY)
+  };
+}
+
+function adminOverview_() {
+  const rows = adminReadEnrolments_(getSheet_());
+  const now = Date.now();
+  const counts = { all: rows.length, awaiting: 0, review: 0, confirmed: 0 };
+  const revenue = { confirmed: 0, awaitingConfirmation: 0 };
+  const attention = [];
+  const events = [];
+
+  rows.forEach(r => {
+    const v = r.values;
+    const status = enrolmentStatus_(v);
+    const reference = cell_(v, 'reference');
+    const name = cell_(v, 'name') || reference;
+    const payment = cell_(v, 'payment_status');
+    const paid = Number(v[COL.amount_paid - 1]);
+    const created = timeOf_(v[COL.timestamp - 1]);
+    const confirmedAt = timeOf_(v[COL.confirmed_at - 1]);
+    const paidAt = timeOf_(v[COL.paid_at - 1]);
+
+    counts[status]++;
+
+    if (v[COL.amount_paid - 1] !== '' && isFinite(paid)) {
+      if (status === 'confirmed') revenue.confirmed += paid;
+      else if (status === 'review') revenue.awaitingConfirmation += paid;
+    }
+
+    const flag = (severity, type, title, detail) =>
+      attention.push({ severity, type, reference, name, title, detail });
+
+    if (status === 'review') {
+      if (/amount needs review/i.test(payment)) {
+        flag('high', 'amount', 'Amount needs review',
+          'Squad reports NGN ' + (isFinite(paid) ? paid : '?') + ', not the expected NGN ' + EXPECTED_AMOUNT + '.');
+      } else {
+        flag('medium', 'confirm', 'Paid, waiting for your confirmation', payment);
+      }
+
+      if (cell_(v, 'review_email_error')) {
+        flag('medium', 'review_email', 'Review email failed', cell_(v, 'review_email_error'));
+      }
+    }
+
+    // Older cohorts were confirmed before welcome emails were tracked, so only recent confirmations are checked.
+    if (
+      status === 'confirmed' &&
+      (cell_(v, 'welcome_email_error') ||
+        (!v[COL.welcome_email_sent_at - 1] && confirmedAt && now - confirmedAt < 7 * DAY_MS))
+    ) {
+      flag('high', 'welcome', 'Welcome email not delivered', cell_(v, 'welcome_email_error') || 'Not sent yet.');
+    }
+
+    // Unpaid for a while, but not so long ago that it is simply an abandoned older cohort.
+    if (status === 'awaiting' && created && now - created > 2 * DAY_MS && now - created < 14 * DAY_MS) {
+      flag('low', 'stale', 'Awaiting payment for ' + Math.floor((now - created) / DAY_MS) + ' days', 'No payment from Squad yet.');
+    }
+
+    if (created) events.push({ at: created, type: 'enrolled', reference, name, text: name + ' enrolled' });
+    if (paidAt && (isSquadPaid_(v) || status !== 'awaiting')) {
+      events.push({ at: paidAt, type: 'paid', reference, name, text: name + ' paid' });
+    }
+    if (confirmedAt) events.push({ at: confirmedAt, type: 'confirmed', reference, name, text: name + ' confirmed' });
+  });
+
+  const rank = { high: 0, medium: 1, low: 2 };
+  attention.sort((a, b) => rank[a.severity] - rank[b.severity]);
+  events.sort((a, b) => b.at - a.at);
+
+  const waitlist = adminTabRows_(FORM_TABS.waitlist);
+  const cohortAt = waitlist.header.indexOf('cohort');
+  const byCohort = {};
+
+  waitlist.rows.forEach(row => {
+    const cohort = (cohortAt > -1 ? cohortText_(row[cohortAt]) : '') || 'Not given';
+    byCohort[cohort] = (byCohort[cohort] || 0) + 1;
+  });
+
+  const sessions = adminTabRows_(FORM_TABS.sessions);
+  const statusAt = sessions.header.indexOf('Status');
+  const amountAt = sessions.header.indexOf('Amount paid (NGN)');
+  const sessionStats = { total: sessions.rows.length, paid: 0, review: 0, revenue: 0 };
+
+  sessions.rows.forEach(row => {
+    const status = String(statusAt > -1 ? row[statusAt] : '').trim();
+
+    if (status === 'Paid') {
+      sessionStats.paid++;
+      sessionStats.revenue += Number(amountAt > -1 ? row[amountAt] : 0) || 0;
+    } else if (/review/i.test(status)) {
+      sessionStats.review++;
+    }
+  });
+
+  if (sessionStats.review) {
+    attention.push({
+      severity: 'high', type: 'session', reference: '', name: '1:1 sessions',
+      title: sessionStats.review + ' session payment' + (sessionStats.review > 1 ? 's' : '') + ' with an unexpected amount',
+      detail: 'Check the Sessions tab and the Squad dashboard.'
+    });
+  }
+
+  return {
+    counts,
+    revenue,
+    expectedAmount: EXPECTED_AMOUNT,
+    waitlist: { total: waitlist.rows.length, byCohort },
+    enquiries: adminEnquiryCounts_(),
+    sessions: sessionStats,
+    attentionTotal: attention.length,
+    attention: attention.slice(0, 12),
+    activity: events.slice(0, 10),
+    health: adminHealth_(),
+    generatedAt: now
+  };
+}
+
+function adminMatchEnrolments_(params) {
+  const q = String(params.q || '').trim().toLowerCase();
+  const digits = q.replace(/\D/g, '');
+  const wanted = ['awaiting', 'review', 'confirmed'].indexOf(params.status) !== -1 ? params.status : '';
+
+  const matches = adminReadEnrolments_(getSheet_()).reverse().filter(r => {
+    if (!q) return true;
+
+    const v = r.values;
+    const haystack = (cell_(v, 'name') + ' ' + cell_(v, 'email') + ' ' + cell_(v, 'reference') + ' ' + siteKey_(cell_(v, 'site'), '')).toLowerCase();
+
+    return haystack.indexOf(q) !== -1 ||
+      (digits.length >= 4 && cell_(v, 'whatsapp').replace(/\D/g, '').indexOf(digits) !== -1);
+  });
+
+  const counts = { all: matches.length, awaiting: 0, review: 0, confirmed: 0 };
+  matches.forEach(r => counts[enrolmentStatus_(r.values)]++);
+
+  const filtered = wanted ? matches.filter(r => enrolmentStatus_(r.values) === wanted) : matches;
+
+  return { filtered, counts };
+}
+
+function adminEnrolments_(params) {
+  const found = adminMatchEnrolments_(params);
+  const filtered = found.filtered;
+  const counts = found.counts;
+  const pages = Math.max(1, Math.ceil(filtered.length / ADMIN_PAGE_SIZE));
+  const page = Math.min(Math.max(1, parseInt(params.page, 10) || 1), pages);
+  const start = (page - 1) * ADMIN_PAGE_SIZE;
+
+  return {
+    items: filtered.slice(start, start + ADMIN_PAGE_SIZE).map(adminSummary_),
+    total: filtered.length,
+    page,
+    pages,
+    pageSize: ADMIN_PAGE_SIZE,
+    counts
+  };
+}
+
+function adminFindEnrolment_(sheet, reference) {
+  const found = findByReference_(sheet, String(reference || '').trim());
+
+  if (!found) throw new Error('That enrolment was not found.');
+
+  return found;
+}
+
+function adminEnrolment_(params) {
+  const found = adminFindEnrolment_(getSheet_(), params.reference);
+  const v = found.values;
+  const status = enrolmentStatus_(v);
+
+  // kind tells the page how to show a value: a mail link, a phone link, or plain text.
+  const item = (label, key, kind, always) => {
+    const value = text_(v, key);
+    return value || always ? { label, value, kind: kind || 'text' } : null;
+  };
+  const section = (title, items) => ({ title, items: items.filter(Boolean) });
+
+  return {
+    summary: adminSummary_(found),
+    status,
+    sections: [
+      section('Contact', [
+        item('Email', 'email', 'email', true),
+        item('WhatsApp', 'whatsapp', 'phone', true),
+        item('City and country', 'location')
+      ]),
+      section('About them', [
+        item('Background', 'background'),
+        item('Years of experience', 'experience'),
+        item('Stage of transition', 'stage'),
+        item('Wants most', 'wants'),
+        item('Availability', 'availability'),
+        item('Heard about it via', 'source'),
+        item('Biggest blocker', 'blocker'),
+        item('Preferred format', 'format'),
+        item('Can start', 'can_start')
+      ]),
+      section('Payment', [
+        item('Expected amount (NGN)', 'amount', 'text', true),
+        item('Payment status', 'payment_status', 'text', true),
+        item('Squad reference', 'squad_ref', 'mono', true),
+        item('Squad status', 'squad_status', 'text', true),
+        item('Amount paid (NGN)', 'amount_paid', 'text', true),
+        item('Paid at', 'paid_at'),
+        item('Confirmed at', 'confirmed_at'),
+        item('Confirmed by', 'confirmed_by'),
+        item('Selar status (earlier cohorts)', 'selar_status'),
+        item('Selar sale reference (earlier cohorts)', 'selar_sale_reference', 'mono')
+      ]),
+      section('Emails', [
+        item('Review email sent', 'review_email_sent_at', 'text', true),
+        item('Review email error', 'review_email_error'),
+        item('Welcome email sent', 'welcome_email_sent_at', 'text', true),
+        item('Welcome email error', 'welcome_email_error')
+      ]),
+      section('Enrolment', [
+        item('Reference', 'reference', 'mono', true),
+        item('Submitted', 'timestamp', 'text', true),
+        { label: 'Registered via', value: siteKey_(text_(v, 'site'), ''), kind: 'text' },
+        item('Consent given', 'consent')
+      ])
+    ].filter(sec => sec.items.length),
+    notes: text_(v, 'admin_notes'),
+    notesMax: ADMIN_NOTE_MAX_LENGTH,
+    expectedAmount: EXPECTED_AMOUNT,
+    defaultAmount: text_(v, 'amount_paid') || String(EXPECTED_AMOUNT),
+    reviewTo: NOTIFY_EMAIL,
+    welcomeCc: WELCOME_EMAIL_CC,
+    canConfirm: status !== 'confirmed',
+    canResend: status === 'confirmed'
+  };
+}
+
+// ---------- actions ----------
+
+function adminSendReviewApi_(params) {
+  const sheet = getSheet_();
+  const found = ensureConfirmToken_(sheet, adminFindEnrolment_(sheet, params.reference));
+  const delivery = sendReviewEmail_(sheet, found, {
+    force: true,
+    reason: 'Review requested from the dashboard.'
+  });
+
+  return { sent: !!delivery.sent, error: delivery.error || '', to: NOTIFY_EMAIL };
+}
+
+function adminConfirmApi_(params, user) {
+  const sheet = getSheet_();
+  const found = adminFindEnrolment_(sheet, params.reference);
+
+  if (cell_(found.values, 'verified') === 'Yes') {
+    throw new Error('This enrolment is already confirmed.');
+  }
+
+  const amountPaid = String(params.amountPaid == null ? '' : params.amountPaid).trim();
+
+  if (amountPaid && !/^\d+(?:\.\d{1,2})?$/.test(amountPaid)) {
+    throw new Error('Enter the amount paid as a number, for example 80000.');
+  }
+
+  const confirmed = confirmEnrolment_(sheet, found, { amountPaid, by: user });
+  const delivery = confirmed.delivery;
+
+  return {
+    welcome: delivery.sent ? 'sent' : delivery.alreadySent ? 'already' : 'failed',
+    error: delivery.error || '',
+    to: cell_(confirmed.refreshed.values, 'email'),
+    cc: WELCOME_EMAIL_CC
+  };
+}
+
+function adminResendWelcomeApi_(params) {
+  const sheet = getSheet_();
+  const found = adminFindEnrolment_(sheet, params.reference);
+
+  if (enrolmentStatus_(found.values) !== 'confirmed') {
+    throw new Error('Confirm the payment before sending the welcome email.');
+  }
+
+  const delivery = sendWelcomeEmail_(sheet, found, { force: true });
+
+  return {
+    welcome: delivery.sent ? 'sent' : 'failed',
+    error: delivery.error || '',
+    to: cell_(found.values, 'email'),
+    cc: WELCOME_EMAIL_CC
+  };
+}
+
+function adminSaveNote_(params) {
+  const sheet = getSheet_();
+  const found = adminFindEnrolment_(sheet, params.reference);
+  const note = String(params.note == null ? '' : params.note).trim();
+
+  if (note.length > ADMIN_NOTE_MAX_LENGTH) {
+    throw new Error('Notes can be up to ' + ADMIN_NOTE_MAX_LENGTH + ' characters.');
+  }
+
+  setRowValue_(sheet, found.row, 'admin_notes', safeCellText_(note));
+
+  return { saved: true };
+}
+
+// ==================== ADMIN DASHBOARD: WAITLIST, ENQUIRIES, SESSIONS, INVITES, OFFLINE ENROLMENT ====================
+
+// The choices on the registration form, as the dashboard's "Add enrolment" page offers them.
+// They match registrationFieldsHtml_ (a test keeps the two together).
+const ADMIN_FORM_OPTIONS = {
+  background: [
+    'Student or recent graduate', 'Academic or market research', 'Banking, finance, or insurance',
+    'Operations, admin, or customer service', 'Tech, but not in a BA role', 'Working BA looking to level up', 'Other'
+  ],
+  experience: ['0 to 1', '2 to 4', '5 to 9', '10+'],
+  stage: [
+    'Just exploring whether BA is right for me', 'Decided on BA, need structured training',
+    'Already doing some BA-type work informally', 'Currently a BA, want to get stronger'
+  ],
+  source: ['LinkedIn', 'X (Twitter)', 'WhatsApp', 'Referral from a friend or colleague', 'Other'],
+  wants: [
+    ['want_jobready', 'Practical, job-ready skills'], ['want_portfolio', 'A portfolio project to show employers'],
+    ['want_certification', 'Certification prep (ECBA / CCBA)'], ['want_careerprep', 'CV, LinkedIn, and interview prep'],
+    ['want_mentor', 'Mentorship from a practising BA'], ['want_networking', 'Networking and job leads']
+  ],
+  availability: [
+    ['avail_weekday', 'Weekday evenings'], ['avail_sat_am', 'Saturday mornings'],
+    ['avail_sat_pm', 'Saturday afternoons'], ['avail_sun_pm', 'Sunday afternoons']
+  ]
+};
+const ADMIN_LIST_LIMIT = 5000;
+const ENQUIRY_HANDLED_HEADING = 'Handled';
+
+// A cell as the dashboard shows it (dates as text; the guard quote in front of =, +, - or @ is not part of the text).
+function plain_(value) {
+  return value instanceof Date
+    ? dateText_(value)
+    : String(value == null ? '' : value).trim().replace(/^'(?=[=+\-@])/, '');
+}
+
+function cellAt_(row, at) {
+  return at > -1 ? row[at] : '';
+}
+
+function isHandled_(value) {
+  return /^(yes|y|true|done|handled)$/i.test(String(value == null ? '' : value).trim());
+}
+
+function adminWaitlist_() {
+  const tab = adminTabRows_(FORM_TABS.waitlist);
+  const at = {
+    name: tab.header.indexOf('name'),
+    email: tab.header.indexOf('email'),
+    cohort: tab.header.indexOf('cohort'),
+    time: tab.header.indexOf('Timestamp'),
+    site: tab.header.indexOf('Site'),
+    type: tab.header.indexOf('type')
+  };
+  const seen = {};
+  const counts = {};
+  let duplicates = 0;
+
+  const items = tab.rows.map((row, i) => {
+    const email = normalizeEmail_(plain_(cellAt_(row, at.email)));
+    const cohort = cohortText_(cellAt_(row, at.cohort)) || 'Not given';
+    const key = email + '|' + cohort.toLowerCase();
+    // The first signup is the real one; a later signup with the same email and cohort is flagged.
+    const duplicate = !!email && seen[key] === true;
+
+    seen[key] = true;
+    if (duplicate) duplicates++;
+    counts[cohort] = (counts[cohort] || 0) + 1;
+
+    return {
+      row: i + 2,
+      name: plain_(cellAt_(row, at.name)),
+      email,
+      cohort,
+      joinedAt: plain_(cellAt_(row, at.time)),
+      joinedMs: timeOf_(cellAt_(row, at.time)),
+      site: siteKey_(plain_(cellAt_(row, at.site)), plain_(cellAt_(row, at.type))),
+      duplicate
+    };
+  }).reverse();
+
+  const cohorts = Object.keys(counts)
+    .map(name => ({ name, count: counts[name], ms: new Date('1 ' + name).getTime() || 0 }))
+    .sort((a, b) => b.ms - a.ms || (a.name < b.name ? -1 : 1))
+    .map(c => ({ name: c.name, count: c.count }));
+
+  return {
+    total: items.length,
+    duplicates,
+    cohorts,
+    items: items.slice(0, ADMIN_LIST_LIMIT)
+  };
+}
+
+function adminEnquiryRows_() {
+  const tab = adminTabRows_(FORM_TABS.contact);
+  const at = {
+    first: tab.header.indexOf('First name'),
+    last: tab.header.indexOf('Last name'),
+    email: tab.header.indexOf('Email'),
+    company: tab.header.indexOf('Company'),
+    type: tab.header.indexOf('Engagement type'),
+    message: tab.header.indexOf('Message'),
+    time: tab.header.indexOf('Timestamp'),
+    site: tab.header.indexOf('Site'),
+    handled: tab.header.indexOf(ENQUIRY_HANDLED_HEADING)
+  };
+
+  return tab.rows.map((row, i) => ({
+    row: i + 2,
+    name: (plain_(cellAt_(row, at.first)) + ' ' + plain_(cellAt_(row, at.last))).trim(),
+    email: plain_(cellAt_(row, at.email)),
+    company: plain_(cellAt_(row, at.company)),
+    type: plain_(cellAt_(row, at.type)),
+    message: plain_(cellAt_(row, at.message)),
+    at: plain_(cellAt_(row, at.time)),
+    atMs: timeOf_(cellAt_(row, at.time)),
+    site: siteKey_(plain_(cellAt_(row, at.site)), plain_(cellAt_(row, at.type))),
+    handled: isHandled_(cellAt_(row, at.handled))
+  }));
+}
+
+function adminEnquiryCounts_() {
+  const rows = adminEnquiryRows_();
+  const open = rows.filter(r => !r.handled).length;
+
+  return { total: rows.length, open };
+}
+
+function adminEnquiries_() {
+  const items = adminEnquiryRows_().reverse();
+  const open = items.filter(r => !r.handled).length;
+
+  return {
+    counts: { all: items.length, open, handled: items.length - open },
+    items: items.slice(0, ADMIN_LIST_LIMIT)
+  };
+}
+
+function adminSetEnquiryHandled_(params) {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(FORM_TABS.contact.tab);
+  const row = Number(params.row);
+
+  if (!sheet || !isFinite(row) || row < 2 || row > sheet.getLastRow() || Math.floor(row) !== row) {
+    throw new Error('That enquiry was not found. Refresh the page.');
+  }
+
+  const header = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(v => String(v).trim());
+  const emailAt = header.indexOf('Email');
+  const timeAt = header.indexOf('Timestamp');
+
+  // The page sends back what it was showing, so a row that has moved (a deleted line) is never changed by mistake.
+  if (
+    emailAt === -1 ||
+    normalizeEmail_(plain_(sheet.getRange(row, emailAt + 1).getValue())) !== normalizeEmail_(params.email) ||
+    (timeAt > -1 && plain_(sheet.getRange(row, timeAt + 1).getValue()) !== String(params.at || ''))
+  ) {
+    throw new Error('The sheet has changed since this page loaded. Refresh and try again.');
+  }
+
+  let handledAt = header.indexOf(ENQUIRY_HANDLED_HEADING);
+
+  if (handledAt === -1) {
+    ensureColumns_(sheet, header.length + 1);
+    sheet.getRange(1, header.length + 1).setValue(ENQUIRY_HANDLED_HEADING);
+    handledAt = header.length;
+  }
+
+  const handled = params.handled === true || params.handled === 'true';
+  sheet.getRange(row, handledAt + 1).setValue(handled ? 'Yes' : '');
+
+  return { handled };
+}
+
+function adminSessions_() {
+  const tab = adminTabRows_(FORM_TABS.sessions);
+  const at = {
+    reference: tab.header.indexOf('Squad reference'),
+    name: tab.header.indexOf('Name'),
+    email: tab.header.indexOf('Email'),
+    amount: tab.header.indexOf('Amount paid (NGN)'),
+    status: tab.header.indexOf('Status'),
+    time: tab.header.indexOf('Timestamp'),
+    source: tab.header.indexOf('Reported by')
+  };
+  const counts = { all: tab.rows.length, paid: 0, review: 0 };
+  let revenue = 0;
+
+  const items = tab.rows.map((row, i) => {
+    const status = plain_(cellAt_(row, at.status));
+    const amount = Number(cellAt_(row, at.amount));
+    const paid = status === 'Paid';
+
+    if (paid) { counts.paid++; revenue += isFinite(amount) ? amount : 0; }
+    else if (/review|check/i.test(status)) counts.review++;
+
+    return {
+      row: i + 2,
+      reference: plain_(cellAt_(row, at.reference)),
+      name: plain_(cellAt_(row, at.name)),
+      email: plain_(cellAt_(row, at.email)),
+      amount: cellAt_(row, at.amount) !== '' && isFinite(amount) ? amount : null,
+      status,
+      paid,
+      reportedBy: plain_(cellAt_(row, at.source)),
+      at: plain_(cellAt_(row, at.time)),
+      atMs: timeOf_(cellAt_(row, at.time))
+    };
+  }).reverse();
+
+  return { counts, revenue, expectedAmount: SESSION_AMOUNT, items: items.slice(0, ADMIN_LIST_LIMIT) };
+}
+
+function adminInvites_() {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(INVITE_SHEET_NAME);
+
+  if (!sheet || sheet.getLastRow() < 2) {
+    return { counts: { all: 0, unused: 0, used: 0 }, items: [] };
+  }
+
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, INVITE_HEADERS.length).getValues();
+  const counts = { all: rows.length, unused: 0, used: 0 };
+
+  const items = rows.map((v, i) => {
+    const status = String(v[4] || '').trim();
+    const token = String(v[1] || '').trim();
+
+    if (status === 'Unused') counts.unused++;
+    else if (status === 'Used') counts.used++;
+
+    return {
+      row: i + 2,
+      createdAt: plain_(v[0]),
+      createdMs: timeOf_(v[0]),
+      name: plain_(v[2]),
+      email: plain_(v[3]),
+      status,
+      usedAt: plain_(v[5]),
+      reference: plain_(v[6]),
+      // The link goes to the public address the website uses, so it opens for the person it is sent to.
+      link: status === 'Unused' && token ? inviteUrl_(token) : ''
+    };
+  }).reverse();
+
+  return { counts, items: items.slice(0, 300) };
+}
+
+function adminCreateInvite_(params) {
+  const name = String(params.name || '').trim();
+  const email = normalizeEmail_(params.email);
+
+  if (!name || !email) throw new Error('Name and email are required.');
+  if (name.length > 200) throw new Error('That name is too long.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Enter a valid email address.');
+
+  const inviteSheet = getInviteSheet_();
+  const existing = findUnusedInviteByEmail_(inviteSheet, email);
+  const enrolled = findByEmail_(getSheet_(), email, false);
+  let token;
+
+  if (existing) {
+    token = existing.token;
+  } else {
+    token = randomKey_();
+    inviteSheet.appendRow([stamp_(), token, safeCellText_(name), safeCellText_(email), 'Unused', '', '']);
+  }
+
+  return {
+    link: inviteUrl_(token),
+    name: existing ? existing.name : name,
+    email,
+    existing: !!existing,
+    enrolled: enrolled
+      ? { reference: cell_(enrolled.values, 'reference'), name: cell_(enrolled.values, 'name') }
+      : null
+  };
+}
+
+function adminOfflineForm_() {
+  return { options: ADMIN_FORM_OPTIONS, expectedAmount: EXPECTED_AMOUNT, maxWants: 3 };
+}
+
+// Adds someone who is paying or has paid outside the website. Same checks and same row as the older "Add Offline Enrollee" page.
+function adminCreateOffline_(params) {
+  const text = key => {
+    const value = String(params[key] == null ? '' : params[key]).trim();
+    if (value.length > MAX_FIELD_LENGTH) throw new Error('A field is too long.');
+    return value;
+  };
+  const data = {
+    name: text('name'), email: text('email'), whatsapp: text('whatsapp'), location: text('location'),
+    background: text('background'), background_other: text('background_other'),
+    experience: text('experience'), stage: text('stage'),
+    source: text('source'), source_other: text('source_other'),
+    want_other_text: text('want_other_text'),
+    consent: params.consent === true || params.consent === 'yes' ? 'yes' : ''
+  };
+
+  const listOf = key => (Array.isArray(params[key]) ? params[key].map(String) : []);
+  const known = list => list.map(item => item[0]);
+
+  listOf('wants').forEach(key => { if (known(ADMIN_FORM_OPTIONS.wants).indexOf(key) !== -1) data[key] = 'yes'; });
+  listOf('availability').forEach(key => { if (known(ADMIN_FORM_OPTIONS.availability).indexOf(key) !== -1) data[key] = 'yes'; });
+  if (params.wantOther === true) data.want_other = 'yes';
+
+  const reg = normalizeRegistration_(data);
+  const sheet = getSheet_();
+  const existing = findByEmail_(sheet, reg.email, false);
+
+  if (existing) {
+    return { created: false, reference: cell_(existing.values, 'reference'), name: cell_(existing.values, 'name') };
+  }
+
+  const reference = generateEnrolmentReference_(sheet, 'OFF');
+  createEnrolment_(sheet, reg, reference);
+
+  return { created: true, reference, name: reg.name, email: reg.email };
+}
+
+// ==================== ADMIN DASHBOARD: EXPORT, SYSTEM, PAYMENT LOOKUP ====================
+
+// What an enrolment export contains. Nothing private to the system (the confirmation token, the notes, email error text) is in it.
+const ADMIN_EXPORT_COLUMNS = [
+  ['Reference', v => text_(v, 'reference')],
+  ['Name', v => text_(v, 'name')],
+  ['Email', v => text_(v, 'email')],
+  ['WhatsApp', v => text_(v, 'whatsapp')],
+  ['City and country', v => text_(v, 'location')],
+  ['Background', v => text_(v, 'background')],
+  ['Years experience', v => text_(v, 'experience')],
+  ['Stage of transition', v => text_(v, 'stage')],
+  ['What they want most', v => text_(v, 'wants')],
+  ['Availability', v => text_(v, 'availability')],
+  ['Heard about it via', v => text_(v, 'source')],
+  ['Status', v => ({ awaiting: 'Awaiting payment', review: 'Needs confirmation', confirmed: 'Confirmed' })[enrolmentStatus_(v)]],
+  ['Payment status', v => text_(v, 'payment_status')],
+  ['Amount paid (NGN)', v => text_(v, 'amount_paid')],
+  ['Paid at', v => text_(v, 'paid_at')],
+  ['Enrolled at', v => text_(v, 'timestamp')],
+  ['Registered via', v => siteKey_(text_(v, 'site'), '')]
+];
+
+// Every enrolment that matches the list's search and status filter (not just the page on screen), ready to become a file or a list of addresses.
+function adminEnrolmentsExport_(params) {
+  const rows = adminMatchEnrolments_(params || {}).filtered.map(r => ADMIN_EXPORT_COLUMNS.map(c => c[1](r.values)));
+  const emailAt = ADMIN_EXPORT_COLUMNS.map(c => c[0]).indexOf('Email');
+  const seen = {};
+  const emails = [];
+
+  rows.forEach(row => {
+    const email = normalizeEmail_(row[emailAt]);
+    if (email && !seen[email]) { seen[email] = true; emails.push(email); }
+  });
+
+  return { headers: ADMIN_EXPORT_COLUMNS.map(c => c[0]), rows, emails };
+}
+
+function adminTabSize_(name) {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(name);
+
+  return { name, rows: sheet ? Math.max(0, sheet.getLastRow() - 1) : null };
+}
+
+function adminSystem_() {
+  const props = PropertiesService.getScriptProperties();
+  const health = adminHealth_();
+  const effective = (() => { try { return normalizeEmail_(Session.getEffectiveUser().getEmail()); } catch (ignore) { return ''; } })();
+  const accounts = [effective].concat(adminEmails_()).filter((email, i, all) => email && all.indexOf(email) === i);
+  const enrolments = getSheet_();
+
+  return {
+    squad: {
+      mode: health.squad,
+      lastWebhook: health.lastWebhook,
+      sweepInstalled: health.sweepInstalled,
+      sweepEveryMinutes: 30,
+      // The two addresses to paste into the Squad dashboard.
+      webhookUrl: webAppUrl_(),
+      redirectUrl: 'https://ubonudonkang.com/ba-training/'
+    },
+    mail: {
+      quotaLeft: health.emailQuota,
+      reviewTo: NOTIFY_EMAIL,
+      notifyTo: SITE_NOTIFY_EMAIL,
+      welcomeCc: WELCOME_EMAIL_CC.split(',')
+    },
+    whatsappGroupUrl: props.getProperty(BA_GROUP_PROPERTY) || '',
+    prices: { cohort: EXPECTED_AMOUNT, session: SESSION_AMOUNT },
+    sheet: {
+      url: 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/edit',
+      tabs: [
+        { name: 'BA Training (enrolments)', rows: Math.max(0, enrolments.getLastRow() - 1) },
+        adminTabSize_(FORM_TABS.waitlist.tab),
+        adminTabSize_(FORM_TABS.contact.tab),
+        adminTabSize_(FORM_TABS.sessions.tab),
+        adminTabSize_(INVITE_SHEET_NAME)
+      ]
+    },
+    access: { accounts, timeZone: Session.getScriptTimeZone() }
+  };
+}
+
+function adminInstallSweep_() {
+  installSquadSweepTrigger();
+
+  return { installed: true };
+}
+
+function adminRunSweep_() {
+  const r = runSquadSweep_();
+
+  return { checked: r.checked, paid: r.paid, failed: r.failed };
+}
+
+// What Squad says about one payment reference and what the sheet holds for it. Changes nothing.
+function adminCheckReference_(params) {
+  const ref = String(params.reference || '').trim();
+  const enrolmentMatch = SQUAD_REF_PATTERN.exec(ref);
+  const isSession = SESSION_REF_PATTERN.test(ref);
+
+  if (!enrolmentMatch && !isSession) {
+    throw new Error('That does not look like a BA Bridge payment reference. Cohort payments look like BAB-XXXX-XXX-1 and 1:1 sessions like UU1-XXXXXXXX.');
+  }
+
+  const key = configuredSquadSecret_();
+  const tx = verifySquadTransaction_(ref);
+  const out = {
+    mode: squadApiBase_(key) === SQUAD_SANDBOX_API ? 'sandbox' : 'live',
+    reference: ref,
+    kind: isSession ? 'session' : 'enrolment',
+    found: tx.found,
+    status: tx.found ? tx.status : '',
+    amount: tx.found && isFinite(tx.amount) ? tx.amount / 100 : null,
+    currency: tx.found ? tx.currency : '',
+    expected: isSession ? SESSION_AMOUNT : EXPECTED_AMOUNT,
+    customer: { name: tx.found ? tx.name : '', email: tx.found ? tx.email : '' },
+    record: { exists: false, alreadyRecorded: false, paidWithOther: '', reference: '', name: '', status: '' },
+    canRecord: false,
+    reason: ''
+  };
+
+  out.amountMatches = out.amount !== null && out.amount === out.expected && (!out.currency || out.currency === 'NGN');
+
+  if (isSession) {
+    const sessions = adminTabRows_(FORM_TABS.sessions);
+    const at = sessions.header.indexOf('Squad reference');
+    const row = sessions.rows.filter(r => at > -1 && plain_(r[at]) === ref)[0];
+
+    out.record.alreadyRecorded = !!row;
+    out.record.exists = !!row;
+    out.record.reference = ref;
+  } else {
+    const found = findByReference_(getSheet_(), enrolmentMatch[1]);
+
+    if (found) {
+      const v = found.values;
+      out.record.exists = true;
+      out.record.reference = enrolmentMatch[1];
+      out.record.name = cell_(v, 'name');
+      out.record.status = enrolmentStatus_(v);
+      out.record.alreadyRecorded = isSquadPaid_(v) && cell_(v, 'squad_ref') === ref;
+      out.record.paidWithOther = isSquadPaid_(v) && !out.record.alreadyRecorded ? cell_(v, 'squad_ref') : '';
+    }
+  }
+
+  const paid = tx.found && String(tx.status).toLowerCase() === 'success';
+
+  if (!tx.found) out.reason = 'Squad has no payment with this reference.';
+  else if (!paid) out.reason = 'Squad says this payment is ' + (tx.status || 'not complete') + ', so there is nothing to record.';
+  else if (out.record.alreadyRecorded) out.reason = 'This payment is already recorded.';
+  else if (out.record.paidWithOther) out.reason = 'This enrolment is already paid with ' + out.record.paidWithOther + '. This looks like a second payment; consider a refund.';
+  else if (!isSession && !out.record.exists) out.reason = 'No enrolment in the sheet has the reference ' + enrolmentMatch[1] + '.';
+
+  out.canRecord = !out.reason;
+
+  return out;
+}
+
+// The same recognition the webhook and the sweep use, started by hand (for example after a webhook was missed).
+function adminRecordPayment_(params, user) {
+  const check = adminCheckReference_(params);
+
+  if (!check.canRecord) throw new Error(check.reason);
+
+  const outcome = processSquadPayment_(getSheet_(), check.reference, 'dashboard');
+
+  return {
+    result: String(outcome.result || ''),
+    reference: check.kind === 'enrolment' ? check.record.reference : check.reference,
+    kind: check.kind,
+    by: user
+  };
 }
 
 // ==================== ADMIN PANEL ====================
@@ -1744,6 +2885,7 @@ function sendReviewEmail_(sheet, found, options) {
       `Name: ${name}\n` +
       `Email: ${email}\n` +
       `Reference: ${reference}\n` +
+      `Registered via: ${siteKey_(cell_(found.values, 'site'), '')}\n` +
       `Expected amount: NGN ${amount}\n` +
       `Payment status: ${paymentStatus}\n` +
       `Squad reference: ${squadRef}\n` +
@@ -1759,6 +2901,7 @@ function sendReviewEmail_(sheet, found, options) {
         <strong>${esc_(name)}</strong><br>
         ${esc_(email)}<br>
         Reference: ${esc_(reference)}<br>
+        Registered via: ${esc_(siteKey_(cell_(found.values, 'site'), ''))}<br>
         Expected amount: ₦${esc_(amount)}<br>
         Payment status: ${esc_(paymentStatus)}<br>
         Squad reference: ${esc_(squadRef)}<br>
@@ -1911,25 +3054,11 @@ function confirmPayment_(sheet, data) {
     );
   }
 
-  setRowValue_(sheet, found.row, 'payment_status', 'Paid — manually confirmed');
-  setRowValue_(sheet, found.row, 'verified', 'Yes');
-  setRowValue_(sheet, found.row, 'confirmed_at', stamp_());
-  setRowValue_(sheet, found.row, 'confirmed_by', NOTIFY_EMAIL);
-
   const selarRef = String(data.selar_sale_reference || '').trim();
 
-  if (selarRef) {
-    setRowValue_(sheet, found.row, 'selar_sale_reference', safeCellText_(selarRef));
-  }
-
-  if (amountPaid) {
-    setRowValue_(sheet, found.row, 'amount_paid', Number(amountPaid));
-  }
-
-  SpreadsheetApp.flush();
-
-  const refreshed = findByReference_(sheet, data.reference);
-  const delivery = sendWelcomeEmail_(sheet, refreshed);
+  const confirmed = confirmEnrolment_(sheet, found, { amountPaid, selarRef });
+  const refreshed = confirmed.refreshed;
+  const delivery = confirmed.delivery;
 
   let message =
     `<p>${esc_(data.reference)} is now marked as paid.</p>`;
@@ -1949,12 +3078,41 @@ function confirmPayment_(sheet, data) {
   return page_('Payment confirmed', message);
 }
 
+/*
+ * Marks an enrolment paid and sends the student's welcome email. Shared by the
+ * emailed review link and the dashboard. Callers hold the script lock and have
+ * already checked the enrolment is not confirmed yet.
+ */
+function confirmEnrolment_(sheet, found, options) {
+  options = options || {};
+  const reference = cell_(found.values, 'reference');
+
+  setRowValue_(sheet, found.row, 'payment_status', 'Paid — manually confirmed');
+  setRowValue_(sheet, found.row, 'verified', 'Yes');
+  setRowValue_(sheet, found.row, 'confirmed_at', stamp_());
+  setRowValue_(sheet, found.row, 'confirmed_by', options.by || NOTIFY_EMAIL);
+
+  if (options.selarRef) {
+    setRowValue_(sheet, found.row, 'selar_sale_reference', safeCellText_(options.selarRef));
+  }
+
+  if (options.amountPaid) {
+    setRowValue_(sheet, found.row, 'amount_paid', Number(options.amountPaid));
+  }
+
+  SpreadsheetApp.flush();
+
+  const refreshed = findByReference_(sheet, reference);
+
+  return { refreshed, delivery: sendWelcomeEmail_(sheet, refreshed) };
+}
+
 // ==================== WELCOME EMAIL ====================
 
-function sendWelcomeEmail_(sheet, found) {
+function sendWelcomeEmail_(sheet, found, options) {
   if (!found) return { sent: false, error: 'Enrolment not found.' };
 
-  if (found.values[COL.welcome_email_sent_at - 1]) {
+  if (!(options && options.force) && found.values[COL.welcome_email_sent_at - 1]) {
     return { alreadySent: true };
   }
 
@@ -1970,7 +3128,8 @@ function sendWelcomeEmail_(sheet, found) {
     const mail = welcomeEmail_(
       name,
       reference,
-      configuredGroupUrl_()
+      configuredGroupUrl_(),
+      siteKey_(cell_(found.values, 'site'), '')
     );
 
     mail.to = recipient;
@@ -2051,7 +3210,9 @@ function retryWelcomeForm_(reference, token) {
     </form>`;
 }
 
-function welcomeEmail_(name, reference, groupUrl) {
+function welcomeEmail_(name, reference, groupUrl, site) {
+  if (site === 'practevahq.com') return practevaWelcomeEmail_(name, reference, groupUrl);
+
   const subject =
     'Welcome to BA Bridge Cohort — your payment is confirmed';
 
@@ -2080,6 +3241,39 @@ function welcomeEmail_(name, reference, groupUrl) {
     htmlBody: emailHtml_(html),
     name: 'BA Bridge',
     replyTo: NOTIFY_EMAIL
+  };
+}
+
+// The same message for someone who enrolled on practevahq.com: from Practeva, in the plural, signed by the team, with replies going to its own address.
+function practevaWelcomeEmail_(name, reference, groupUrl) {
+  const site = SITES['practevahq.com'];
+  const subject = 'Welcome to the BA Bridge Cohort: your payment is confirmed';
+
+  const body =
+    `Hi ${name},\n\n` +
+    `Thank you for enrolling in the BA Bridge Cohort at Practeva. ` +
+    `We have confirmed your payment and your place is secured.\n\n` +
+    `Join the cohort WhatsApp group for updates and next steps:\n` +
+    `${groupUrl}\n\n` +
+    `Your enrolment reference: ${reference}\n\n` +
+    `If you have any questions, reply to this email.\n\nThe Practeva team`;
+
+  const html = `
+    <p>Hi ${esc_(name)},</p>
+    <p>Thank you for enrolling in the BA Bridge Cohort at Practeva. We have confirmed your payment and your place is secured.</p>
+    <p>Join the cohort WhatsApp group for updates and next steps:</p>
+    <p><a class="button" href="${escAttr_(groupUrl)}">Join the WhatsApp group</a></p>
+    <p>Or use this link: <a href="${escAttr_(groupUrl)}">${esc_(groupUrl)}</a></p>
+    <p>Your enrolment reference: <strong>${esc_(reference)}</strong></p>
+    <p>If you have any questions, reply to this email.</p>
+    <p>The Practeva team</p>`;
+
+  return {
+    subject,
+    body,
+    htmlBody: emailHtml_(html, site.accent),
+    name: site.senderName,
+    replyTo: site.replyTo
   };
 }
 
@@ -2428,6 +3622,8 @@ function retryMissingReviewEmails() {
 // ==================== SETUP ====================
 
 function setupIntegrationSecrets() {
+  requireAdmin_();
+
   const props = PropertiesService.getScriptProperties();
 
   let adminKey = props.getProperty(ADMIN_KEY_PROPERTY) || '';
@@ -2451,6 +3647,8 @@ function setupIntegrationSecrets() {
 }
 
 function getIntegrationUrls() {
+  requireAdmin_();
+
   const props = PropertiesService.getScriptProperties();
 
   const adminKey = props.getProperty(ADMIN_KEY_PROPERTY) || '';
@@ -3032,7 +4230,7 @@ function escAttr_(value) {
 
 // ==================== HTML ====================
 
-function emailHtml_(body) {
+function emailHtml_(body, accent) {
   return `
     <!doctype html>
     <html>
@@ -3040,7 +4238,7 @@ function emailHtml_(body) {
         <meta charset="UTF-8">
         <style>
           body{font-family:Arial,sans-serif;font-size:16px;line-height:1.6;color:#111}
-          .button{display:inline-block;padding:12px 18px;background:#1F3BD6;color:#fff!important;text-decoration:none;border-radius:6px}
+          .button{display:inline-block;padding:12px 18px;background:${accent || '#1F3BD6'};color:#fff!important;text-decoration:none;border-radius:6px}
           .note{color:#555}
         </style>
       </head>
@@ -3106,6 +4304,8 @@ function page_(title, body) {
 // ==================== PAID COHORT WELCOME REMINDER ====================
 
 function previewPaidCohortWelcomeReminder() {
+  requireAdmin_();
+
   const sheet = getSheet_();
   const recipients = [];
   const seen = {};
@@ -3150,6 +4350,8 @@ function previewPaidCohortWelcomeReminder() {
 
 
 function sendPaidCohortWelcomeReminder() {
+  requireAdmin_();
+
   const sheet = getSheet_();
   const groupUrl = configuredGroupUrl_();
 
@@ -3502,6 +4704,8 @@ function sendPaidCohortWelcomeReminder() {
  * to everyone in future.
  */
 function resetPaidCohortWelcomeReminderLog() {
+  requireAdmin_();
+
   PropertiesService
     .getScriptProperties()
     .deleteProperty(
