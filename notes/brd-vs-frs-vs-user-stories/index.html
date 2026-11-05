@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>BRD vs FRS vs User Stories: When to Use Each</title>
+  <title>BRD vs FRS (FRD) vs User Stories: When to Use Each</title>
   <meta name="description" content="The difference between a BRD, an FRS (or FRD) and user stories: what each answers, who it is for, when to use which, and how to trace them together."/>
   <meta name="theme-color" content="#FFFFFF"/>
   <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin/>
@@ -16,7 +16,7 @@
   <link rel="canonical" href="https://ubonudonkang.com/notes/brd-vs-frs-vs-user-stories/"/>
   <meta property="og:type" content="article"/>
   <meta property="og:site_name" content="Ubon Udonkang"/>
-  <meta property="og:title" content="BRD vs FRS vs User Stories: When to Use Each"/>
+  <meta property="og:title" content="BRD vs FRS (FRD) vs User Stories: When to Use Each"/>
   <meta property="og:description" content="The difference between a BRD, an FRS (or FRD) and user stories: what each answers, who it is for, when to use which, and how to trace them together."/>
   <meta property="og:image" content="https://ubonudonkang.com/img/og-card.jpg"/>
   <meta property="og:image:type" content="image/jpeg"/>
@@ -24,7 +24,7 @@
   <meta property="og:image:height" content="630"/>
   <meta property="og:image:alt" content="Ubon Udonkang, Business Analyst, Lagos"/>
   <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="BRD vs FRS vs User Stories: When to Use Each"/>
+  <meta name="twitter:title" content="BRD vs FRS (FRD) vs User Stories: When to Use Each"/>
   <meta name="twitter:description" content="The difference between a BRD, an FRS (or FRD) and user stories: what each answers, who it is for, when to use which, and how to trace them together."/>
   <meta name="twitter:image" content="https://ubonudonkang.com/img/og-card.jpg"/>
   <link rel="icon" href="/favicon.ico" sizes="48x48"/>
@@ -33,7 +33,7 @@
   <link rel="manifest" href="/site.webmanifest"/>
   <script data-goatcounter="https://ubonudonkang.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
   <meta property="og:url" content="https://ubonudonkang.com/notes/brd-vs-frs-vs-user-stories/"/>
-  <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "BRD vs FRS vs User Stories: When to Use Each", "description": "The difference between a BRD, an FRS (or FRD) and user stories: what each answers, who it is for, when to use which, and how to trace them together.", "url": "https://ubonudonkang.com/notes/brd-vs-frs-vs-user-stories/", "mainEntityOfPage": "https://ubonudonkang.com/notes/brd-vs-frs-vs-user-stories/", "image": "https://ubonudonkang.com/img/og-card.jpg", "datePublished": "2026-10-01", "dateModified": "2026-10-01", "articleSection": "Practice", "inLanguage": "en", "wordCount": 1016, "author": {"@type": "Person", "@id": "https://ubonudonkang.com/#person", "name": "Ubon Udonkang", "url": "https://ubonudonkang.com/about/"}, "publisher": {"@id": "https://ubonudonkang.com/#person"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://ubonudonkang.com/"}, {"@type": "ListItem", "position": 2, "name": "Notes", "item": "https://ubonudonkang.com/notes/"}, {"@type": "ListItem", "position": 3, "name": "BRD vs FRS vs User Stories: When to Use Each", "item": "https://ubonudonkang.com/notes/brd-vs-frs-vs-user-stories/"}]}]}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "BRD vs FRS (FRD) vs User Stories: When to Use Each", "description": "The difference between a BRD, an FRS (or FRD) and user stories: what each answers, who it is for, when to use which, and how to trace them together.", "url": "https://ubonudonkang.com/notes/brd-vs-frs-vs-user-stories/", "mainEntityOfPage": "https://ubonudonkang.com/notes/brd-vs-frs-vs-user-stories/", "image": "https://ubonudonkang.com/img/og-card.jpg", "datePublished": "2026-10-01", "dateModified": "2026-11-05", "articleSection": "Practice", "inLanguage": "en", "wordCount": 1102, "author": {"@type": "Person", "@id": "https://ubonudonkang.com/#person", "name": "Ubon Udonkang", "url": "https://ubonudonkang.com/about/"}, "publisher": {"@id": "https://ubonudonkang.com/#person"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://ubonudonkang.com/"}, {"@type": "ListItem", "position": 2, "name": "Notes", "item": "https://ubonudonkang.com/notes/"}, {"@type": "ListItem", "position": 3, "name": "BRD vs FRS (FRD) vs User Stories: When to Use Each", "item": "https://ubonudonkang.com/notes/brd-vs-frs-vs-user-stories/"}]}]}</script>
   <!--/seo-->
 </head>
 <body>
@@ -54,7 +54,7 @@
     <section class="phero wrap">
       <a href="/notes/" class="phero__back"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8H3M7 4 3 8l4 4"/></svg>Notes</a>
       <div class="phero__label"><span class="label">Practice</span><span class="label">5 min read</span></div>
-      <h1 class="phero__title phero__title--article">BRD vs FRS vs User Stories: When to Use Each</h1>
+      <h1 class="phero__title phero__title--article">BRD vs FRS (FRD) vs User Stories: When to Use Each</h1>
       <p class="phero__sub">Ask three teams what goes in a BRD and you'll get three answers. Ask where the FRS ends and user stories begin and you'll get more. Here's how the three differ, when each one earns its place, and how they fit together on a real project.</p>
       <div class="byline">
         <img src="/img/ubon-udonkang.jpg" srcset="/img/ubon-udonkang-240.webp 240w, /img/ubon-udonkang-480.webp 480w, /img/ubon-udonkang-720.webp 720w, /img/ubon-udonkang.webp 862w" sizes="48px" alt="" width="862" height="1080" loading="lazy" decoding="async"/>
@@ -71,13 +71,14 @@
           <span class="label">Contents</span>
           <ol>
           <li><a href="#the-short-answer"><span>01</span>The short answer</a></li>
-          <li><a href="#the-brd-the-business-case-for-the-requirements"><span>02</span>The BRD: the business case for the requirements</a></li>
-          <li><a href="#the-frs-the-detail-a-system-is-built-and-tested-from"><span>03</span>The FRS: the detail a system is built and tested from</a></li>
-          <li><a href="#user-stories-requirements-in-deliverable-slices"><span>04</span>User stories: requirements in deliverable slices</a></li>
-          <li><a href="#when-to-use-which"><span>05</span>When to use which</a></li>
-          <li><a href="#how-they-fit-together-traceability"><span>06</span>How they fit together: traceability</a></li>
-          <li><a href="#common-mistakes"><span>07</span>Common mistakes</a></li>
-          <li><a href="#questions"><span>08</span>Common questions</a></li>
+          <li><a href="#is-an-frd-the-same-as-an-frs"><span>02</span>Is an FRD the same as an FRS?</a></li>
+          <li><a href="#the-brd-the-business-case-for-the-requirements"><span>03</span>The BRD: the business case for the requirements</a></li>
+          <li><a href="#the-frs-the-detail-a-system-is-built-and-tested-from"><span>04</span>The FRS: the detail a system is built and tested from</a></li>
+          <li><a href="#user-stories-requirements-in-deliverable-slices"><span>05</span>User stories: requirements in deliverable slices</a></li>
+          <li><a href="#when-to-use-which"><span>06</span>When to use which</a></li>
+          <li><a href="#how-they-fit-together-traceability"><span>07</span>How they fit together: traceability</a></li>
+          <li><a href="#common-mistakes"><span>08</span>Common mistakes</a></li>
+          <li><a href="#questions"><span>09</span>Common questions</a></li>
           </ol>
         </nav>
         <div>
@@ -98,15 +99,21 @@
 </table></div>
           </div>
         </section>
+        <section class="cs-sec rv" id="is-an-frd-the-same-as-an-frs">
+          <h2><span>02</span>Is an FRD the same as an FRS?</h2>
+          <div class="prose article-prose">
+            <p>In most teams, yes. FRD (functional requirements document) and FRS (functional requirements specification) name the same artefact: the detailed, testable list of what a system must do, written from the <a href="/notes/how-to-write-a-brd/">BRD</a>. Some organisations use FRD for a shorter, narrative version and FRS for a numbered, formal one, so check your own team's template before you assume. The BRD explains why the business needs the change; the FRD or FRS says what the system will do about it.</p>
+          </div>
+        </section>
         <section class="cs-sec rv" id="the-brd-the-business-case-for-the-requirements">
-          <h2><span>02</span>The BRD: the business case for the requirements</h2>
+          <h2><span>03</span>The BRD: the business case for the requirements</h2>
           <div class="prose article-prose">
             <p>The business requirements document sets out the problem, the objectives and how success will be measured, the scope, the stakeholders, the current and future process, and the requirements the business needs met. It's written so a sponsor who has never seen the system can read it and say "yes, that's what we need".</p>
 <p>Its real job is agreement. A signed BRD is the record that the people who fund and use the solution agreed on what it's for before anyone built it. My <a href="/notes/how-to-write-a-brd/">guide to writing a BRD</a> covers the structure section by section.</p>
           </div>
         </section>
         <section class="cs-sec rv" id="the-frs-the-detail-a-system-is-built-and-tested-from">
-          <h2><span>03</span>The FRS: the detail a system is built and tested from</h2>
+          <h2><span>04</span>The FRS: the detail a system is built and tested from</h2>
           <div class="prose article-prose">
             <p>The functional requirements specification takes each business need and says precisely how the system must behave. A good FRS covers:</p>
 <ul>
@@ -121,7 +128,7 @@
           </div>
         </section>
         <section class="cs-sec rv" id="user-stories-requirements-in-deliverable-slices">
-          <h2><span>04</span>User stories: requirements in deliverable slices</h2>
+          <h2><span>05</span>User stories: requirements in deliverable slices</h2>
           <div class="prose article-prose">
             <p>A user story describes one thing a user needs, in their words, with the reason:</p>
 <p><em>As a customer, I want to see my treasury bill's maturity date on my dashboard, so that I can plan when the money comes back.</em></p>
@@ -130,7 +137,7 @@
           </div>
         </section>
         <section class="cs-sec rv" id="when-to-use-which">
-          <h2><span>05</span>When to use which</h2>
+          <h2><span>06</span>When to use which</h2>
           <div class="prose article-prose">
             <div class="table-wrap" role="region" tabindex="0" aria-label="Table: Situation, What to write"><table>
   <thead><tr><th>Situation</th><th>What to write</th></tr></thead>
@@ -146,7 +153,7 @@
           </div>
         </section>
         <section class="cs-sec rv" id="how-they-fit-together-traceability">
-          <h2><span>06</span>How they fit together: traceability</h2>
+          <h2><span>07</span>How they fit together: traceability</h2>
           <div class="prose article-prose">
             <p>The three documents are levels of the same thinking, and each level should point to the one above it. Here's an example thread for a treasury bill product:</p>
 <div class="table-wrap" role="region" tabindex="0" aria-label="Table: Level, Example"><table>
@@ -162,7 +169,7 @@
           </div>
         </section>
         <section class="cs-sec rv" id="common-mistakes">
-          <h2><span>07</span>Common mistakes</h2>
+          <h2><span>08</span>Common mistakes</h2>
           <div class="prose article-prose">
             <ol>
   <li><strong>Copying the BRD into the FRS.</strong> If the FRS repeats business goals without adding rules, data and exceptions, developers will fill the gaps with guesses.</li>
@@ -174,7 +181,7 @@
           </div>
         </section>
           <section class="cs-sec rv" id="questions">
-            <h2><span>08</span>Common questions</h2>
+            <h2><span>09</span>Common questions</h2>
             <div class="qa">
             <details>
               <summary>Is an FRD the same as an FRS?</summary>
@@ -254,8 +261,8 @@
     <div class="note-grid">
       <a href="/notes/how-to-write-a-brd/" class="note-card rv">
         <span class="note-card__meta"><span class="label">Practice</span><span class="label">5 min read</span></span>
-        <span class="note-card__title">How to Write a BRD: Structure, Example and Checklist</span>
-        <span class="note-card__desc">How to write a business requirements document that gets signed off: a section-by-section structure, a worked banking example and a 20-point quality checklist.</span>
+        <span class="note-card__title">What Is a BRD? How to Write One, With Template and Example</span>
+        <span class="note-card__desc">BRD stands for business requirements document. See what goes in one, a worked banking example, and a 20-point checklist to get it signed off.</span>
         <span class="note-card__more">Read the note <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </a>
       <a href="/notes/user-stories-and-acceptance-criteria/" class="note-card rv">
