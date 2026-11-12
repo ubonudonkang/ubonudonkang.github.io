@@ -133,7 +133,7 @@ for (const file of htmlFiles(fileURLToPath(root))) {
     assert.match(button, />Join Waitlist<\/a>$/);
   }
 }
-assert.equal(promotionCount, 22, 'all content-page promotions should point to the waitlist');
+assert.equal(promotionCount, 25, 'all content-page promotions should point to the waitlist');
 
 // The browser carries only Squad's public key (pk_). A secret key (sk_) in any shipped file would expose the account.
 const forms = read('js/forms.js');

@@ -131,5 +131,5 @@ for (const file of htmlFiles(root)) {
     assert.match(output, /₦90,000/);
   }
 }
-assert.equal(promos, 22);
+assert.equal(promos, 25);
 console.log('BA Bridge open-registration preview checks passed.');
