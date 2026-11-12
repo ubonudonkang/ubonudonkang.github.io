@@ -437,3 +437,21 @@ document.querySelectorAll('[data-copy-text]').forEach(el => el.addEventListener(
 window.uuTrack = function (name) {
   try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: name, title: name, event: true }); } catch (e) { /* analytics must never break checkout */ }
 };
+
+/* ── Intro-call booking link ─────────────────────────────────────
+   The one place the booking URL lives (a Google Calendar appointment
+   schedule, say). While it is empty:
+     [data-booking="optional"]  stays hidden (the /hire/ button)
+     [data-booking="fallback"]  keeps its own link (/contact/ on /consulting/)
+   Once it is set, both point at it and read their data-booking-text. */
+(function booking() {
+  const BOOKING_URL = '';
+  if (!BOOKING_URL) return;
+  document.querySelectorAll('[data-booking]').forEach(el => {
+    el.href = BOOKING_URL;
+    el.target = '_blank';
+    el.rel = 'noopener';
+    if (el.dataset.bookingText) el.firstChild.textContent = el.dataset.bookingText + ' ';
+    el.hidden = false;
+  });
+})();

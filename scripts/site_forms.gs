@@ -8,6 +8,8 @@
  *   Sessions             Squad webhook / action=payment  1:1 Career Clarity session payments
  *   Waitlist             form_name=ba-waitlist-*     cohort waitlist signups
  *   Contact              form_name=contact           contact page enquiries
+ *   CV requests          form_name=cv_request        CV requests from /hire/ (emailed to SITE_NOTIFY_EMAIL)
+ *   BA notes subscribers form_name=newsletter        "BA notes, once a month" signups (no email sent)
  *
  * Keep this as the ONLY .gs file in the Apps Script project (the dashboard's page is an
  * HTML file named "admin", which is fine). A second file that
@@ -200,6 +202,40 @@ FORM_TABS.sessions = {
   dedupeFields: ['reference'],
   dedupeKey: values => String(values.reference || '').trim()
 };
+/*
+ * CV requests and the BA notes signup. Nothing is ever emailed to the person
+ * who fills these in (so the forms cannot be used to send mail to strangers):
+ * the page shows the confirmation, and a CV request is emailed to the owner,
+ * who replies by hand. Both forms add two checks of their own:
+ *   limits     the longest each field may be, checked here, not only in the page
+ *   minMs      the page sends _elapsed, the milliseconds since the form appeared;
+ *              a post sent sooner than this (or without it) is a bot, answered ok, saved nowhere
+ */
+FORM_TABS.cv_request = {
+  tab: 'CV requests',
+  fields: [
+    ['timestamp', 'Timestamp'], ['form_name', 'Form type'], ['name', 'Name'], ['email', 'Email'],
+    ['company', 'Company'], ['role', 'Role or job link'], ['page', 'Source page'], ['submission_id', 'Submission ID']
+  ],
+  required: ['name', 'email'],
+  limits: { name: 100, email: 254, company: 150, role: 500, page: 300, submission_id: 100 },
+  minMs: 3000,
+  dedupeFields: ['submission_id'],
+  dedupeKey: values => String(values.submission_id || '').trim()
+};
+FORM_TABS.newsletter = {
+  tab: 'BA notes subscribers',
+  fields: [
+    ['timestamp', 'Timestamp'], ['form_name', 'Form type'], ['email', 'Email'], ['first_name', 'First name'],
+    ['page', 'Source page'], ['submission_id', 'Submission ID']
+  ],
+  required: ['email'],
+  limits: { email: 254, first_name: 60, page: 300, submission_id: 100 },
+  minMs: 3000,
+  // One row per address: signing up again from another note is not a second subscriber.
+  dedupeFields: ['email'],
+  dedupeKey: values => normalizeEmail_(values.email)
+};
 const MAX_FIELD_LENGTH = 5000;
 
 // ==================== ROUTES ====================
@@ -345,6 +381,8 @@ function mergeObject_(target, source) {
 function formKindFor_(data) {
   const name = String(data.form_name || '');
   if (name === 'contact') return 'contact';
+  if (name === 'cv_request') return 'cv_request';
+  if (name === 'newsletter') return 'newsletter';
   if (/^ba-waitlist-/.test(name)) return 'waitlist';
   return '';
 }
@@ -352,6 +390,13 @@ function formKindFor_(data) {
 function handleFormPost_(kind, data) {
   // Honeypot: bots fill the hidden field. Answer ok so they do not retry.
   if (data._gotcha) return json_({ result: 'ok' });
+
+  // Too fast to be a person (or sent without the page): answer ok, save nothing.
+  const minMs = FORM_TABS[kind].minMs;
+  if (minMs) {
+    const elapsed = Number(data._elapsed);
+    if (!isFinite(elapsed) || elapsed < minMs) return json_({ result: 'ok' });
+  }
 
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -374,6 +419,9 @@ function saveFormRow_(kind, data) {
     const key = field[0];
     const text = String(data[key] == null ? '' : data[key]).trim();
     if (text.length > MAX_FIELD_LENGTH) throw new Error('A field is too long.');
+    if (def.limits && def.limits[key] && text.length > def.limits[key]) {
+      throw new Error('A field is too long: ' + key + ' (up to ' + def.limits[key] + ' characters).');
+    }
     values[key] = text;
   });
 
@@ -481,6 +529,27 @@ function formRowExists_(tab, def, key) {
 
 function sendFormEmail_(kind, values, total) {
   const site = SITES[siteKey_(values.site, values.type)];
+
+  // The signup is only a row; nothing is sent to anyone.
+  if (kind === 'newsletter') return;
+
+  if (kind === 'cv_request') {
+    MailApp.sendEmail({
+      to: SITE_NOTIFY_EMAIL,
+      subject: 'CV request: ' + values.name + ', ' + (values.company || 'no company'),
+      body:
+        'Name: ' + values.name +
+        '\nEmail: ' + values.email +
+        '\nCompany: ' + (values.company || 'not given') +
+        '\nRole or job link: ' + (values.role || 'not given') +
+        '\nSource page: ' + (values.page || 'not given') +
+        '\nTimestamp: ' + Utilities.formatDate(new Date(), 'Africa/Lagos', 'd MMM yyyy, HH:mm') + ' WAT' +
+        '\n\nReply to this email with the CV attached; it goes to the requester.',
+      replyTo: values.email,
+      name: 'ubonudonkang.com'
+    });
+    return;
+  }
 
   if (kind === 'waitlist') {
     MailApp.sendEmail({
