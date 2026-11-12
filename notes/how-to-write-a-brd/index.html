@@ -239,6 +239,36 @@
     </section>
   </article>
 
+  <section class="wrap" style="padding-top:clamp(48px,7vw,80px)" aria-label="Templates for this note">
+    <div class="sec__hd" style="margin-bottom:18px"><div><span class="label">Free templates for this note</span></div><a href="/resources/templates/" class="sec__link">All templates →</a></div>
+    <div class="tags"><a href="/resources/templates/#brd" class="tag" style="text-decoration:none">BRD template</a><a href="/resources/templates/#rtm" class="tag" style="text-decoration:none">Requirements traceability matrix</a><a href="/resources/templates/#user-story" class="tag" style="text-decoration:none">User story template</a><a href="/resources/templates/#bpmn" class="tag" style="text-decoration:none">BPMN starter</a></div>
+  </section>
+  <section class="sec wrap" aria-labelledby="signup-title">
+    <div class="signup">
+      <div>
+        <span class="label">Newsletter</span>
+        <h2 id="signup-title" style="margin-top:14px">BA notes, once a month</h2>
+        <p>New guides and templates by email. No spam; unsubscribe any time.</p>
+      </div>
+      <form class="lite-form" data-form="newsletter" data-ok-text="Thanks, {name}. You're on the list for BA notes." data-error-text="Something went wrong. Please try again, or email ubonudonkang@gmail.com.">
+        <div class="lite-form" data-form-fields>
+          <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+          <label class="field" for="signup-email">
+            <span class="field__lbl">Email</span>
+            <input class="input" id="signup-email" name="email" type="email" autocomplete="email" maxlength="254" required/>
+          </label>
+          <label class="field" for="signup-name">
+            <span class="field__lbl">First name (optional)</span>
+            <input class="input" id="signup-name" name="first_name" type="text" autocomplete="given-name" maxlength="60"/>
+          </label>
+          <button type="submit" class="btn btn-primary btn-block">Get BA notes <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+        </div>
+        <p class="lite-form__ok" data-form-ok tabindex="-1" role="status" hidden></p>
+        <p class="lite-form__err" data-form-err role="alert" hidden></p>
+      </form>
+    </div>
+  </section>
+
   <!-- ══ COHORT ════════════════════════════════════════════════ -->
   <section class="sec wrap" id="cohort">
     <div class="cohort rv">
@@ -341,5 +371,6 @@
 
 <div class="toast" id="toast" role="status"></div>
 <script src="/js/site.js?v=188964e4"></script>
+<script src="/js/forms.js?v=edefd2b8"></script>
 </body>
 </html>
