@@ -31,6 +31,7 @@ project-loan-approval/         Case study: loan approval automation across Afric
 resources/index.html           Paid and free resources
 contact/index.html             Contact details and enquiry form
 ba-training/index.html         BA Bridge Cohort: page-specific styles and February 2027 waitlist
+hire/index.html                For remote contract roles: noindex, left out of the menu, sitemap and every link; holds the CV request form
 css/site.css                   Design system shared by every page (starts with the @font-face rules)
 fonts/                         Self-hosted Inter, Instrument Serif and JetBrains Mono (latin + latin-ext woff2), plus inter-naira.woff2: the naira sign on its own (1 KB)
 js/site.js                     Dock, WAT clock, email copy (press C), scroll reveals, testimonials, draggable case file, PDF viewer
@@ -50,6 +51,7 @@ docs/ams/                      Do not publish confidential client documents here
 - **Forms:** see [Forms and the Apps Script](#forms-and-the-apps-script). The contact form (`data-form="contact"`) posts to the same Apps Script as the waitlist and enrolment forms and writes to the `Contact` tab.
 - **Portrait:** replace `img/ubon-udonkang.jpg` with another photo of the same name. A 4:5 portrait works best.
 - **AMS documents:** confidential originals must stay out of the public repository. The Data Dictionary is available by request only, subject to permission and redaction. Removing a file from the current site does not remove old copies from Git history or caches.
+- **Booking link:** `BOOKING_URL` in `js/site.js` is the one place the intro-call link lives. While it is empty the "Book a 20-minute intro call" buttons on `/hire/` stay hidden and the consulting page's call to action goes to `/contact/`.
 - **Testimonials:** short quotes live in the home page carousel. The full recommendations are on the About page.
 - **Cohort promotion:** the BA Bridge card sits after the homepage stats while registration is open; the close command moves it before the homepage's final dark CTA. On other content pages it appears before the final dark CTA (after the form on Contact). The open command updates its repeated copy and links. It is intentionally absent from BA Training, BA Workbench, and the 404 page. Keep the `HOME_COHORT_PROMO` markers around the homepage card so both commands can move it.
 - **February waitlist:** the November 2026 cohort is full. The BA Training page collects name, email, and consent (`data-form="waitlist"`) and posts them through `js/forms.js` to the `Waitlist` tab, with an email notification to the site owner. The hidden `type`, `cohort` and `form_name` fields identify the signup, and the script skips repeat email and cohort combinations. No payment or BA enrolment is created by joining the waitlist. Do not describe a waitlist signup as a reserved place.

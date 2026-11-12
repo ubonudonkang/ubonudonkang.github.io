@@ -112,6 +112,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
 
 .wrap { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+[hidden] { display: none !important; }
 
 /* ── Type ─────────────────────────────────────────────────── */
 .label {
@@ -1030,4 +1031,45 @@ select.input { background-image: var(--select-arrow); background-repeat: no-repe
 }
 @media (prefers-contrast: more) {
   :root { --ink-2: #222; --ink-3: #444; --line: #999; --line-2: #666; }
+}
+
+/* ── Cards, fact lists, forms and the time-zone band (hire, consulting, speaking, templates) ── */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; }
+.card { display: flex; flex-direction: column; gap: 12px; padding: clamp(20px, 3vw, 28px); background: var(--paper-2); border: 1px solid var(--line); border-radius: 20px; color: inherit; text-decoration: none; min-width: 0; }
+a.card { transition: border-color 200ms var(--ease-out); }
+@media (hover: hover) and (pointer: fine) { a.card:hover { border-color: var(--ink-3); } }
+.card__kicker { font: 500 0.72rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.card__metric { font: 400 clamp(2rem, 4vw, 2.6rem)/1 var(--serif); letter-spacing: -0.02em; }
+.card__title { font: 400 1.6rem/1.1 var(--serif); letter-spacing: -0.01em; margin: 0; }
+.card p, .card li { margin: 0; color: var(--ink-2); font-size: 0.95rem; line-height: 1.55; }
+.card ul { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
+.card__more { margin-top: auto; padding-top: 4px; font-size: 0.9rem; color: var(--accent); }
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 12px 28px; margin: 0; }
+.facts dt { font: 500 0.72rem/1.7 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.facts dd { margin: 0; line-height: 1.55; }
+.facts a { color: var(--accent); }
+@media (max-width: 560px) { .facts { grid-template-columns: minmax(0, 1fr); gap: 2px; } .facts dd { margin-bottom: 14px; } }
+.prose-col { max-width: 62ch; }
+.prose-col p { color: var(--ink-2); line-height: 1.65; }
+.lite-form { display: grid; gap: 14px; }
+.lite-form__ok { padding: 18px 20px; border-radius: 16px; background: rgba(22,128,74,0.07); border: 1px solid rgba(22,128,74,0.25); font-size: 1rem; line-height: 1.5; }
+.lite-form__ok:focus { outline: none; }
+.lite-form__err { padding: 14px 18px; border-radius: 12px; background: var(--err-bg); border: 1px solid var(--err-line); color: var(--err); font-size: 0.88rem; }
+.signup { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 24px 40px; align-items: start; padding: clamp(24px, 4vw, 40px); background: var(--paper-2); border: 1px solid var(--line); border-radius: 24px; }
+.signup h2 { font: 400 clamp(1.8rem, 3.4vw, 2.4rem)/1.05 var(--serif); letter-spacing: -0.02em; margin: 0 0 10px; }
+.signup p { margin: 0; color: var(--ink-2); }
+@media (max-width: 760px) { .signup { grid-template-columns: minmax(0, 1fr); } }
+.tz { display: grid; gap: 14px; }
+.tz__row { display: grid; grid-template-columns: 150px minmax(0, 1fr) 230px; gap: 8px 18px; align-items: center; }
+.tz__city { font-weight: 500; }
+.tz__note { font-size: 0.85rem; color: var(--ink-2); }
+.tz__track { position: relative; height: 14px; border-radius: 999px; background: linear-gradient(to right, var(--line) 0 37.5%, var(--line-2) 37.5% 70.833%, var(--line) 70.833% 100%); }
+.tz__bar { position: absolute; top: 0; bottom: 0; left: calc(var(--s) / 24 * 100%); width: calc((var(--e) - var(--s)) / 24 * 100%); border-radius: 999px; background: var(--accent-fill); opacity: 0.85; }
+.tz__bar--home { background: var(--ink); opacity: 1; }
+.tz__axis { display: grid; grid-template-columns: 150px minmax(0, 1fr) 230px; gap: 18px; font: 500 0.7rem/1 var(--mono); color: var(--ink-3); }
+.tz__ticks { display: flex; justify-content: space-between; }
+@media (max-width: 760px) {
+  .tz__row, .tz__axis { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .tz__axis > span:first-child, .tz__axis > span:last-child { display: none; }
+  .tz__row { padding-bottom: 6px; }
 }
