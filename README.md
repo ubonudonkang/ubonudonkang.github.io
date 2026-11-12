@@ -34,7 +34,7 @@ ba-training/index.html         BA Bridge Cohort: page-specific styles and Februa
 consulting/index.html          Consulting for founders and teams: the three tiers, worded exactly as practevahq.com/advisory
 speaking-and-writing/index.html Teaching and mentoring (the cohort), writing (every note, newest first, and the ebook); linked from About and every footer. Talks go in a third block once there are any
 resources/templates/           Free template library (Word, Excel, BPMN) and the newsletter signup; ba-cv-template/ is the CV guide page. Files live in downloads/
-hire/index.html                For remote contract roles, linked from the "Hire Me" header button; holds a CV request form (contact/ has the other)
+hire/index.html                For recruiters, linked from the "Hire Me" header button: facts strip, skills, case studies, career summary, time zones, testimonials, FAQ (with FAQPage and Person data) and a CV request form. Its own header button reads "Request my CV" and jumps to the form
 css/site.css                   Design system shared by every page (starts with the @font-face rules)
 fonts/                         Self-hosted Inter, Instrument Serif and JetBrains Mono (latin + latin-ext woff2), plus inter-naira.woff2: the naira sign on its own (1 KB)
 js/site.js                     Dock, WAT clock, email copy (press C), scroll reveals, testimonials, draggable case file, PDF viewer
