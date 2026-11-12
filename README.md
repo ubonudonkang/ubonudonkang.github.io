@@ -32,6 +32,7 @@ resources/index.html           Paid and free resources
 contact/index.html             Contact details and enquiry form
 ba-training/index.html         BA Bridge Cohort: page-specific styles and February 2027 waitlist
 consulting/index.html          Consulting for founders and teams: the three tiers, worded exactly as practevahq.com/advisory
+speaking-and-writing/index.html Teaching and mentoring (the cohort), writing (every note, newest first, and the ebook); linked from About and every footer. Talks go in a third block once there are any
 hire/index.html                For remote contract roles: noindex, left out of the menu, sitemap and every link; holds the CV request form
 css/site.css                   Design system shared by every page (starts with the @font-face rules)
 fonts/                         Self-hosted Inter, Instrument Serif and JetBrains Mono (latin + latin-ext woff2), plus inter-naira.woff2: the naira sign on its own (1 KB)

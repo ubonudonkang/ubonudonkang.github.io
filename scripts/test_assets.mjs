@@ -32,7 +32,7 @@ for (const file of htmlFiles()) {
 // The BA Workbench is a self-contained tool with its own styles and no site.js.
 assert.deepEqual(withoutSite, ['resources/ba-workbench/index.html']);
 assert.deepEqual(withoutCss, ['resources/ba-workbench/index.html']);
-assert.equal(inlined, 25);
+assert.equal(inlined, 26);
 assert.equal(carriers, 4, 'contact, BA Training, the 1:1 session and hire load forms.js');
 
 // minify: drops comments and the whitespace around punctuation, and nothing inside a value
