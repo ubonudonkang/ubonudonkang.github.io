@@ -107,6 +107,10 @@ assert.ok(movedHome.indexOf('HOME_COHORT_PROMO_START') > movedHome.indexOf('═�
 assert.ok(movedHome.indexOf('HOME_COHORT_PROMO_END') < movedHome.indexOf('══ CLOSING'));
 assert.equal(movedHome, home, 'the closed homepage promo should already be at the bottom');
 assert.equal(moveHomePromoToBottom(movedHome), movedHome, 'closing twice must not move the promo again');
+// An open command used to strip the closing marker's indentation; closing must still work on such a page.
+assert.equal(moveHomePromoToBottom(home.replace('\n  <!-- ══ CLOSING', '\n<!-- ══ CLOSING')), movedHome, 'an unindented closing marker is still found');
+assert.equal(headerCtaToWaitlist('<a class="btn btn-line topbar__cta" href="/ba-training/#join" aria-label="Join February Cohort" data-goatcounter-click="header-cohort-cta">Join February Cohort</a><a class="btn btn-primary topbar__hire" href="/hire/">Hire Me</a>'),
+  '<a class="btn btn-line topbar__cta" href="/ba-training/#waitlist" aria-label="Join Waitlist" data-goatcounter-click="header-waitlist-cta">Join Waitlist</a><a class="btn btn-primary topbar__hire" href="/hire/">Hire Me</a>', 'the outline cohort button is rewritten and Hire Me is left alone');
 assert.doesNotMatch(cohort, /schema\.org\/InStock|2026-11-02/, 'closed cohort must not be advertised as available to search engines');
 assert.match(readme, /browser return, query parameter, or session-storage record is not server-verified proof/i);
 
@@ -127,7 +131,7 @@ for (const file of htmlFiles(fileURLToPath(root))) {
     assert.match(html, /href="\/ba-training\/#waitlist"[^>]*>Join the February waitlist/);
   }
   if (/class="topbar__cta"|class="cohort-cta"/.test(html)) {
-    const button = html.match(/<a class="(?:btn btn-primary topbar__cta|cohort-cta)"[^>]*>[\s\S]*?<\/a>/)?.[0];
+    const button = html.match(/<a class="(?:btn btn-(?:primary|line) topbar__cta|cohort-cta)"[^>]*>[\s\S]*?<\/a>/)?.[0];
     assert.ok(button, `${file} should have a header cohort button`);
     assert.match(button, /aria-label="Join Waitlist"/);
     assert.match(button, />Join Waitlist<\/a>$/);

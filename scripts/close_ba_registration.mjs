@@ -51,7 +51,7 @@ export function pointCohortLinksToWaitlist(page) {
 
 export function headerCtaToWaitlist(page, isTrainingPage = false) {
   let matches = 0;
-  const updated = page.replace(/<a class="(?:btn btn-primary topbar__cta|cohort-cta)"[^>]*>[\s\S]*?<\/a>/g, (anchor) => {
+  const updated = page.replace(/<a class="(?:btn btn-(?:primary|line) topbar__cta|cohort-cta)"[^>]*>[\s\S]*?<\/a>/g, (anchor) => {
     matches += 1;
     const openEnd = anchor.indexOf('>');
     let open = anchor.slice(0, openEnd + 1);
@@ -71,6 +71,8 @@ export function moveHomePromoToBottom(home) {
   const startMarker = '  <!-- HOME_COHORT_PROMO_START -->';
   const endMarker = '  <!-- HOME_COHORT_PROMO_END -->';
   const closingMarker = '  <!-- ══ CLOSING';
+  // An earlier open command could leave the marker without its indentation; restore it first.
+  home = home.replace(/\n<!-- ══ CLOSING/, '\n' + closingMarker);
   const { start, end, text: promo } = locate(home, startMarker, endMarker);
   const closing = home.indexOf(closingMarker);
   if (closing < 0 || home.indexOf(closingMarker, closing + 1) !== -1) {
