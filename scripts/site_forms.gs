@@ -9,7 +9,7 @@
  *   Waitlist             form_name=ba-waitlist-*     cohort waitlist signups
  *   Contact              form_name=contact           contact page enquiries
  *   CV requests          form_name=cv_request        CV requests from /hire/ (emailed to SITE_NOTIFY_EMAIL)
- *   BA notes subscribers form_name=newsletter        "BA notes, once a month" signups (no email sent)
+ *   BA notes subscribers form_name=newsletter        "BA notes, once a month" signups (emailed to SITE_NOTIFY_EMAIL)
  *
  * Keep this as the ONLY .gs file in the Apps Script project (the dashboard's page is an
  * HTML file named "admin", which is fine). A second file that
@@ -205,8 +205,8 @@ FORM_TABS.sessions = {
 /*
  * CV requests and the BA notes signup. Nothing is ever emailed to the person
  * who fills these in (so the forms cannot be used to send mail to strangers):
- * the page shows the confirmation, and a CV request is emailed to the owner,
- * who replies by hand. Both forms add two checks of their own:
+ * the page shows the confirmation. Each CV request and each new subscriber
+ * is emailed to the owner, who replies to CV requests by hand. Both forms add two checks of their own:
  *   limits     the longest each field may be, checked here, not only in the page
  *   minMs      the page sends _elapsed, the milliseconds since the form appeared;
  *              a post sent sooner than this (or without it) is a bot, answered ok, saved nowhere
@@ -530,8 +530,21 @@ function formRowExists_(tab, def, key) {
 function sendFormEmail_(kind, values, total) {
   const site = SITES[siteKey_(values.site, values.type)];
 
-  // The signup is only a row; nothing is sent to anyone.
-  if (kind === 'newsletter') return;
+  // A new subscriber is announced to the owner only; the subscriber gets nothing until the first issue.
+  if (kind === 'newsletter') {
+    MailApp.sendEmail({
+      to: SITE_NOTIFY_EMAIL,
+      subject: 'New BA notes subscriber: ' + (values.first_name || values.email) + ' (' + total + ' total)',
+      body:
+        'Email: ' + values.email +
+        '\nFirst name: ' + (values.first_name || 'not given') +
+        '\nSource page: ' + (values.page || 'not given') +
+        '\nTimestamp: ' + Utilities.formatDate(new Date(), 'Africa/Lagos', 'd MMM yyyy, HH:mm') + ' WAT' +
+        '\n\nTotal subscribers: ' + total,
+      name: 'ubonudonkang.com'
+    });
+    return;
+  }
 
   if (kind === 'cv_request') {
     MailApp.sendEmail({

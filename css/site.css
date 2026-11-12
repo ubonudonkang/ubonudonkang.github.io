@@ -561,7 +561,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 kbd { font: 500 0.75rem/1 var(--mono); padding: 4px 7px; border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: 5px; color: var(--ink-2); background: var(--surface); }
 
 .foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 28px 0; border-top: 1px solid var(--line); font-size: 0.85rem; color: var(--ink-3); }
-.foot__links { display: flex; gap: 20px; }
+.foot__links { display: flex; flex-wrap: wrap; gap: 10px 20px; }
+.foot__links a { white-space: nowrap; }
 @media (hover: hover) and (pointer: fine) { .foot__links a:hover { color: var(--ink); } }
 
 /* ================================================================
