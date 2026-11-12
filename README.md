@@ -34,7 +34,7 @@ ba-training/index.html         BA Bridge Cohort: page-specific styles and Februa
 consulting/index.html          Consulting for founders and teams: the three tiers, worded exactly as practevahq.com/advisory
 speaking-and-writing/index.html Teaching and mentoring (the cohort), writing (every note, newest first, and the ebook); linked from About and every footer. Talks go in a third block once there are any
 resources/templates/           Free template library (Word, Excel, BPMN) and the newsletter signup; ba-cv-template/ is the CV guide page. Files live in downloads/
-hire/index.html                For remote contract roles: noindex, left out of the menu, sitemap and every link; holds the CV request form
+hire/index.html                For remote contract roles, linked from the "Hire Me" header button; holds a CV request form (contact/ has the other)
 css/site.css                   Design system shared by every page (starts with the @font-face rules)
 fonts/                         Self-hosted Inter, Instrument Serif and JetBrains Mono (latin + latin-ext woff2), plus inter-naira.woff2: the naira sign on its own (1 KB)
 js/site.js                     Dock, WAT clock, email copy (press C), scroll reveals, testimonials, draggable case file, PDF viewer
@@ -69,7 +69,7 @@ Every form on the site is handled by one browser script, `js/forms.js`, and one 
 | Cohort waitlist | `ba-training/` (closed) | `waitlist` | `Waitlist` tab |
 | BA enrolment + Squad | `ba-training/` (open) | `enrol` | `BA Training` tab (gid 0) |
 | 1:1 session payment | `resources/1-on-1-session/` | `session` | `Sessions` tab (from Squad's webhook) |
-| CV request | `hire/` | `cv_request` | `CV requests` tab, plus an email to `SITE_NOTIFY_EMAIL` |
+| CV request | `hire/` and `contact/` | `cv_request` | `CV requests` tab, plus an email to `SITE_NOTIFY_EMAIL` |
 | BA notes signup | `resources/templates/` and the end of each note | `newsletter` | `BA notes subscribers` tab (no email) |
 
 - The script routes a post by `form_name` (`contact`, `ba-waitlist-*`) or `action` (`signup`, and the admin, review and Selar actions). Each tab is matched by column heading, so the existing `Waitlist` headings (`name`, `email`, `cohort`, `consent`, `type`) keep working; a missing tab is created.
