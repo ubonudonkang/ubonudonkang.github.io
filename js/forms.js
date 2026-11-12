@@ -8,6 +8,8 @@
  *   data-form="waitlist"  BA Bridge cohort waitlist       -> Waitlist tab
  *   data-form="enrol"     BA Bridge enrolment + Squad     -> BA Training tab
  *   data-form="session"   1:1 session payment (Squad)     -> Sessions tab (via Squad's webhook)
+ *   data-form="cv_request" CV request on /hire/           -> CV requests tab (emailed to the owner)
+ *   data-form="newsletter" "BA notes, once a month"       -> BA notes subscribers tab
  *
  * Needs /js/site.js first (window.uuTrack).
  */
@@ -522,10 +524,75 @@
     });
   }
 
+  /* ── CV request and BA notes signup ─────────────────────────────
+     Each form carries its own messages ([data-form-ok], [data-form-err]), so a
+     page can hold more than one. The script also gets the page's path and
+     _elapsed, the milliseconds since the form appeared: it drops anything
+     sent in under three seconds as a bot. Nothing is emailed to the visitor;
+     the confirmation is shown here. data-ok-text may contain {name}. */
+  function initLight(form, kind) {
+    const endpoint = form.dataset.endpoint || ENDPOINT;
+    const shown = Date.now();
+    const ok = form.querySelector('[data-form-ok]');
+    const err = form.querySelector('[data-form-err]');
+    const fields = form.querySelector('[data-form-fields]');
+    const button = form.querySelector('button[type="submit"]');
+    const label = button.innerHTML;
+    let sending = false;
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (sending) return;
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+
+      const params = collect(form);
+      if (!EMAIL_RE.test(params.email || '')) {
+        err.textContent = 'Enter a valid email address.';
+        err.hidden = false;
+        return;
+      }
+      params.form_name = kind;
+      params.page = location.pathname;
+      params.submission_id = uniqueId();
+
+      sending = true;
+      button.disabled = true;
+      button.textContent = 'Sending…';
+      err.hidden = true;
+
+      // A person cannot fill a form in under three seconds; wait out the rest rather than lose a real submission.
+      const wait = Math.max(0, 3200 - (Date.now() - shown));
+      new Promise((resolve) => setTimeout(resolve, wait))
+        .then(() => {
+          params._elapsed = String(Date.now() - shown);
+          return send(endpoint, params);
+        })
+        .then(() => {
+          const name = (params.name || params.first_name || '').split(/\s+/)[0];
+          ok.textContent = (form.dataset.okText || 'Thanks.').replace('{name}', name || 'there');
+          ok.hidden = false;
+          if (fields) fields.hidden = true;
+          form.reset();
+          ok.focus();
+          track(kind === 'cv_request' ? 'cv-request' : 'newsletter-signup');
+        })
+        .catch(() => {
+          err.textContent = form.dataset.errorText || 'Something went wrong. Please email ubonudonkang@gmail.com.';
+          err.hidden = false;
+        })
+        .then(() => {
+          sending = false;
+          button.disabled = false;
+          button.innerHTML = label;
+        });
+    });
+  }
+
   document.querySelectorAll('form[data-form]').forEach((form) => {
     const kind = form.dataset.form;
     if (kind === 'contact' || kind === 'waitlist') initNotice(form, kind);
     else if (kind === 'enrol') initEnrol(form);
     else if (kind === 'session') initSession(form);
+    else if (kind === 'cv_request' || kind === 'newsletter') initLight(form, kind);
   });
 })();
