@@ -174,7 +174,7 @@ function renderPromo(page, c) {
 }
 
 function headerCta(page, c, isTraining) {
-  const pattern = /<a class="(?:btn btn-primary topbar__cta|cohort-cta)"[^>]*>[\s\S]*?<\/a>/g;
+  const pattern = /<a class="(?:btn btn-(?:primary|line) topbar__cta|cohort-cta)"[^>]*>[\s\S]*?<\/a>/g;
   const matches = [...page.matchAll(pattern)];
   if (matches.length > 1) throw new Error('Expected at most one header cohort button per page.');
   if (!matches.length) return page;
@@ -192,7 +192,7 @@ export function moveHomePromoBelowHero(home) {
   if (promo.end < target && /^\s*$/.test(home.slice(promo.end, target))) return home;
   const newline = home.includes('\r\n') ? '\r\n' : '\n';
   const without = home.slice(0, promo.start).replace(/[ \t\r\n]*$/, '') + newline + newline +
-    home.slice(promo.end).replace(/^[ \t\r\n]*/, '');
+    home.slice(promo.end).replace(/^[ \t]*(?:\r?\n)+/, '');
   const insertion = without.indexOf(caseFile);
   return without.slice(0, insertion).replace(/[ \t\r\n]*$/, '') + newline + newline +
     '  ' + promo.text.trim() + newline + newline + without.slice(insertion);
