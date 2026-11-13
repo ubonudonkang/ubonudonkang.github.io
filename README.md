@@ -20,7 +20,7 @@ Never force-push to `main`: it rewrites history and can wipe out other changes.
 ## File structure
 
 ```
-index.html                     Home: hero with portrait, stats, cohort, case file, services, work, testimonials, resources
+index.html                     Home: hero with portrait, stats, cohort, case file, services (each with an illustration), work, things built, testimonials, resources
 about/index.html               Bio, 4C Framework, skills, experience, certifications, full LinkedIn recommendations
 projects/index.html            Work: the five case studies
 project-rights-issue/          Case study: ₦351B rights issue digitisation (Access Bank, 2024)
@@ -37,9 +37,10 @@ resources/templates/           Free template library (Word, Excel, BPMN) and the
 hire/index.html                For recruiters, linked from the "Hire Me" header button: facts strip, skills, case studies, career summary, time zones, testimonials, FAQ (with FAQPage and Person data) and a CV request form. Its own header button reads "Request my CV" and jumps to the form
 css/site.css                   Design system shared by every page (starts with the @font-face rules)
 fonts/                         Self-hosted Inter, Instrument Serif and JetBrains Mono (latin + latin-ext woff2), plus inter-naira.woff2: the naira sign on its own (1 KB)
-js/site.js                     Dock, WAT clock, email copy (press C), scroll reveals, testimonials, draggable case file, PDF viewer
+js/site.js                     Dock, WAT clock, email copy (press C), scroll reveals, illustration playback, testimonials, draggable case file, PDF viewer
 js/forms.js                    The one script for the contact, waitlist and BA enrolment forms (and the Apps Script endpoint they post to)
 scripts/site_forms.gs          The one Apps Script web app behind those forms: enrolment, waitlist and contact tabs in one workbook
+scripts/build_illustrations.mjs The illustrations: draws each one on an isometric grid and writes it into the pages as inline SVG (run it after editing a drawing)
 scripts/build_assets.mjs        The build step: inlines css/site.css into every page and stamps script versions (run it after editing css/site.css, js/site.js or js/forms.js)
 img/ubon-udonkang.jpg          Portrait used on the home and About pages
 favicon.ico                    Favicon (16, 32, 48 px); browsers and Google request /favicon.ico
@@ -213,6 +214,12 @@ BA Bridge enrolments and the 1:1 session are paid through Squad by GTCO (card, b
 - White editorial layout: Instrument Serif headings, Inter body text, JetBrains Mono labels.
 - **Light and dark themes.** All colours are tokens on `:root` in `css/site.css`. Light is the default for every visitor. Dark applies only when chosen with the top-bar toggle, and the choice is remembered in the browser. Use the tokens (`--ink`, `--paper`, `--surface`, `--on-ink`, `--accent-fill`...) rather than hard-coded colours. The case file on the home page deliberately stays "paper" in both themes.
 - One accent colour, signature blue `#1F3BD6` (lightened to `#8FA2FF` for text in dark mode). Stamp red is used only on the "Approved" and "Delivered" stamps.
+- **Illustrations.** Isometric line drawings in the site's own palette: ink outlines, white and paper faces, a solid ink edge on the thick tiles, and the one blue for the part that matters. No second colour; the "Signed" stamp is the only red. Each drawing shows the idea beside it, and carries the labels that used to be tag pills (BRD, FRS, RTM and so on). The home page has nine: one per service card and a small one on each "Things I've built" card.
+  - **Where they live:** `scripts/build_illustrations.mjs` draws every one from a few shared parts (`slab`, `block`, `route`, `text`, `riser`) and writes the SVG between `<!--illo:name-->` and `<!--/illo:name-->` in the page. Edit the drawing's function, then run `node scripts/build_illustrations.mjs`; never edit the SVG in the page by hand, the next run replaces it. `test_assets.mjs` fails if a page's drawing is out of date.
+  - **Adding one:** write a function, add it to `illustrations`, and put an empty marker pair in the page inside `<div class="svc-card__art">` (a large drawing with the grid behind it) or `<span class="card__art">` (a small one at the top of a `.card`; pass `SPOT` to the scene). Give it a `label` that says what the picture shows; that is what a screen reader reads.
+  - **Colours** are the `--il-*` tokens on `.illo` in `css/site.css`, with a dark-theme set beside them, so a drawing needs no changes for dark mode.
+  - **Motion:** a drawing assembles once, the first time 40% of it is on screen (`site.js` adds `is-on`), in the order the idea happens: the paper steps lift out before the short route is drawn, the stamp lands after the signature. Each part's `--d` is its delay in milliseconds. A few have one quiet loop (a dot along a line, the gear, the lifted tile), which runs only while the drawing is on screen (`is-live`). Under reduced motion, and without JavaScript, the finished drawing is shown and nothing moves.
+  - **Service cards** are taller on phones now that they hold a drawing. A card taller than the screen sticks higher (`--over`, set by `site.js`), so its foot clears the dock before the next card covers it.
 - The dock is the main navigation on every page. Its magnification only runs with a mouse.
 - Respects reduced motion, reduced transparency and higher-contrast settings.
 

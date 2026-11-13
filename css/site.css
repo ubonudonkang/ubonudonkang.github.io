@@ -412,8 +412,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .svc { display: grid; gap: 16px; }
 .svc-card {
   position: sticky;
-  top: calc(80px + var(--i, 0) * 14px);
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 40px;
+  top: calc(80px + var(--i, 0) * 14px - var(--over, 0px)); /* --over: site.js, for a card taller than the screen */
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr); gap: 24px 40px;
   min-height: 300px;
   padding: clamp(24px, 4vw, 44px);
   background: var(--paper-2);
@@ -421,15 +421,22 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   border-radius: 20px;
   box-shadow: 0 -12px 30px -24px rgba(0,0,0,0.25);
 }
-.svc-card__num { font: 400 clamp(2.2rem, 4vw, 3.5rem)/1 var(--serif); color: var(--ink-3); letter-spacing: -0.02em; }
+.svc-card__num { position: absolute; top: clamp(24px, 4vw, 44px); right: clamp(24px, 4vw, 44px); font: 400 clamp(2.2rem, 4vw, 3.5rem)/1 var(--serif); color: var(--ink-3); letter-spacing: -0.02em; }
+.svc-card__art { align-self: center; min-width: 0; }
 .svc-card__title { font: 400 clamp(2rem, 4.5vw, 3.5rem)/1 var(--serif); letter-spacing: -0.02em; margin: 16px 0 18px; max-width: 14ch; }
 .svc-card__desc { color: var(--ink-2); max-width: 52ch; margin: 0 0 24px; }
 .svc-card__links { display: flex; flex-wrap: wrap; gap: 12px 24px; margin: -8px 0 24px; }
 .tags { display: flex; flex-wrap: wrap; gap: 8px; }
 .tag { font: 500 0.72rem/1 var(--mono); letter-spacing: 0.04em; padding: 8px 12px; border: 1px solid var(--line-2); border-radius: 999px; color: var(--ink-2); background: var(--surface); }
+/* the last line of text sits on the card's padding, as the tag row used to */
+.svc-card__body > :last-child { margin-bottom: 0; }
+@media (max-width: 760px) {
+  .svc-card { grid-template-columns: minmax(0, 1fr); }
+  .svc-card__art { margin-inline: -8px; }
+  .svc-card__art .illo { max-height: 300px; }
+}
 @media (max-width: 640px) {
-  .svc-card { grid-template-columns: 1fr; min-height: 0; top: calc(68px + var(--i, 0) * 10px); }
-  .svc-card__num { order: -1; }
+  .svc-card { min-height: 0; top: calc(68px + var(--i, 0) * 10px - var(--over, 0px)); }
 }
 
 /* ── Work: dark cards ────────────────────────────────────── */
@@ -1019,6 +1026,73 @@ select.input { background-image: var(--select-arrow); background-repeat: no-repe
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+/* ── Illustrations ───────────────────────────────────────────
+   Drawn by scripts/build_illustrations.mjs and written into the pages as inline SVG, so they
+   take the theme's colours from these tokens. Ink line, one blue, the paper tints. */
+.illo {
+  --il-line: var(--ink); --il-face: var(--surface); --il-shade: var(--ink); --il-tint: var(--paper-2);
+  --il-accent: var(--accent-fill); --il-deep: #172DA8; --il-soft: #DCE2FA; --il-stamp: var(--stamp);
+  display: block; width: 100%; max-width: calc(var(--w) * 1px); height: auto; margin-inline: auto;
+}
+:root[data-theme="dark"] .illo { --il-face: #1C1C21; --il-shade: #050506; --il-tint: #26262B; --il-deep: #2238B4; --il-soft: #26305F; --il-stamp: #F0766D; }
+.il-line { stroke: var(--il-line); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.il-face { fill: var(--il-face); }
+.il-shade { fill: var(--il-shade); }
+.il-tint { fill: var(--il-tint); }
+.il-accent { fill: var(--il-accent); }
+.il-accent-deep { fill: var(--il-deep); }
+.il-soft { fill: var(--il-soft); }
+.il-ghost { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 4; }
+.il-none { fill: none; stroke: none; }
+.il-thin, .il-wire, .il-code, .il-tick, .il-sign, .il-grid, .il-pulse { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.il-thin { stroke: var(--il-line); stroke-width: 1.25; }
+.il-dash { stroke: var(--ink-3); stroke-dasharray: 4 4; }
+.il-wire { stroke: var(--accent); stroke-width: 2; }
+.il-code { stroke: var(--line-2); stroke-width: 3; }
+.il-code--on { stroke: rgba(255,255,255,0.45); }
+.il-tick { stroke: var(--accent); stroke-width: 2; }
+.il-tick--on { stroke: #fff; }
+.il-sign { stroke: var(--accent); stroke-width: 1.5; }
+.il-grid { stroke: var(--line-2); stroke-width: 1; opacity: 0.75; }
+.il-text { font-family: var(--mono); font-weight: 600; letter-spacing: 0.06em; }
+.il-ink { fill: var(--ink); }
+.il-on { fill: #fff; }
+.il-mute { fill: var(--ink-3); }
+.il-stamp__box { fill: none; stroke: var(--il-stamp); stroke-width: 2; }
+.il-stamp__text { fill: var(--il-stamp); font-weight: 700; letter-spacing: 0.12em; }
+/* resting state, which is also what shows without JavaScript and under reduced motion */
+.il-pulse { stroke: var(--accent); stroke-width: 5; stroke-dasharray: 0.001 1; opacity: 0; }
+.il-out { opacity: 0; }
+.il-dim { opacity: 0.5; }
+.il-pop, .il-stamp, .il-spin { transform-box: fill-box; transform-origin: center; }
+/* entrances play once, when site.js sees the drawing (is-on); each part waits its --d */
+.js .il-drop { animation: ilDrop 620ms var(--ease-out) var(--d, 0ms) both; }
+.js .il-pop { animation: ilPop 420ms var(--ease-out) var(--d, 0ms) both; }
+.js .il-fade { animation: ilFade 420ms ease var(--d, 0ms) both; }
+.js .il-draw { stroke-dasharray: 1; animation: ilDraw 700ms var(--ease-in-out) var(--d, 0ms) both; }
+.js .il-rise { animation: ilRise 760ms var(--ease-out) var(--d, 0ms) both; }
+.js .il-out { animation: ilOut 520ms var(--ease-in-out) var(--d, 0ms) both; }
+.js .il-dim { animation: ilDim 420ms ease var(--d, 0ms) both; }
+.js .il-stamp { animation: ilStamp 280ms cubic-bezier(0.55, 0, 0.9, 0.4) var(--d, 0ms) both; }
+.js .illo:not(.is-on) * { animation-play-state: paused; }
+/* loops run only while the drawing is on screen (is-live) */
+.js .illo.is-on .il-pulse { animation: ilPulse 3.6s linear var(--d, 0ms) infinite; }
+.js .illo.is-on .il-spin { animation: ilSpin 7s linear 1.6s infinite; }
+.js .illo.is-on .il-float { animation: ilFloat 3.2s ease-in-out 1.2s infinite alternate; }
+.js .illo:not(.is-live) :is(.il-pulse, .il-spin, .il-float) { animation-play-state: paused; }
+@keyframes ilDrop { from { opacity: 0; transform: translateY(-18px); } }
+@keyframes ilPop { from { opacity: 0; transform: scale(0.6); } }
+@keyframes ilFade { from { opacity: 0; } }
+@keyframes ilDraw { from { stroke-dashoffset: 1; opacity: 0; } 8% { opacity: 1; } }
+@keyframes ilRise { from { opacity: 0; transform: translateY(var(--h, 40px)); } 10% { opacity: 1; } }
+@keyframes ilOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-16px); } }
+@keyframes ilDim { from { opacity: 1; } }
+@keyframes ilStamp { from { opacity: 0; transform: scale(1.8); } }
+@keyframes ilPulse { 0% { stroke-dashoffset: 0; opacity: 0; } 6% { opacity: 1; } 44% { opacity: 1; } 50%, 100% { stroke-dashoffset: -1; opacity: 0; } }
+@keyframes ilSpin { to { transform: rotate(360deg); } }
+@keyframes ilFloat { to { transform: translateY(-5px); } }
+@media (prefers-reduced-motion: reduce) { .js .illo * { animation: none !important; } }
+
 /* ── Scroll reveal ───────────────────────────────────────── */
 .js .rv { opacity: 0; transform: translateY(12px); transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out); }
 .js .rv.in { opacity: 1; transform: none; }
@@ -1044,6 +1118,9 @@ select.input { background-image: var(--select-arrow); background-repeat: no-repe
 .card { display: flex; flex-direction: column; gap: 12px; padding: clamp(20px, 3vw, 28px); background: var(--paper-2); border: 1px solid var(--line); border-radius: 20px; color: inherit; text-decoration: none; min-width: 0; }
 a.card { transition: border-color 200ms var(--ease-out); }
 @media (hover: hover) and (pointer: fine) { a.card:hover { border-color: var(--ink-3); } }
+/* a small drawing at the top of a card; the fixed height keeps a row of cards' text aligned */
+.card__art { display: flex; align-items: flex-end; height: 132px; margin-bottom: 6px; }
+.card__art .illo { margin-inline: 0; max-height: 100%; }
 .card__kicker { font: 500 0.72rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
 .card__metric { font: 400 clamp(2rem, 4vw, 2.6rem)/1 var(--serif); letter-spacing: -0.02em; }
 .card__title { font: 400 1.6rem/1.1 var(--serif); letter-spacing: -0.01em; margin: 0; }
