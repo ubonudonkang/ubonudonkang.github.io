@@ -215,6 +215,37 @@ document.querySelectorAll('[data-copy-text]').forEach(el => el.addEventListener(
   els.forEach(el => io.observe(el));
 })();
 
+/* ── Service cards: a card taller than the screen sticks higher, so its foot is seen before the next covers it ── */
+(function tallCards() {
+  const cards = [...document.querySelectorAll('.svc-card')];
+  if (!cards.length || !('ResizeObserver' in window)) return;
+  const DOCK = 96; // the dock floats over the foot of the screen
+  const measure = () => cards.forEach(card => {
+    const stuck = parseFloat(getComputedStyle(card).top);
+    if (Number.isNaN(stuck)) { card.style.removeProperty('--over'); return; } // not sticky (reduced motion)
+    const top = stuck + (parseFloat(card.style.getPropertyValue('--over')) || 0);
+    const over = Math.max(0, Math.round(card.offsetHeight - (innerHeight - top - DOCK)));
+    card.style.setProperty('--over', over + 'px');
+  });
+  new ResizeObserver(measure).observe(cards[0].parentElement);
+  addEventListener('resize', measure);
+  measure();
+})();
+
+/* ── Illustrations: play once when seen, loop only while on screen ── */
+(function illustrations() {
+  const els = document.querySelectorAll('.illo');
+  if (!els.length) return;
+  if (!('IntersectionObserver' in window)) { els.forEach(el => el.classList.add('is-on', 'is-live')); return; }
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.intersectionRatio >= 0.4) entry.target.classList.add('is-on');
+      entry.target.classList.toggle('is-live', entry.isIntersecting);
+    });
+  }, { threshold: [0, 0.4] });
+  els.forEach(el => io.observe(el));
+})();
+
 /* ── Stat counters ───────────────────────────────────────────── */
 (function counters() {
   const els = document.querySelectorAll('[data-to]');

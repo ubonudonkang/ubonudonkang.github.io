@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { build, htmlFiles, inputs, minify, staleFiles, versions } from './build_assets.mjs';
+import { draw, illustrations, staleFiles as staleDrawings } from './build_illustrations.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
@@ -84,4 +85,28 @@ for (const f of faces.filter((x) => /latin-ext/.test(x.file))) {
   assert.ok(covers(0x20A5) && covers(0x20A7) && covers(0x20AB) && covers(0x20AD), `${f.file} still covers the rest of the currency symbols`);
   assert.ok(covers(0x0100) && covers(0x0142), `${f.file} still covers Latin Extended letters`);
 }
-console.log('Asset build and readability checks passed.');
+// Illustrations: every marked drawing in the pages is the one scripts/build_illustrations.mjs draws now.
+assert.deepEqual(staleDrawings(), [], 'run: node scripts/build_illustrations.mjs');
+const home = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const placed = [...home.matchAll(/<!--illo:([a-z0-9-]+)-->/g)].map((m) => m[1]);
+assert.deepEqual(placed, ['requirements', 'automation', 'process', 'compliance', 'signoff', 'spot-workbench', 'spot-4c', 'spot-bridge', 'spot-book'], 'the home page drawings, in order');
+const ids = new Set();
+for (const [name, make] of Object.entries(illustrations)) {
+  const svg = make();
+  assert.match(svg, new RegExp(`^<svg class="illo[^"]*" data-illo="${name}" viewBox="0 0 \\d+ \\d+" style="--w:\\d+" role="img" aria-label="[^"]{20,}">`), `${name} is a labelled image`);
+  assert.ok(!/NaN|undefined|Infinity/.test(svg), `${name} has no broken numbers`);
+  assert.ok(!svg.includes('\u2014'), `${name} has no em dash`);
+  // ids are shared by the whole page, so no two drawings may reuse one, and every reference must resolve
+  for (const [, id] of svg.matchAll(/ id="([^"]+)"/g)) { assert.ok(!ids.has(id), `${name} reuses the id ${id}`); ids.add(id); }
+  for (const [, id] of svg.matchAll(/url\(#([^)]+)\)/g)) assert.ok(svg.includes(` id="${id}"`), `${name} refers to #${id}`);
+}
+// drawing is idempotent, and an unknown name is an error instead of an empty gap in the page
+const marked = '<p><!--illo:spot-book-->old<!--/illo:spot-book--></p>';
+assert.equal(draw(draw(marked)), draw(marked));
+assert.ok(draw(marked).includes('data-illo="spot-book"'));
+assert.throws(() => draw('<!--illo:nope--><!--/illo:nope-->'), /No illustration called "nope"/);
+// the animation classes the drawings use all exist in the stylesheet, and motion can be switched off
+const used = new Set(Object.values(illustrations).flatMap((make) => [...make().matchAll(/class="([^"]+)"/g)].flatMap((m) => m[1].split(' '))));
+for (const cls of used) if (cls.startsWith('il-')) assert.ok(source.includes(`.${cls}`), `css/site.css styles .${cls}`);
+assert.match(source, /@media \(prefers-reduced-motion: reduce\) \{ \.js \.illo \* \{ animation: none !important; \} \}/, 'illustrations stand still under reduced motion');
+console.log('Asset build, illustration and readability checks passed.');
